@@ -1,0 +1,53 @@
+package com.ticketing.global;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+
+@Getter
+@RequiredArgsConstructor
+public enum BaseResponseStatus {
+
+    // 공통 1000
+    SUCCESS(true, 1000, "성공", HttpStatus.OK),
+
+    // 회원 2000
+    DUPLICATE_EMAIL(false, 2001, "이미 사용중인 이메일입니다", HttpStatus.CONFLICT),
+    DUPLICATE_NICKNAME(false, 2002, "이미 사용중인 닉네임입니다", HttpStatus.CONFLICT),
+    MEMBER_NOT_FOUND(false, 2003, "존재하지 않는 회원입니다", HttpStatus.NOT_FOUND),
+    INVALID_PASSWORD(false, 2004, "비밀번호가 일치하지 않습니다", HttpStatus.UNAUTHORIZED),
+    UNAUTHORIZED_ACCESS(false, 2005, "인증이 필요합니다", HttpStatus.UNAUTHORIZED),
+    FORBIDDEN_ACCESS(false, 2006, "접근 권한이 없습니다", HttpStatus.FORBIDDEN),
+    MEMBER_ALREADY_DELETED(false, 2007, "이미 탈퇴한 회원입니다", HttpStatus.BAD_REQUEST),
+
+    // 공연 3000
+    PERFORMANCE_NOT_FOUND(false, 3001, "존재하지 않는 공연입니다", HttpStatus.NOT_FOUND),
+    PERFORMANCE_ALREADY_CLOSED(false, 3002, "이미 종료된 공연입니다", HttpStatus.BAD_REQUEST),
+    VENUE_NOT_FOUND(false, 3003, "존재하지 않는 공연장입니다.", HttpStatus.NOT_FOUND),
+
+    // 티켓/예매 4000
+    TICKET_NOT_FOUND(false, 4001, "존재하지 않는 티켓입니다", HttpStatus.NOT_FOUND),
+    TICKET_SOLD_OUT(false, 4002, "매진된 티켓입니다", HttpStatus.CONFLICT),
+    ALREADY_RESERVED(false, 4003, "이미 예매한 티켓입니다", HttpStatus.CONFLICT),
+    RESERVATION_NOT_FOUND(false, 4004, "존재하지 않는 예매입니다", HttpStatus.NOT_FOUND),
+    RESERVATION_CANCEL_FAILED(false, 4005, "예매 취소가 불가능한 상태입니다", HttpStatus.BAD_REQUEST),
+
+    // 결제 5000
+    PAYMENT_FAILED(false, 5001, "결제에 실패했습니다", HttpStatus.BAD_REQUEST),
+    PAYMENT_NOT_FOUND(false, 5002, "존재하지 않는 결제입니다", HttpStatus.NOT_FOUND),
+    PAYMENT_ALREADY_COMPLETED(false, 5003, "이미 완료된 결제입니다", HttpStatus.CONFLICT),
+
+    // 대기열 6000
+    QUEUE_NOT_FOUND(false, 6001, "대기열 정보를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
+    QUEUE_ALREADY_ENTERED(false, 6002, "이미 대기열에 등록되어 있습니다", HttpStatus.CONFLICT),
+    QUEUE_EXPIRED(false, 6003, "대기열이 만료되었습니다", HttpStatus.BAD_REQUEST),
+
+    // 서버 9000
+    INTERNAL_SERVER_ERROR(false, 9001, "서버 오류가 발생했습e니다", HttpStatus.INTERNAL_SERVER_ERROR),
+    INVALID_INPUT(false, 9002, "입력값이 올바르지 않습니다", HttpStatus.BAD_REQUEST);
+
+    private final boolean success;
+    private final int code;
+    private final String message;
+    private final HttpStatus httpStatus;
+}

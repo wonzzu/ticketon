@@ -1,0 +1,32 @@
+/**
+ * 디자인 토큰 — 티켓팅 사이트 톤 (검정 헤더 + 빨강 CTA).
+ * 컴포넌트에서 색 직접 하드코딩 금지. 이 변수만 사용.
+ */
+
+// Brand (CTA·강조)
+$color-primary:        #E11D48;
+$color-primary-dark:   #BE123C;
+$color-primary-light:  #FB7185;
+
+// Dark (헤더·텍스트)
+$color-dark:           #0F172A;
+$color-dark-soft:      #1F2937;
+
+// Semantic
+$color-success:        #10B981;
+$color-danger:         #DC2626;
+$color-warning:        #F59E0B;
+$color-info:           #3B82F6;
+
+// Neutral
+$color-text-primary:   #0F172A;
+$color-text-secondary: #6B7280;
+$color-bg-light:       #F9FAFB;
+$color-bg-soft:        #F3F4F6;
+$color-border:         #E5E7EB;
+
+// 좌석 상태 의미 토큰 (CLAUDE.md §4.2)
+$color-seat-available: $color-success;
+$color-seat-held:      $color-warning;
+$color-seat-reserved:  $color-text-secondary;
+$color-seat-selected:  $color-primary;

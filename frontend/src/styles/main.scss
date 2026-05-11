@@ -1,0 +1,50 @@
+/**
+ * 메인 스타일 — main.js에서 import.
+ *
+ * 순서 중요:
+ * 1. 디자인 토큰 정의 (@use 'tokens')
+ * 2. 우리 토큰을 Bootstrap 변수에 매핑 (오버라이드)
+ * 3. Bootstrap CSS import
+ * 4. 전역 스타일
+ */
+
+@use 'tokens' as *;
+
+// === Bootstrap 변수 오버라이드 ===
+$primary: $color-primary;
+$danger:  $color-danger;
+$success: $color-success;
+$warning: $color-warning;
+$info:    $color-info;
+$dark:    $color-dark;
+
+$body-bg:    #ffffff;
+$body-color: $color-text-primary;
+
+$font-family-sans-serif:
+  'Pretendard',
+  -apple-system, BlinkMacSystemFont,
+  'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic',
+  sans-serif;
+
+$border-radius:    6px;
+$border-radius-sm: 4px;
+$border-radius-lg: 10px;
+
+// === Bootstrap import (변수 오버라이드 후) ===
+@import 'bootstrap/scss/bootstrap';
+
+// === 전역 ===
+html, body {
+  font-family: $font-family-sans-serif;
+}
+
+a {
+  text-decoration: none;
+}
+
+// 좌석 상태 유틸 (다른 컴포넌트에서 import 없이 사용)
+.text-seat-available { color: $color-seat-available; }
+.text-seat-held      { color: $color-seat-held; }
+.text-seat-reserved  { color: $color-seat-reserved; }
+.text-seat-selected  { color: $color-seat-selected; }
