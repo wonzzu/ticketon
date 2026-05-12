@@ -23,7 +23,11 @@ public enum BaseResponseStatus {
     // 공연 3000
     PERFORMANCE_NOT_FOUND(false, 3001, "존재하지 않는 공연입니다", HttpStatus.NOT_FOUND),
     PERFORMANCE_ALREADY_CLOSED(false, 3002, "이미 종료된 공연입니다", HttpStatus.BAD_REQUEST),
-    VENUE_NOT_FOUND(false, 3003, "존재하지 않는 공연장입니다.", HttpStatus.NOT_FOUND),
+    INVALID_EVENT_STATUS(false, 3003, "현재 상태에서는 처리할 수 없습니다", HttpStatus.BAD_REQUEST),
+    VENUE_NOT_FOUND(false, 3004, "존재하지 않는 공연장입니다", HttpStatus.NOT_FOUND),
+    EVENT_ALREADY_REVIEWED(false, 3005, "이미 검수가 완료된 공연입니다", HttpStatus.CONFLICT),
+    REJECT_REASON_REQUIRED(false, 3006, "반려 사유는 필수입니다", HttpStatus.BAD_REQUEST),
+    EVENT_NOT_OWNED(false, 3007, "본인이 등록한 공연만 수정할 수 있습니다", HttpStatus.FORBIDDEN),
 
     // 티켓/예매 4000
     TICKET_NOT_FOUND(false, 4001, "존재하지 않는 티켓입니다", HttpStatus.NOT_FOUND),
@@ -44,7 +48,8 @@ public enum BaseResponseStatus {
 
     // 서버 9000
     INTERNAL_SERVER_ERROR(false, 9001, "서버 오류가 발생했습e니다", HttpStatus.INTERNAL_SERVER_ERROR),
-    INVALID_INPUT(false, 9002, "입력값이 올바르지 않습니다", HttpStatus.BAD_REQUEST);
+    INVALID_INPUT(false, 9002, "입력값이 올바르지 않습니다", HttpStatus.BAD_REQUEST),
+    ;
 
     private final boolean success;
     private final int code;
