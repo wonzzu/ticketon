@@ -31,7 +31,8 @@ public class EventService {
                 dto.getRunningTime(),
                 dto.getCast(),
                 dto.getAgeLimit(),
-                dto.getCategory());
+                dto.getCategory(),
+                dto.getPosterUrl());
 
         eventRepository.save(event);
     }
@@ -59,7 +60,8 @@ public class EventService {
                 dto.getCast(),
                 dto.getRunningTime(),
                 dto.getStartDate(),
-                dto.getEndDate());
+                dto.getEndDate(),
+                dto.getPosterUrl());
     }
 
     @Transactional

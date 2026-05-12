@@ -25,6 +25,8 @@ public class EventListResponseDto {
 
     private Category category;
 
+    private String posterUrl;
+
     public static EventListResponseDto from(Event event) {
        return EventListResponseDto.builder()
                 .id(event.getId())
@@ -33,6 +35,7 @@ public class EventListResponseDto {
                 .endDate(event.getEndDate())
                 .ageLimit(event.getAgeLimit())
                 .category(event.getCategory())
+                .posterUrl(event.getPosterUrl())
                 .build();
     }
 }
