@@ -30,6 +30,8 @@ public class EventResponseDto {
 
     private Category category;
 
+    private String posterUrl;
+
 
     public static EventResponseDto from(Event event) {
         return EventResponseDto.builder()
@@ -41,6 +43,7 @@ public class EventResponseDto {
                 .cast(event.getCast())
                 .ageLimit(event.getAgeLimit())
                 .category(event.getCategory())
+                .posterUrl(event.getPosterUrl())
                 .build();
     }
 

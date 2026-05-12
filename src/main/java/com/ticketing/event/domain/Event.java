@@ -45,6 +45,9 @@ public class Event extends BaseEntity {
     @Column(nullable = false)
     private Category category;
 
+    @Column(length = 500)
+    private String posterUrl;
+
     @Column
     private LocalDateTime deletedAt;
 
@@ -61,7 +64,7 @@ public class Event extends BaseEntity {
     }
 
     public static Event create(String title, String description, LocalDate startDate, LocalDate endDate, Integer runningTime,
-                               String cast, AgeLimit ageLimit, Category category) {
+                               String cast, AgeLimit ageLimit, Category category, String posterUrl) {
         validatePeriod(startDate, endDate);
         return Event.builder()
                 .title(title)
@@ -72,11 +75,12 @@ public class Event extends BaseEntity {
                 .cast(cast)
                 .ageLimit(ageLimit)
                 .category(category)
+                .posterUrl(posterUrl)
                 .build();
     }
 
     public void update(String title, String description, String cast,
-                       Integer runningTime, LocalDate startDate, LocalDate endDate) {
+                       Integer runningTime, LocalDate startDate, LocalDate endDate, String posterUrl) {
         validatePeriod(startDate, endDate);
 
         this.title = title;
@@ -85,6 +89,7 @@ public class Event extends BaseEntity {
         this.runningTime = runningTime;
         this.startDate = startDate;
         this.endDate = endDate;
+        this.posterUrl = posterUrl;
     }
 
     private static void validatePeriod(LocalDate startDate, LocalDate endDate) {

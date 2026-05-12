@@ -30,4 +30,5 @@ public class EventUpdateDto {
     @NotBlank
     private String cast;
 
+    private String posterUrl;
 }
