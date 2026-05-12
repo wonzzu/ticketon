@@ -37,4 +37,7 @@ public class EventCreateDto {
 
     @NotBlank
     private Category category;
+
+    // 포스터 이미지 URL — 외부 호스팅(picsum 등) 또는 추후 S3 URL. 빈 값 허용.
+    private String posterUrl;
 }
