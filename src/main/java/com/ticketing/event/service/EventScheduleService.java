@@ -38,9 +38,12 @@ public class EventScheduleService {
     private final SeatRepository seatRepository;
 
     @Transactional
-    public void create(Long eventId, EventScheduleCreateDto dto) {
+    public void create(Long eventId, EventScheduleCreateDto dto, Long sellerId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new BaseException(PERFORMANCE_NOT_FOUND));
+        if (!event.isOwnedBy(sellerId)) {
+            throw new BaseException(EVENT_NOT_OWNED);
+        }
         Venue venue = venueRepository.findById(dto.getVenueId())
                 .orElseThrow(() -> new BaseException(VENUE_NOT_FOUND));
 
