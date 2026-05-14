@@ -48,7 +48,7 @@ public class EventService {
 
 
     public List<EventListResponseDto> findAll() {
-        return eventRepository.findByEventStatus(EventStatus.APPROVED)
+        return eventRepository.findByStatus(EventStatus.APPROVED)
                 .stream().map(EventListResponseDto::from)
                 .toList();
     }
@@ -57,6 +57,9 @@ public class EventService {
 
         Event event = eventRepository.findById(id).orElseThrow
                 (() -> new BaseException(BaseResponseStatus.PERFORMANCE_NOT_FOUND));
+        if (event.getStatus() != EventStatus.APPROVED) {
+            throw new BaseException(BaseResponseStatus.PERFORMANCE_NOT_FOUND);
+        }
         return EventResponseDto.from(event);
     }
 
