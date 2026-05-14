@@ -1,5 +1,6 @@
 package com.ticketing.event.controller;
 
+import com.ticketing.auth.CustomUserDetails;
 import com.ticketing.event.dto.request.EventScheduleCreateDto;
 import com.ticketing.event.dto.response.EventScheduleResponseDto;
 import com.ticketing.event.service.EventScheduleService;
@@ -7,6 +8,7 @@ import com.ticketing.global.BaseResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,8 +23,9 @@ public class EventScheduleController {
 
     @PostMapping
     public ResponseEntity<BaseResponse<Void>> create(@PathVariable Long eventId,
-                                                     @Validated @RequestBody EventScheduleCreateDto dto) {
-        eventScheduleService.create(eventId, dto);
+                                                     @Validated @RequestBody EventScheduleCreateDto dto,
+                                                     @AuthenticationPrincipal CustomUserDetails seller) {
+        eventScheduleService.create(eventId, dto, seller.getMemberId());
         return ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse.success());
     }
 
