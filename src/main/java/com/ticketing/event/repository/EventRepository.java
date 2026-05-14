@@ -8,5 +8,5 @@ import java.util.Arrays;
 import java.util.List;
 
 public interface EventRepository extends JpaRepository<Event, Long> {
-    List<Event> findByEventStatus(EventStatus eventStatus);
+    List<Event> findByStatus(EventStatus status);
 }
