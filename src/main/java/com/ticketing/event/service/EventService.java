@@ -80,6 +80,23 @@ public class EventService {
                 dto.getPosterUrl());
     }
 
+    /** 셀러 본인 공연 목록 — 모든 status 반환 (대시보드용) */
+    public List<EventListResponseDto> findBySeller(Long sellerId) {
+        return eventRepository.findBySellerIdOrderByCreatedAtDesc(sellerId)
+                .stream().map(EventListResponseDto::from)
+                .toList();
+    }
+
+    /** 셀러 본인 공연 상세 — 본인 공연이면 status 무관 조회 가능 */
+    public EventResponseDto findBySeller(Long eventId, Long sellerId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.PERFORMANCE_NOT_FOUND));
+        if (!event.isOwnedBy(sellerId)) {
+            throw new BaseException(EVENT_NOT_OWNED);
+        }
+        return EventResponseDto.from(event);
+    }
+
     @Transactional
     public void delete(Long id,Long sellerId) {
         Event event = eventRepository.findById(id).orElseThrow
