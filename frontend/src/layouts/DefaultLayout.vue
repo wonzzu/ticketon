@@ -46,6 +46,10 @@ async function onLogout() {
           <div class="ms-auto d-flex align-items-center gap-3 small">
             <!-- 로그인 상태 분기 -->
             <template v-if="auth.isAuthenticated">
+              <RouterLink v-if="auth.isSeller" to="/seller" class="auth-link">
+                <i class="bi bi-shop me-1"></i>셀러센터
+              </RouterLink>
+              <span v-if="auth.isSeller" class="auth-divider">|</span>
               <RouterLink to="/mypage" class="auth-link">
                 <i class="bi bi-person-circle me-1"></i>마이페이지
               </RouterLink>

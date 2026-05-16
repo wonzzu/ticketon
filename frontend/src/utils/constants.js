@@ -44,6 +44,30 @@ export const MEMBER_TYPE = Object.freeze({
   ADMIN:  'ADMIN',
 })
 
+// === 공연 검수 상태 (백엔드 EventStatus 미러링) ===
+export const EVENT_STATUS = Object.freeze({
+  PENDING:  'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  CLOSED:   'CLOSED',
+})
+
+// 응답에 statusLabel이 같이 내려오지만, fallback용 + 클래스 매핑용
+export const EVENT_STATUS_LABEL = Object.freeze({
+  PENDING:  '검수 대기',
+  APPROVED: '게시 중',
+  REJECTED: '반려',
+  CLOSED:   '종료',
+})
+
+// 상태별 뱃지 색 클래스 (Bootstrap subtle 활용)
+export const EVENT_STATUS_BADGE = Object.freeze({
+  PENDING:  'bg-warning-subtle text-warning-emphasis',
+  APPROVED: 'bg-success-subtle text-success-emphasis',
+  REJECTED: 'bg-danger-subtle text-danger-emphasis',
+  CLOSED:   'bg-secondary-subtle text-secondary-emphasis',
+})
+
 // =====================================================================
 // === Mock 데이터 — TODO: 백엔드 GET /events 연동 시 삭제 (Phase F5) ===
 // =====================================================================
