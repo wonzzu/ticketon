@@ -7,6 +7,7 @@
  *   3. 인증 필요하면 meta: { requiresAuth: true }
  *   4. 헤더/푸터 없이 보여줄 거면 meta: { layout: 'blank' }
  *   5. 비로그인만 접근 가능하면 meta: { guestOnly: true } (로그인/회원가입)
+ *   6. 특정 권한만 접근 가능하면 meta: { requiresRole: 'SELLER' } (SELLER/ADMIN/NORMAL)
  */
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
@@ -32,17 +33,22 @@ const routes = [
     meta: { layout: 'blank', guestOnly: true },
   },
 
+  // === 셀러 마이페이지 ===
+  {
+    path: '/seller',
+    name: 'seller-dashboard',
+    component: () => import('@/views/seller/SellerDashboardView.vue'),
+    meta: { requiresAuth: true, requiresRole: 'SELLER' },
+  },
+
   // === 향후 추가 (Phase F3~F5) ===
+  // { path: '/seller/events/new', name: 'seller-event-create',
+  //   component: () => import('@/views/seller/EventCreateView.vue'),
+  //   meta: { requiresAuth: true, requiresRole: 'SELLER' } },
   // { path: '/events', name: 'event-list',
   //   component: () => import('@/views/event/EventListView.vue') },
   // { path: '/events/:id', name: 'event-detail',
   //   component: () => import('@/views/event/EventDetailView.vue'), props: true },
-  // { path: '/reservations/new', name: 'reservation-new',
-  //   component: () => import('@/views/reservation/ReservationNewView.vue'),
-  //   meta: { requiresAuth: true } },
-  // { path: '/mypage', name: 'mypage',
-  //   component: () => import('@/views/MyPageView.vue'),
-  //   meta: { requiresAuth: true } },
 
   // === 404 (catch-all은 마지막) ===
   {
@@ -60,8 +66,9 @@ const router = createRouter({
 /**
  * 글로벌 인증 가드.
  *
- * - requiresAuth: true → 로그인 안 됐으면 /login으로 (redirect query 보존)
- * - guestOnly: true   → 로그인 됐으면 / 로 (로그인 페이지 재진입 차단)
+ * - requiresAuth: true            → 로그인 안 됐으면 /login으로 (redirect query 보존)
+ * - guestOnly: true               → 로그인 됐으면 / 로 (로그인 페이지 재진입 차단)
+ * - requiresRole: 'SELLER'/'ADMIN' → 권한 없으면 / 로 (UX용. 진짜 방어는 백엔드)
  */
 router.beforeEach((to, from, next) => {
   const auth = useAuthStore()
@@ -70,6 +77,9 @@ router.beforeEach((to, from, next) => {
     return next({ name: 'login', query: { redirect: to.fullPath } })
   }
   if (to.meta.guestOnly && auth.isAuthenticated) {
+    return next({ name: 'home' })
+  }
+  if (to.meta.requiresRole && auth.user?.role !== to.meta.requiresRole) {
     return next({ name: 'home' })
   }
   next()
