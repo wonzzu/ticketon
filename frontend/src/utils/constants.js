@@ -44,6 +44,21 @@ export const MEMBER_TYPE = Object.freeze({
   ADMIN:  'ADMIN',
 })
 
+// === 연령 등급 (백엔드 AgeLimit 미러링) ===
+export const AGE_LIMIT = Object.freeze({
+  ALL:    'ALL',
+  AGE_12: 'AGE_12',
+  AGE_15: 'AGE_15',
+  AGE_18: 'AGE_18',
+})
+
+export const AGE_LIMIT_LABEL = Object.freeze({
+  ALL:    '전체 관람가',
+  AGE_12: '12세 이상',
+  AGE_15: '15세 이상',
+  AGE_18: '18세 이상',
+})
+
 // === 공연 검수 상태 (백엔드 EventStatus 미러링) ===
 export const EVENT_STATUS = Object.freeze({
   PENDING:  'PENDING',

@@ -54,8 +54,7 @@ public class SellerController {
     @GetMapping("/me/events")
     public ResponseEntity<BaseResponse<List<EventListResponseDto>>> findMyEvents(
             @AuthenticationPrincipal CustomUserDetails seller) {
-        return ResponseEntity.ok(BaseResponse.success(
-                eventService.findBySeller(seller.getMemberId())));
+        return ResponseEntity.ok(BaseResponse.success(eventService.findBySeller(seller.getMemberId())));
     }
 
     @GetMapping("/me/events/{id}")
