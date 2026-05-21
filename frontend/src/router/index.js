@@ -40,11 +40,17 @@ const routes = [
     component: () => import('@/views/seller/SellerDashboardView.vue'),
     meta: { requiresAuth: true, requiresRole: 'SELLER' },
   },
+  {
+    path: '/seller/events/new',
+    name: 'seller-event-create',
+    component: () => import('@/views/seller/EventCreateView.vue'),
+    meta: { requiresAuth: true, requiresRole: 'SELLER' },
+  },
 
   // === 향후 추가 (Phase F3~F5) ===
-  // { path: '/seller/events/new', name: 'seller-event-create',
-  //   component: () => import('@/views/seller/EventCreateView.vue'),
-  //   meta: { requiresAuth: true, requiresRole: 'SELLER' } },
+  // { path: '/seller/events/:id', name: 'seller-event-detail',
+  //   component: () => import('@/views/seller/EventDetailView.vue'),
+  //   meta: { requiresAuth: true, requiresRole: 'SELLER' }, props: true },
   // { path: '/events', name: 'event-list',
   //   component: () => import('@/views/event/EventListView.vue') },
   // { path: '/events/:id', name: 'event-detail',
