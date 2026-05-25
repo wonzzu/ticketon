@@ -28,7 +28,7 @@ public class AdminMember extends Member {
         return AdminMember.builder()
                 .email(email)
                 .password(encodedPassword)
-                .name(name)             // 운영자 본인 이름
+                .name(name)
                 .phone(phone)
                 .address(address)
                 .department(department)
