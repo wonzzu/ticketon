@@ -46,10 +46,11 @@ public class EventService {
         eventRepository.save(event);
     }
 
-
+    //TODO event가 많이 쌓이면 N+1문제 생기니 나중에 레포지토리에 쿼리로 날아가게 하는 방향성 고려.
     public List<EventListResponseDto> findAll() {
         return eventRepository.findByStatus(EventStatus.APPROVED)
-                .stream().map(EventListResponseDto::from)
+                .stream().filter(e -> !e.getSchedules().isEmpty())
+                .map(EventListResponseDto::from)
                 .toList();
     }
 
