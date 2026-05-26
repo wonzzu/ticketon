@@ -47,6 +47,20 @@ const routes = [
     meta: { requiresAuth: true, requiresRole: 'SELLER' },
   },
 
+  // === 어드민 ===
+  {
+    path: '/admin',
+    name: 'admin-dashboard',
+    component: () => import('@/views/admin/AdminDashboardView.vue'),
+    meta: { requiresAuth: true, requiresRole: 'ADMIN' },
+  },
+  {
+    path: '/admin/events/review',
+    name: 'admin-event-review',
+    component: () => import('@/views/admin/AdminEventReviewView.vue'),
+    meta: { requiresAuth: true, requiresRole: 'ADMIN' },
+  },
+
   // === 향후 추가 (Phase F3~F5) ===
   // { path: '/seller/events/:id', name: 'seller-event-detail',
   //   component: () => import('@/views/seller/EventDetailView.vue'),
