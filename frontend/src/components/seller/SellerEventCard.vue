@@ -13,9 +13,9 @@ defineProps({
   event: { type: Object, required: true },
 })
 
-// PENDING이거나 APPROVED일 때 회차 추가 가능 (CLOSED/REJECTED는 비활성)
+// 검수 통과 후(APPROVED)에만 회차 추가 가능 (운영 정책)
 function canAddSchedule(status) {
-  return status === EVENT_STATUS.PENDING || status === EVENT_STATUS.APPROVED
+  return status === EVENT_STATUS.APPROVED
 }
 </script>
 

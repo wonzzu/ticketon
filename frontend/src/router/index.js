@@ -46,6 +46,20 @@ const routes = [
     component: () => import('@/views/seller/EventCreateView.vue'),
     meta: { requiresAuth: true, requiresRole: 'SELLER' },
   },
+  {
+    path: '/seller/events/:id',
+    name: 'seller-event-detail',
+    component: () => import('@/views/seller/SellerEventDetailView.vue'),
+    meta: { requiresAuth: true, requiresRole: 'SELLER' },
+    props: true,
+  },
+  {
+    path: '/seller/events/:id/schedules/new',
+    name: 'seller-schedule-create',
+    component: () => import('@/views/seller/ScheduleCreateView.vue'),
+    meta: { requiresAuth: true, requiresRole: 'SELLER' },
+    props: true,
+  },
 
   // === 어드민 ===
   {
