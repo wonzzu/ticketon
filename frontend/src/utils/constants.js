@@ -37,6 +37,21 @@ export const SEAT_STATUS = Object.freeze({
   RESERVED:  'RESERVED',
 })
 
+// === 좌석 등급 (백엔드 SeatGrade 미러링) ===
+export const SEAT_GRADE = Object.freeze({
+  VIP: 'VIP',
+  R:   'R',
+  S:   'S',
+  A:   'A',
+})
+
+export const SEAT_GRADE_LABEL = Object.freeze({
+  VIP: 'VIP석',
+  R:   'R석',
+  S:   'S석',
+  A:   'A석',
+})
+
 // === 회원 종류 (백엔드 MemberType 미러링) ===
 export const MEMBER_TYPE = Object.freeze({
   NORMAL: 'NORMAL',
