@@ -24,6 +24,7 @@ import {
 import AppButton from '@/components/common/AppButton.vue'
 import AppLoading from '@/components/common/AppLoading.vue'
 import AppEmpty from '@/components/common/AppEmpty.vue'
+import PosterImage from '@/components/common/PosterImage.vue'
 
 const props = defineProps({
   id: { type: [String, Number], required: true },
@@ -90,19 +91,15 @@ onMounted(load)
 
     <template v-else-if="event">
       <!-- 기본 정보 -->
-      <section class="card-section">
+      <section class="bg-white border rounded p-4 mb-3">
         <div class="d-flex gap-4 align-items-start">
-          <div class="poster">
-            <img v-if="event.posterUrl" :src="event.posterUrl" :alt="event.title" />
-            <div v-else class="poster-placeholder">
-              <i class="bi bi-image"></i>
-            </div>
-          </div>
+          <PosterImage :src="event.posterUrl" :alt="event.title"
+                       class="flex-shrink-0" style="width: 140px" />
 
           <div class="flex-grow-1">
             <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
               <div>
-                <div class="category text-secondary small">
+                <div class="text-secondary small">
                   {{ CATEGORY_LABEL[event.category] }}
                 </div>
                 <h2 class="h5 fw-bold mb-0">{{ event.title }}</h2>
@@ -134,7 +131,7 @@ onMounted(load)
       </section>
 
       <!-- 회차 -->
-      <section class="card-section">
+      <section class="bg-white border rounded p-4 mb-3">
         <div class="d-flex align-items-center justify-content-between mb-3">
           <h3 class="h6 fw-bold mb-0">
             회차 <span class="text-secondary">({{ schedules.length }})</span>
@@ -162,12 +159,13 @@ onMounted(load)
                   icon="calendar-event"
                   message="아직 등록된 회차가 없습니다." />
 
-        <ul v-else class="schedule-list">
-          <li v-for="s in schedules" :key="s.id" class="schedule-item">
-            <span class="round-badge">{{ s.roundNumber }}회차</span>
-            <div class="schedule-info">
-              <div class="venue fw-semibold">{{ s.venueName }}</div>
-              <div class="datetime text-secondary small">
+        <ul v-else class="list-unstyled d-flex flex-column gap-2 mb-0">
+          <li v-for="s in schedules" :key="s.id"
+              class="d-flex align-items-center gap-3 p-3 bg-light rounded">
+            <span class="badge bg-dark flex-shrink-0">{{ s.roundNumber }}회차</span>
+            <div class="flex-grow-1">
+              <div class="fw-semibold">{{ s.venueName }}</div>
+              <div class="text-secondary small">
                 <i class="bi bi-calendar-event me-1"></i>
                 {{ formatDateTime(s.showDateTime) }}
               </div>
@@ -182,39 +180,7 @@ onMounted(load)
 <style lang="scss" scoped>
 @use '@/styles/tokens' as *;
 
-.card-section {
-  background: white;
-  border: 1px solid $color-border;
-  border-radius: 8px;
-  padding: 24px;
-  margin-bottom: 16px;
-}
-
-.poster {
-  flex-shrink: 0;
-  width: 140px;
-  aspect-ratio: 2 / 3;
-  overflow: hidden;
-  border-radius: 4px;
-  background: $color-bg-light;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-}
-
-.poster-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: $color-border;
-  font-size: 2rem;
-}
-
+// dt/dd 2열 정의 목록 — 부트스트랩에 라벨/값 그리드 유틸이 없어 직접 지정
 .info-grid {
   display: grid;
   grid-template-columns: 80px 1fr;
@@ -233,40 +199,9 @@ onMounted(load)
   }
 }
 
+// 줄바꿈 보존(pre-line)은 대응 유틸이 없음
 .description {
   white-space: pre-line;
   line-height: 1.6;
-}
-
-.schedule-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.schedule-item {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 16px;
-  background: $color-bg-light;
-  border-radius: 6px;
-}
-
-.round-badge {
-  background: $color-dark;
-  color: white;
-  font-size: 0.8rem;
-  font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 4px;
-  flex-shrink: 0;
-}
-
-.schedule-info {
-  flex-grow: 1;
 }
 </style>

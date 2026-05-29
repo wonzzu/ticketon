@@ -32,8 +32,8 @@ async function onSubmit() {
 
 <template>
   <div class="auth-card">
-    <RouterLink to="/" class="brand">
-      <span class="brand-mark">🎫</span> Ticketing
+    <RouterLink to="/" class="d-block text-center fs-4 fw-bold text-reset mb-4">
+      🎫 Ticketing
     </RouterLink>
 
     <h1 class="h4 fw-bold text-center mb-4">로그인</h1>
@@ -75,6 +75,7 @@ async function onSubmit() {
 <style lang="scss" scoped>
 @use '@/styles/tokens' as *;
 
+// 인증 카드 — 부드러운 커스텀 그림자라 부트스트랩 shadow 유틸로 대체 불가
 .auth-card {
   background: white;
   border-radius: 12px;
@@ -84,19 +85,7 @@ async function onSubmit() {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
 }
 
-.brand {
-  display: block;
-  text-align: center;
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: $color-text-primary;
-  margin-bottom: 28px;
-
-  &:hover { color: $color-text-primary; }
-
-  .brand-mark { margin-right: 4px; }
-}
-
+// "또는" 양옆 가로줄 — ::before 가상요소라 유틸로 안 됨
 .divider {
   text-align: center;
   margin: 16px 0;

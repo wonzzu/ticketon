@@ -21,6 +21,12 @@ $dark:    $color-dark;
 $body-bg:    #ffffff;
 $body-color: $color-text-primary;
 
+// .border 유틸이 디자인 토큰과 같은 회색을 쓰도록 매핑
+$border-color: $color-border;
+
+// mt-n2 같은 음수 마진 유틸 활성화 (Bootstrap 기본은 off)
+$enable-negative-margins: true;
+
 $font-family-sans-serif:
   'Pretendard',
   -apple-system, BlinkMacSystemFont,
@@ -48,3 +54,13 @@ a {
 .text-seat-held      { color: $color-seat-held; }
 .text-seat-reserved  { color: $color-seat-reserved; }
 .text-seat-selected  { color: $color-seat-selected; }
+
+// 카드 호버 떠오름 — transition/transform은 부트스트랩 유틸로 안 돼서 공용 클래스로 통일
+.hover-lift {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  }
+}

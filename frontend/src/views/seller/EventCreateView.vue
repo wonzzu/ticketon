@@ -16,6 +16,7 @@ import {
 } from '@/utils/constants'
 import AppButton from '@/components/common/AppButton.vue'
 import AppInput from '@/components/common/AppInput.vue'
+import PosterImage from '@/components/common/PosterImage.vue'
 
 const router = useRouter()
 const loading = ref(false)
@@ -83,8 +84,8 @@ function onCancel() {
 
     <form @submit.prevent="onSubmit">
       <!-- 기본 정보 -->
-      <section class="form-section">
-        <h2 class="section-title">기본 정보</h2>
+      <section class="bg-white border rounded p-4 mb-3">
+        <h2 class="h6 fw-bold pb-2 mb-3 border-bottom">기본 정보</h2>
 
         <AppInput v-model="form.title" label="공연 제목" required />
 
@@ -123,8 +124,8 @@ function onCancel() {
       </section>
 
       <!-- 분류 -->
-      <section class="form-section">
-        <h2 class="section-title">분류</h2>
+      <section class="bg-white border rounded p-4 mb-3">
+        <h2 class="h6 fw-bold pb-2 mb-3 border-bottom">분류</h2>
 
         <div class="row g-2">
           <div class="col-md-6">
@@ -153,20 +154,19 @@ function onCancel() {
       </section>
 
       <!-- 포스터 -->
-      <section class="form-section">
-        <h2 class="section-title">포스터</h2>
+      <section class="bg-white border rounded p-4 mb-3">
+        <h2 class="h6 fw-bold pb-2 mb-3 border-bottom">포스터</h2>
 
         <AppInput v-model="form.posterUrl"
                   label="포스터 이미지 URL"
                   placeholder="https://picsum.photos/seed/concert1/400/600" />
-        <p class="form-help small text-secondary">
+        <p class="small text-secondary mt-n2">
           <i class="bi bi-lightbulb me-1"></i>
           S3 업로드 도입 전까지 외부 URL을 입력해주세요. 비워두면 기본 이미지가 표시됩니다.
         </p>
 
-        <div v-if="form.posterUrl" class="poster-preview mt-3">
-          <img :src="form.posterUrl" alt="포스터 미리보기" />
-        </div>
+        <PosterImage v-if="form.posterUrl" :src="form.posterUrl" alt="포스터 미리보기"
+                     class="border mt-3" style="max-width: 200px" />
       </section>
 
       <!-- 에러 -->
@@ -185,44 +185,9 @@ function onCancel() {
   </div>
 </template>
 
-<style lang="scss" scoped>
-@use '@/styles/tokens' as *;
-
+<style scoped>
+/* 폼 가독성용 고정 너비 — 컨테이너 max-width 유틸과 값이 달라 직접 지정 */
 .form-wrap {
   max-width: 720px;
-}
-
-.form-section {
-  background: white;
-  border: 1px solid $color-border;
-  border-radius: 8px;
-  padding: 24px;
-  margin-bottom: 16px;
-}
-
-.section-title {
-  font-size: 1rem;
-  font-weight: 700;
-  margin-bottom: 16px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid $color-border;
-}
-
-.form-help {
-  margin-top: -8px;
-}
-
-.poster-preview {
-  max-width: 200px;
-  border: 1px solid $color-border;
-  border-radius: 4px;
-  overflow: hidden;
-  aspect-ratio: 2 / 3;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
 }
 </style>
