@@ -97,11 +97,12 @@ onMounted(load)
               title="검수 대기 공연이 없어요"
               message="모든 공연이 처리되었습니다." />
 
-    <div v-else class="event-grid">
-      <AdminEventReviewCard v-for="ev in events" :key="ev.id"
-                            :event="ev"
-                            @approve="onApprove(ev.id)"
-                            @reject="onRejectClick(ev.id)" />
+    <div v-else class="row g-3 row-cols-1 row-cols-md-2">
+      <div v-for="ev in events" :key="ev.id" class="col">
+        <AdminEventReviewCard :event="ev"
+                              @approve="onApprove(ev.id)"
+                              @reject="onRejectClick(ev.id)" />
+      </div>
     </div>
 
     <RejectReasonModal v-model="modalOpen"
@@ -109,15 +110,3 @@ onMounted(load)
                        @submit="onRejectSubmit" />
   </div>
 </template>
-
-<style lang="scss" scoped>
-.event-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-
-  @media (min-width: 768px) {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-</style>

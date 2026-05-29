@@ -35,7 +35,7 @@ const sportsList  = computed(() => events.value.filter(e => e.category === 'SPOR
              class="carousel-item" :class="{ active: i === 0 }">
           <div class="hero-slide">
             <img :src="slide.image" :alt="slide.title" />
-            <div class="hero-overlay">
+            <div class="hero-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-end">
               <div class="container">
                 <div class="hero-text">
                   <h2 class="display-5 fw-bold text-white mb-2">{{ slide.title }}</h2>
@@ -146,6 +146,7 @@ const sportsList  = computed(() => events.value.filter(e => e.category === 'SPOR
 @use '@/styles/tokens' as *;
 
 // ===== 히어로 =====
+// 고정 높이 + 이미지 어둡게(brightness) + 하단 정렬 오버레이 — 부트스트랩 유틸로 안 되는 부분만 직접 지정
 .hero {
   .hero-slide {
     position: relative;
@@ -161,10 +162,6 @@ const sportsList  = computed(() => events.value.filter(e => e.category === 'SPOR
   }
 
   .hero-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: flex-end;
     padding-bottom: 5rem;
   }
 

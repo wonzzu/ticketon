@@ -125,8 +125,8 @@ onMounted(loadVenues)
 
     <form v-else @submit.prevent="onSubmit">
       <!-- 공연장 / 일시 -->
-      <section class="form-section">
-        <h2 class="section-title">회차 정보</h2>
+      <section class="bg-white border rounded p-4 mb-3">
+        <h2 class="h6 fw-bold pb-2 mb-3 border-bottom">회차 정보</h2>
 
         <div class="mb-3">
           <label class="form-label fw-semibold small">
@@ -150,11 +150,11 @@ onMounted(loadVenues)
       </section>
 
       <!-- 등급별 가격 -->
-      <section class="form-section">
-        <h2 class="section-title">등급별 가격</h2>
+      <section class="bg-white border rounded p-4 mb-3">
+        <h2 class="h6 fw-bold pb-2 mb-3 border-bottom">등급별 가격</h2>
 
-        <div class="price-grid">
-          <div v-for="key in Object.keys(SEAT_GRADE)" :key="key" class="price-item">
+        <div class="row g-2 row-cols-2 row-cols-sm-4">
+          <div v-for="key in Object.keys(SEAT_GRADE)" :key="key" class="col">
             <label class="form-label fw-semibold small">{{ SEAT_GRADE_LABEL[key] }}</label>
             <div class="input-group">
               <input v-model.number="form.prices[key]"
@@ -166,7 +166,7 @@ onMounted(loadVenues)
           </div>
         </div>
 
-        <p class="form-help small text-secondary mt-2 mb-0">
+        <p class="small text-secondary mt-2 mb-0">
           공연장에 해당 등급 좌석이 없으면 자동 제외됩니다.
         </p>
       </section>
@@ -185,40 +185,9 @@ onMounted(loadVenues)
   </div>
 </template>
 
-<style lang="scss" scoped>
-@use '@/styles/tokens' as *;
-
+<style scoped>
+/* 폼 가독성용 고정 너비 — 컨테이너 max-width 유틸과 값이 달라 직접 지정 */
 .form-wrap {
   max-width: 720px;
-}
-
-.form-section {
-  background: white;
-  border: 1px solid $color-border;
-  border-radius: 8px;
-  padding: 24px;
-  margin-bottom: 16px;
-}
-
-.section-title {
-  font-size: 1rem;
-  font-weight: 700;
-  margin-bottom: 16px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid $color-border;
-}
-
-.price-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-
-  @media (min-width: 576px) {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-.form-help {
-  margin-top: -8px;
 }
 </style>
