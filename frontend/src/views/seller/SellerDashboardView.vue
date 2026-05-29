@@ -71,21 +71,11 @@ onMounted(load)
         </RouterLink>
       </AppEmpty>
 
-      <div v-else class="event-grid">
-        <SellerEventCard v-for="ev in events" :key="ev.id" :event="ev" />
+      <div v-else class="row g-3 row-cols-1 row-cols-md-2">
+        <div v-for="ev in events" :key="ev.id" class="col">
+          <SellerEventCard :event="ev" />
+        </div>
       </div>
     </section>
   </div>
 </template>
-
-<style lang="scss" scoped>
-.event-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-
-  @media (min-width: 768px) {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-</style>
