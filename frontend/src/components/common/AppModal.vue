@@ -1,26 +1,11 @@
 <script setup>
 /**
- * 공용 모달 (CLAUDE.md §4.2).
- * 배경 딤·중앙정렬·ESC/배경클릭 닫기·바디 스크롤 잠금·트랜지션을 공통으로 책임진다.
- * 본문과 버튼은 슬롯으로 케이스마다 자유 구성 → 색/버튼 개수는 바깥에서 결정.
+ * 공용 모달. 본문/버튼은 슬롯으로 자유 구성, persistent면 처리 중 닫기 차단.
  *
- * 사용:
- *   <AppModal v-model="open" title="제목" size="md" :persistent="loading">
- *     본문 내용 (default 슬롯)
- *     <template #footer>
- *       <AppButton variant="outline-dark" @click="open = false">취소</AppButton>
- *       <AppButton variant="primary" @click="confirm">확인</AppButton>
- *     </template>
+ *   <AppModal v-model="open" title="제목" :persistent="loading">
+ *     본문
+ *     <template #footer><AppButton @click="confirm">확인</AppButton></template>
  *   </AppModal>
- *
- * props
- *   - v-model(modelValue): 열림/닫힘 양방향
- *   - title:      헤더 제목. 비우고 #header 슬롯으로 직접 채워도 됨
- *   - size:       sm / md / lg (가로 폭)
- *   - persistent: true면 처리 중으로 간주 → 배경클릭·ESC·X로 닫히지 않음 (실수 닫기 방지)
- * emits
- *   - update:modelValue
- *   - close: 닫힘 직전 1회 (별도 정리 필요할 때 훅)
  */
 import { watch, onUnmounted } from 'vue'
 
@@ -43,7 +28,6 @@ function onKeydown(e) {
   if (e.key === 'Escape') close()
 }
 
-// 열림 상태에 따라 ESC 리스너 + 바디 스크롤 잠금을 토글
 watch(() => props.modelValue, (open) => {
   if (open) {
     document.addEventListener('keydown', onKeydown)
@@ -54,7 +38,7 @@ watch(() => props.modelValue, (open) => {
   }
 })
 
-// 열린 채로 컴포넌트가 사라지는 경우(라우트 이동 등) 정리
+// 열린 채 언마운트되면 스크롤 잠금이 남으므로 정리
 onUnmounted(() => {
   document.removeEventListener('keydown', onKeydown)
   document.body.style.overflow = ''

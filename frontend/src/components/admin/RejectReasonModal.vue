@@ -1,13 +1,6 @@
 <script setup>
 /**
- * 반려 사유 입력 모달 (공용 AppModal 기반).
- *
- * 사용:
- *   <RejectReasonModal v-model="open" :loading="submitting" @submit="onSubmit" />
- *
- * - v-model로 열림/닫힘 양방향 바인딩
- * - @submit(reason)으로 사유 텍스트 전달
- * - 처리 중(loading)이면 닫기 차단 (AppModal :persistent)
+ * 반려 사유 입력 모달. @submit(reason)으로 사유 전달, 처리 중(loading)엔 닫기 차단.
  */
 import { ref, watch } from 'vue'
 import AppModal from '@/components/common/AppModal.vue'
