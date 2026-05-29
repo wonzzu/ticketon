@@ -40,13 +40,14 @@ onMounted(load)
     <div v-else class="row g-3">
       <!-- 공연 검수 -->
       <div class="col-md-6 col-lg-4">
-        <RouterLink to="/admin/events/review" class="admin-card">
-          <div class="card-icon bg-warning-subtle text-warning-emphasis">
+        <RouterLink to="/admin/events/review"
+                    class="d-flex align-items-center gap-3 p-3 bg-white border rounded text-reset hover-lift">
+          <div class="admin-icon bg-warning-subtle text-warning-emphasis d-flex align-items-center justify-content-center rounded fs-4 flex-shrink-0">
             <i class="bi bi-clipboard-check"></i>
           </div>
-          <div class="card-info">
-            <h3 class="card-title">공연 검수</h3>
-            <p class="card-desc text-secondary small mb-0">
+          <div>
+            <h3 class="h6 fw-bold mb-1">공연 검수</h3>
+            <p class="text-secondary small mb-0">
               검수 대기 <strong class="text-warning-emphasis">{{ pendingCount }}건</strong>
             </p>
           </div>
@@ -55,26 +56,26 @@ onMounted(load)
 
       <!-- 회원 관리 (준비 중) -->
       <div class="col-md-6 col-lg-4">
-        <div class="admin-card disabled">
-          <div class="card-icon bg-secondary-subtle text-secondary">
+        <div class="admin-card-disabled d-flex align-items-center gap-3 p-3 bg-white border rounded">
+          <div class="admin-icon bg-secondary-subtle text-secondary d-flex align-items-center justify-content-center rounded fs-4 flex-shrink-0">
             <i class="bi bi-people"></i>
           </div>
-          <div class="card-info">
-            <h3 class="card-title">회원 관리</h3>
-            <p class="card-desc text-secondary small mb-0">준비 중</p>
+          <div>
+            <h3 class="h6 fw-bold mb-1">회원 관리</h3>
+            <p class="text-secondary small mb-0">준비 중</p>
           </div>
         </div>
       </div>
 
       <!-- 통계 (준비 중) -->
       <div class="col-md-6 col-lg-4">
-        <div class="admin-card disabled">
-          <div class="card-icon bg-secondary-subtle text-secondary">
+        <div class="admin-card-disabled d-flex align-items-center gap-3 p-3 bg-white border rounded">
+          <div class="admin-icon bg-secondary-subtle text-secondary d-flex align-items-center justify-content-center rounded fs-4 flex-shrink-0">
             <i class="bi bi-graph-up"></i>
           </div>
-          <div class="card-info">
-            <h3 class="card-title">통계</h3>
-            <p class="card-desc text-secondary small mb-0">준비 중</p>
+          <div>
+            <h3 class="h6 fw-bold mb-1">통계</h3>
+            <p class="text-secondary small mb-0">준비 중</p>
           </div>
         </div>
       </div>
@@ -82,47 +83,16 @@ onMounted(load)
   </div>
 </template>
 
-<style lang="scss" scoped>
-@use '@/styles/tokens' as *;
-
-.admin-card {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px;
-  background: white;
-  border: 1px solid $color-border;
-  border-radius: 8px;
-  color: inherit;
-  text-decoration: none;
-  transition: box-shadow 0.15s, transform 0.15s;
-
-  &:not(.disabled):hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-    transform: translateY(-2px);
-    color: inherit;
-  }
-
-  &.disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-}
-
-.card-icon {
-  flex-shrink: 0;
+<style scoped>
+/* 아이콘 박스 고정 48px 정사각 — 대응 크기 유틸이 없어 직접 지정 */
+.admin-icon {
   width: 48px;
   height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  font-size: 1.5rem;
 }
 
-.card-title {
-  font-size: 1rem;
-  font-weight: 700;
-  margin-bottom: 4px;
+/* 준비 중 카드 비활성 표현 — 대응 유틸이 없음 */
+.admin-card-disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>
