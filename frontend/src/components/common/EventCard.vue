@@ -10,25 +10,14 @@ defineProps({
 <template>
   <RouterLink :to="`/events/${event.id}`" class="d-block text-reset">
     <article class="h-100 bg-white border rounded overflow-hidden hover-lift">
-      <div class="position-relative">
-        <PosterImage :src="event.poster" :alt="event.title" />
-        <span v-if="event.badge"
-              class="badge text-bg-primary position-absolute top-0 start-0 m-2">
-          {{ event.badge }}
-        </span>
-      </div>
+      <PosterImage :src="event.posterUrl" :alt="event.title" />
       <div class="p-3">
         <div class="text-secondary small mb-1">
           {{ CATEGORY_LABEL[event.category] }}
         </div>
         <h3 class="title h6 fw-bold mb-2">{{ event.title }}</h3>
         <div class="text-secondary small">
-          <div class="text-truncate">
-            <i class="bi bi-geo-alt me-1"></i>{{ event.venue }}
-          </div>
-          <div>
-            <i class="bi bi-calendar me-1"></i>{{ event.startDate }} ~ {{ event.endDate }}
-          </div>
+          <i class="bi bi-calendar me-1"></i>{{ event.startDate }} ~ {{ event.endDate }}
         </div>
       </div>
     </article>
