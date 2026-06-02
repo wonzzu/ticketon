@@ -19,4 +19,8 @@ export const reviewApi = {
 
   remove: (reviewId) =>
     http.delete(`/reviews/${reviewId}`),
+
+  // 내가 쓴 리뷰 목록 (마이페이지용 — 공연 제목 포함)
+  findMine: () =>
+    http.get('/me/reviews'),
 }

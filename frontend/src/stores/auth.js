@@ -17,6 +17,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => !!accessToken.value)
   const isAdmin  = computed(() => user.value?.role === 'ADMIN')
   const isSeller = computed(() => user.value?.role === 'SELLER')
+  const isNormal = computed(() => user.value?.role === 'NORMAL')
 
   async function login(email, password) {
     const data = await authApi.login(email, password)
@@ -49,7 +50,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     accessToken, user,
-    isAuthenticated, isAdmin, isSeller,
+    isAuthenticated, isAdmin, isSeller, isNormal,
     login, reissue, logout,
   }
 })

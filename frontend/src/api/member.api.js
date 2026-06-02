@@ -3,10 +3,7 @@
  *
  * - POST /members/signup  (NormalMember)
  * - POST /sellers/signup  (Seller)
- *
- * TODO (백엔드 미구현):
- * - GET  /members/me      (현재 사용자 정보 — Phase F4쯤 필요)
- * - PATCH /members/{id}   (정보 수정)
+ * - GET  /me              (현재 로그인한 회원 공통 정보)
  */
 import http from './http'
 
@@ -16,4 +13,8 @@ export const memberApi = {
 
   signupSeller: (payload) =>
     http.post('/sellers/signup', payload),
+
+  // 현재 로그인한 회원 정보 (이름/이메일/전화/타입/주소)
+  getMyInfo: () =>
+    http.get('/me'),
 }
