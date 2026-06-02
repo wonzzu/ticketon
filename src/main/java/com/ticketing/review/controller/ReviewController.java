@@ -4,6 +4,7 @@ package com.ticketing.review.controller;
 import com.ticketing.auth.CustomUserDetails;
 import com.ticketing.global.BaseResponse;
 import com.ticketing.review.dto.request.ReviewCreateDto;
+import com.ticketing.review.dto.response.MyReviewResponseDto;
 import com.ticketing.review.dto.response.ReviewListResponseDto;
 import com.ticketing.review.service.ReviewService;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -45,5 +48,12 @@ public class ReviewController {
     ) {
         reviewService.delete(reviewId, user.getMemberId());
         return ResponseEntity.ok(BaseResponse.success());
+    }
+
+    @GetMapping("/me/reviews")
+    public ResponseEntity<BaseResponse<List<MyReviewResponseDto>>> findMyReviews(@AuthenticationPrincipal CustomUserDetails user) {
+        List<MyReviewResponseDto> myReviews = reviewService.findMyReviews(user.getMemberId());
+
+        return ResponseEntity.ok(BaseResponse.success(myReviews));
     }
 }
