@@ -1,14 +1,22 @@
 <script setup>
 import { ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink, useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { CATEGORY, CATEGORY_LABEL, CATEGORY_ICON } from '@/utils/constants'
 
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 const keyword = ref('')
 
 const categories = Object.values(CATEGORY)
+
+// 카테고리 네비 active 판정 — 경로 + 쿼리까지 봐서 정확히 하나만 활성
+const isHomeActive = () => route.path === '/'
+const isCategoryActive = (cat) =>
+  route.path === '/events' && route.query.category === cat
+const isRankingActive = () =>
+  route.path === '/events' && route.query.sort === 'hot'
 
 function onSearch() {
   if (!keyword.value.trim()) return
@@ -76,18 +84,20 @@ async function onLogout() {
         <div class="container">
           <ul class="nav d-flex gap-1 mb-0">
             <li class="nav-item">
-              <RouterLink to="/" class="category-link">
+              <RouterLink to="/" class="category-link" :class="{ active: isHomeActive() }">
                 <i class="bi bi-house-door me-1"></i>홈
               </RouterLink>
             </li>
             <li v-for="cat in categories" :key="cat" class="nav-item">
-              <RouterLink :to="`/events?category=${cat}`" class="category-link">
+              <RouterLink :to="`/events?category=${cat}`" class="category-link"
+                          :class="{ active: isCategoryActive(cat) }">
                 <i :class="`bi bi-${CATEGORY_ICON[cat]} me-1`"></i>
                 {{ CATEGORY_LABEL[cat] }}
               </RouterLink>
             </li>
             <li class="nav-item ms-auto">
-              <RouterLink to="/events?sort=hot" class="category-link text-danger fw-semibold">
+              <RouterLink to="/events?sort=hot" class="category-link text-danger fw-semibold"
+                          :class="{ active: isRankingActive() }">
                 <i class="bi bi-fire me-1"></i>랭킹
               </RouterLink>
             </li>
@@ -196,7 +206,7 @@ async function onLogout() {
   transition: color 0.15s, border-color 0.15s;
 
   &:hover,
-  &.router-link-active {
+  &.active {
     color: $color-primary;
     border-bottom-color: $color-primary;
   }

@@ -30,6 +30,15 @@ export const CATEGORY_ICON = Object.freeze({
   KIDS:       'balloon',
 })
 
+// 카테고리별 히어로 배너 (가로) — TODO: S3 bannerUrl 도입 시 교체. 지금은 Mock(picsum 가로).
+export const CATEGORY_HERO = Object.freeze({
+  CONCERT:    'https://picsum.photos/seed/cat-concert/1600/440',
+  MUSICAL:    'https://picsum.photos/seed/cat-musical/1600/440',
+  SPORTS:     'https://picsum.photos/seed/cat-sports/1600/440',
+  EXHIBITION: 'https://picsum.photos/seed/cat-exhibition/1600/440',
+  KIDS:       'https://picsum.photos/seed/cat-kids/1600/440',
+})
+
 // === 좌석 상태 (백엔드 EventSeatStatus 미러링) ===
 export const SEAT_STATUS = Object.freeze({
   AVAILABLE: 'AVAILABLE',
