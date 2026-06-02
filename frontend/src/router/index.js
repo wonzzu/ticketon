@@ -83,6 +83,14 @@ const routes = [
     props: true,
   },
 
+  // === 마이페이지 (일반 회원 전용) ===
+  {
+    path: '/mypage',
+    name: 'mypage',
+    component: () => import('@/views/MyPageView.vue'),
+    meta: { requiresAuth: true, requiresRole: 'NORMAL' },
+  },
+
   // === 향후 추가 (Phase F3~F5) ===
   // { path: '/events', name: 'event-list',
   //   component: () => import('@/views/event/EventListView.vue') },
