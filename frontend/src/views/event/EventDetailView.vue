@@ -154,7 +154,7 @@ onMounted(load)
           <p v-if="activeTab === 'info'" class="description mb-0">
             {{ event.description }}
           </p>
-          <ReviewSection v-else />
+          <ReviewSection v-else :event-id="eventId" />
         </div>
       </section>
     </template>
