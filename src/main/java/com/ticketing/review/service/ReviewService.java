@@ -7,6 +7,7 @@ import com.ticketing.member.domain.Member;
 import com.ticketing.member.repository.MemberRepository;
 import com.ticketing.review.domain.Review;
 import com.ticketing.review.dto.request.ReviewCreateDto;
+import com.ticketing.review.dto.response.MyReviewResponseDto;
 import com.ticketing.review.dto.response.ReviewListResponseDto;
 import com.ticketing.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
@@ -66,4 +67,10 @@ public class ReviewService {
         review.delete();
 
     }
+
+    public List<MyReviewResponseDto> findMyReviews(Long memberId) {
+        return reviewRepository.findByMemberIdOrderByCreatedAtDesc(memberId)
+                .stream().map(MyReviewResponseDto::from).toList();
+    }
 }
+
