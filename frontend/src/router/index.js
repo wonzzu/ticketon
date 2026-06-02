@@ -75,14 +75,17 @@ const routes = [
     meta: { requiresAuth: true, requiresRole: 'ADMIN' },
   },
 
+  // === 공개 공연 (누구나 접근) ===
+  {
+    path: '/events/:id',
+    name: 'event-detail',
+    component: () => import('@/views/event/EventDetailView.vue'),
+    props: true,
+  },
+
   // === 향후 추가 (Phase F3~F5) ===
-  // { path: '/seller/events/:id', name: 'seller-event-detail',
-  //   component: () => import('@/views/seller/EventDetailView.vue'),
-  //   meta: { requiresAuth: true, requiresRole: 'SELLER' }, props: true },
   // { path: '/events', name: 'event-list',
   //   component: () => import('@/views/event/EventListView.vue') },
-  // { path: '/events/:id', name: 'event-detail',
-  //   component: () => import('@/views/event/EventDetailView.vue'), props: true },
 
   // === 404 (catch-all은 마지막) ===
   {
