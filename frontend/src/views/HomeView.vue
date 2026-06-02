@@ -1,20 +1,31 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed,onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
+import {eventApi} from '@/api/event.api'
 import EventCard from '@/components/common/EventCard.vue'
 import {
-  MOCK_EVENTS, HERO_SLIDES,
+  HERO_SLIDES,
   CATEGORY, CATEGORY_LABEL, CATEGORY_ICON,
 } from '@/utils/constants'
 
-// TODO: 백엔드 GET /events 연동 후 Mock 제거 (Phase F5)
-const events = ref(MOCK_EVENTS)
+const events = ref([])
 const slides = ref(HERO_SLIDES)
 
+async function loadEvents(){
+   try{
+   events.value = await eventApi.findAll()
+   }catch(e){
+   events.value=[]
+   }
+}
+
+
 const featured    = computed(() => events.value.slice(0, 6))
-const concertList = computed(() => events.value.filter(e => e.category === 'CONCERT'))
-const musicalList = computed(() => events.value.filter(e => e.category === 'MUSICAL'))
-const sportsList  = computed(() => events.value.filter(e => e.category === 'SPORTS'))
+const concertList = computed(() => events.value.filter(e => e.category === CATEGORY.CONCERT))
+const musicalList = computed(() => events.value.filter(e => e.category === CATEGORY.MUSICAL))
+const sportsList  = computed(() => events.value.filter(e => e.category === CATEGORY.SPORTS))
+
+onMounted(loadEvents)
 </script>
 
 <template>
