@@ -1,33 +1,72 @@
 <script setup>
 /**
- * 공연 후기 섹션 (현재 Mock).
+ * 공연 후기 섹션 (백엔드 실연동).
+ *
+ * 백엔드:
+ *   GET  /events/{id}/reviews?sort=latest|rating
+ *        → { reviewCount, avgRating, reviews: [{ id, name, rating, content, createdAt }] }
+ *   POST /events/{id}/reviews  (로그인)
  *
  * 구조:
- *  - 상단: "리뷰 (N개)"  +  우측 끝: 평균 별점 + 별 5개
- *  - 하단: 리뷰 카드 리스트 (내용 / 별점 / 작성자 / 작성일)
- *
- * TODO: 백엔드 Review API 연동 시 props로 실데이터 받기. 지금은 MOCK_REVIEWS 사용.
+ *  - 상단: "리뷰 (N)" + 우측 평균 별점 + 별
+ *  - 정렬 토글 (최신순 / 별점순)
+ *  - 작성 폼 (로그인 시) — 별점 입력 + 내용
+ *  - 리뷰 리스트
  */
-import { computed } from 'vue'
-import { MOCK_REVIEWS } from '@/utils/constants'
+import { ref, onMounted } from 'vue'
+import { reviewApi } from '@/api/review.api'
+import { useAuthStore } from '@/stores/auth'
 import StarRating from '@/components/common/StarRating.vue'
+import ReviewForm from '@/components/event/ReviewForm.vue'
 
-const reviews = computed(() => MOCK_REVIEWS)
-
-const reviewCount = computed(() => reviews.value.length)
-
-// 평균 별점 (소수 1자리)
-const avgRating = computed(() => {
-  if (reviews.value.length === 0) return 0
-  const sum = reviews.value.reduce((acc, r) => acc + r.rating, 0)
-  return Math.round((sum / reviews.value.length) * 10) / 10
+const props = defineProps({
+  eventId: { type: [String, Number], required: true },
 })
+
+const auth = useAuthStore()
+
+const reviewCount = ref(0)
+const avgRating = ref(0)
+const reviews = ref([])
+const sort = ref('latest')        // 'latest' | 'rating'
+const loading = ref(false)
+
+async function load() {
+  loading.value = true
+  try {
+    const data = await reviewApi.findByEvent(props.eventId, sort.value)
+    reviewCount.value = data.reviewCount
+    avgRating.value = data.avgRating
+    reviews.value = data.reviews
+  } catch (e) {
+    reviews.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+function changeSort(next) {
+  if (sort.value === next) return
+  sort.value = next
+  load()
+}
+
+// 작성 폼에서 등록 성공 → 목록 갱신
+function onCreated() {
+  load()
+}
+
+function formatDate(iso) {
+  return iso ? iso.slice(0, 10) : ''
+}
+
+onMounted(load)
 </script>
 
 <template>
   <div>
     <!-- 헤더: 리뷰 수 + 평균 별점 -->
-    <div class="d-flex align-items-center justify-content-between mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
       <h3 class="h6 fw-bold mb-0">
         리뷰 <span class="text-secondary">({{ reviewCount }})</span>
       </h3>
@@ -38,16 +77,41 @@ const avgRating = computed(() => {
       </div>
     </div>
 
+    <!-- 정렬 토글 -->
+    <div class="d-flex gap-2 mb-3">
+      <button type="button"
+              class="btn btn-sm"
+              :class="sort === 'latest' ? 'btn-dark' : 'btn-outline-secondary'"
+              @click="changeSort('latest')">최신순</button>
+      <button type="button"
+              class="btn btn-sm"
+              :class="sort === 'rating' ? 'btn-dark' : 'btn-outline-secondary'"
+              @click="changeSort('rating')">별점순</button>
+    </div>
+
+    <!-- 작성 폼 (로그인 시) -->
+    <ReviewForm v-if="auth.isAuthenticated"
+                :event-id="eventId"
+                class="mb-4"
+                @created="onCreated" />
+    <div v-else class="alert alert-light border small mb-4">
+      <i class="bi bi-info-circle me-1"></i>
+      로그인 후 후기를 작성할 수 있습니다.
+    </div>
+
     <!-- 리뷰 리스트 -->
-    <ul class="list-unstyled d-flex flex-column gap-3 mb-0">
-      <li v-for="review in reviews" :key="review.id"
-          class="border rounded p-3">
+    <p v-if="!loading && reviews.length === 0" class="text-secondary text-center py-4 mb-0">
+      아직 등록된 후기가 없습니다. 첫 후기를 남겨보세요!
+    </p>
+
+    <ul v-else class="list-unstyled d-flex flex-column gap-3 mb-0">
+      <li v-for="review in reviews" :key="review.id" class="border rounded p-3">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <div class="d-flex align-items-center gap-2">
             <StarRating :rating="review.rating" readonly size="sm" />
-            <span class="fw-semibold small">{{ review.author }}</span>
+            <span class="fw-semibold small">{{ review.name }}</span>
           </div>
-          <span class="text-secondary small">{{ review.createdAt }}</span>
+          <span class="text-secondary small">{{ formatDate(review.createdAt) }}</span>
         </div>
         <p class="mb-0 small">{{ review.content }}</p>
       </li>
