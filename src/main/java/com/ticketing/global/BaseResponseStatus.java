@@ -46,6 +46,12 @@ public enum BaseResponseStatus {
     QUEUE_ALREADY_ENTERED(false, 6002, "이미 대기열에 등록되어 있습니다", HttpStatus.CONFLICT),
     QUEUE_EXPIRED(false, 6003, "대기열이 만료되었습니다", HttpStatus.BAD_REQUEST),
 
+    // 리뷰 7000
+    REVIEW_NOT_FOUND(false, 7001, "존재하지 않는 후기입니다", HttpStatus.NOT_FOUND),
+    INVALID_REVIEW_RATING(false, 7002, "별점은 1~5 사이여야 합니다", HttpStatus.BAD_REQUEST),
+    DUPLICATE_REVIEW(false, 7003, "이미 작성한 후기가 있습니다", HttpStatus.CONFLICT),
+    REVIEW_NOT_OWNED(false, 7004, "본인이 작성한 후기만 삭제할 수 있습니다", HttpStatus.FORBIDDEN),
+
     // 서버 9000
     INTERNAL_SERVER_ERROR(false, 9001, "서버 오류가 발생했습e니다", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_INPUT(false, 9002, "입력값이 올바르지 않습니다", HttpStatus.BAD_REQUEST),
