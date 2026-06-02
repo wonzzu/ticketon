@@ -77,6 +77,11 @@ const routes = [
 
   // === 공개 공연 (누구나 접근) ===
   {
+    path: '/events',
+    name: 'event-list',
+    component: () => import('@/views/event/EventListView.vue'),
+  },
+  {
     path: '/events/:id',
     name: 'event-detail',
     component: () => import('@/views/event/EventDetailView.vue'),
