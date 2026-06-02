@@ -54,10 +54,10 @@ async function onLogout() {
                 <i class="bi bi-shop me-1"></i>셀러센터
               </RouterLink>
               <span v-if="auth.isSeller" class="auth-divider">|</span>
-              <RouterLink to="/mypage" class="auth-link">
+              <RouterLink v-if="auth.isNormal" to="/mypage" class="auth-link">
                 <i class="bi bi-person-circle me-1"></i>마이페이지
               </RouterLink>
-              <span class="auth-divider">|</span>
+              <span v-if="auth.isNormal" class="auth-divider">|</span>
               <button type="button" class="auth-link btn-reset" @click="onLogout">
                 로그아웃
               </button>
