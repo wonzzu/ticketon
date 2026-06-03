@@ -29,12 +29,13 @@ public enum BaseResponseStatus {
     REJECT_REASON_REQUIRED(false, 3006, "반려 사유는 필수입니다", HttpStatus.BAD_REQUEST),
     EVENT_NOT_OWNED(false, 3007, "본인이 등록한 공연만 수정할 수 있습니다", HttpStatus.FORBIDDEN),
 
-    // 티켓/예매 4000
-    TICKET_NOT_FOUND(false, 4001, "존재하지 않는 티켓입니다", HttpStatus.NOT_FOUND),
-    TICKET_SOLD_OUT(false, 4002, "매진된 티켓입니다", HttpStatus.CONFLICT),
-    ALREADY_RESERVED(false, 4003, "이미 예매한 티켓입니다", HttpStatus.CONFLICT),
-    RESERVATION_NOT_FOUND(false, 4004, "존재하지 않는 예매입니다", HttpStatus.NOT_FOUND),
-    RESERVATION_CANCEL_FAILED(false, 4005, "예매 취소가 불가능한 상태입니다", HttpStatus.BAD_REQUEST),
+    // 예매 4000
+    RESERVATION_NOT_FOUND(false, 4001, "존재하지 않는 예매입니다", HttpStatus.NOT_FOUND),
+    INVALID_RESERVATION_STATUS(false, 4002, "현재 상태에서는 처리할 수 없습니다", HttpStatus.BAD_REQUEST),
+    SEAT_NOT_AVAILABLE(false, 4003, "이미 선택된 좌석입니다", HttpStatus.CONFLICT),
+    EXCEED_SEAT_LIMIT(false, 4004, "최대 3개 좌석까지 예매할 수 있습니다", HttpStatus.BAD_REQUEST),
+    RESERVATION_NOT_OWNED(false, 4005, "본인 예매만 처리할 수 있습니다", HttpStatus.FORBIDDEN),
+    EMPTY_SEAT_SELECTION(false, 4006, "좌석을 선택해주세요", HttpStatus.BAD_REQUEST),
 
     // 결제 5000
     PAYMENT_FAILED(false, 5001, "결제에 실패했습니다", HttpStatus.BAD_REQUEST),
@@ -51,6 +52,8 @@ public enum BaseResponseStatus {
     INVALID_REVIEW_RATING(false, 7002, "별점은 1~5 사이여야 합니다", HttpStatus.BAD_REQUEST),
     DUPLICATE_REVIEW(false, 7003, "이미 작성한 후기가 있습니다", HttpStatus.CONFLICT),
     REVIEW_NOT_OWNED(false, 7004, "본인이 작성한 후기만 삭제할 수 있습니다", HttpStatus.FORBIDDEN),
+
+
 
     // 서버 9000
     INTERNAL_SERVER_ERROR(false, 9001, "서버 오류가 발생했습e니다", HttpStatus.INTERNAL_SERVER_ERROR),
