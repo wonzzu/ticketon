@@ -37,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -82,14 +83,17 @@ public class DataSeedRunner implements CommandLineRunner {
         Seller seller2 = seedSeller("seller2@test.com", "프로덕션B", "박셀러", "222-22-22222");
         seedNormalMember();
 
-        // 2) 공연장 + 좌석 (등급: R / S 2등급)
-        Venue venue1 = seedVenue("잠실 종합운동장", 5, 5);
-        Venue venue2 = seedVenue("블루스퀘어 신한카드홀", 4, 6);
-        Venue venue3 = seedVenue("예술의전당 콘서트홀", 5, 6);
+        // 2) 공연장 + 좌석 (등급: VIP / R / S / A 4등급, 행 8이면 2행씩)
+        Venue venue1 = seedVenue("잠실 종합운동장", 8, 10);
+        Venue venue2 = seedVenue("블루스퀘어 신한카드홀", 8, 8);
+        Venue venue3 = seedVenue("예술의전당 콘서트홀", 8, 9);
 
-        Map<SeatGrade, Integer> price1 = Map.of(SeatGrade.R, 165000, SeatGrade.S, 121000);
-        Map<SeatGrade, Integer> price2 = Map.of(SeatGrade.R, 132000, SeatGrade.S,  99000);
-        Map<SeatGrade, Integer> price3 = Map.of(SeatGrade.R,  88000, SeatGrade.S,  66000);
+        Map<SeatGrade, Integer> price1 = Map.of(
+                SeatGrade.VIP, 198000, SeatGrade.R, 165000, SeatGrade.S, 132000, SeatGrade.A, 99000);
+        Map<SeatGrade, Integer> price2 = Map.of(
+                SeatGrade.VIP, 154000, SeatGrade.R, 121000, SeatGrade.S,  99000, SeatGrade.A, 77000);
+        Map<SeatGrade, Integer> price3 = Map.of(
+                SeatGrade.VIP, 110000, SeatGrade.R,  88000, SeatGrade.S,  66000, SeatGrade.A, 44000);
 
         // 3) APPROVED 공연 (회차 자동 생성 → 메인 노출)
         seedApprovedEvent(seller1, admin, venue1, "아이유 콘서트 H.E.R.", "concert1",
@@ -177,14 +181,26 @@ public class DataSeedRunner implements CommandLineRunner {
         Venue venue = Venue.create(name, new Address("서울", name + " 주소", "00000"), rows, cols);
         venueRepository.save(venue);
 
-        // 앞쪽 절반 R석, 나머지 S석
-        int mid = (rows + 1) / 2;
-        List<SeatGradeRange> ranges = List.of(
-                new SeatGradeRange(SeatGrade.R, 1, mid),
-                new SeatGradeRange(SeatGrade.S, mid + 1, rows)
-        );
+        // 앞→뒤로 VIP / R / S / A 4등급 균등 분배
+        List<SeatGradeRange> ranges = buildGradeRanges(rows);
         seatRepository.saveAll(venue.assignSeats(rows, cols, ranges));
         return venue;
+    }
+
+    // 행을 4구간으로 나눠 VIP/R/S/A 배정 (마지막 등급이 남는 행 흡수)
+    private List<SeatGradeRange> buildGradeRanges(int rows) {
+        SeatGrade[] grades = {SeatGrade.VIP, SeatGrade.R, SeatGrade.S, SeatGrade.A};
+        List<SeatGradeRange> ranges = new ArrayList<>();
+        int per = Math.max(1, rows / grades.length);
+        int row = 1;
+        for (int i = 0; i < grades.length; i++) {
+            if (row > rows) break;
+            int from = row;
+            int to = (i == grades.length - 1) ? rows : Math.min(rows, row + per - 1);
+            ranges.add(new SeatGradeRange(grades[i], from, to));
+            row = to + 1;
+        }
+        return ranges;
     }
 
     // ===== 공연 + 회차 + 좌석 =====
