@@ -86,9 +86,8 @@ async function onReserve() {
       eventSeatIds: selectedIds.value,
       idempotencyKey,
     })
-    // TODO: 결제 화면 만들어지면 → router.push(`/reservations/${data.id}/payment`)
-    alert('좌석이 선점되었습니다. (결제 화면은 다음 단계)')
-    router.push('/mypage')
+    // 예매 생성(PENDING) → 결제 화면으로
+    router.push(`/reservations/${data.id}/payment`)
   } catch (e) {
     errorMsg.value = e.response?.data?.message || '예매에 실패했습니다.'
   } finally {

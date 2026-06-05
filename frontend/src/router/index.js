@@ -95,6 +95,12 @@ const routes = [
     component: () => import('@/views/reservation/SeatSelectionView.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/reservations/:id/payment',
+    name: 'payment',
+    component: () => import('@/views/reservation/PaymentView.vue'),
+    meta: { requiresAuth: true },
+  },
 
   // === 마이페이지 (일반 회원 전용) ===
   {
