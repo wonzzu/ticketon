@@ -10,6 +10,7 @@
  * 가격·할인은 Mock (백엔드 가격/할인 도메인 연동 전). 예매는 Phase 2.
  */
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { eventApi } from '@/api/event.api'
 import { scheduleApi } from '@/api/schedule.api'
 import {
@@ -25,6 +26,8 @@ import ReviewSection from '@/components/event/ReviewSection.vue'
 const props = defineProps({
   id: { type: [String, Number], required: true },
 })
+
+const router = useRouter()
 
 const eventId = computed(() => Number(props.id))
 
@@ -62,8 +65,9 @@ async function load() {
   }
 }
 
-function onReserve() {
-  alert('예매 기능은 준비 중입니다.')
+// ScheduleSelector에서 회차 선택 후 [예매하기] → 좌석 선택 화면으로
+function onReserve(schedule) {
+  router.push({ path: '/reservations/new', query: { scheduleId: schedule.id } })
 }
 
 onMounted(load)
