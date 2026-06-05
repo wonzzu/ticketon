@@ -11,4 +11,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     Optional<Reservation> findByIdempotencyKey(String idempotencyKey);
 
     List<Reservation> findByMemberIdOrderByCreatedAtDesc(Long memberId);
+
+
 }
