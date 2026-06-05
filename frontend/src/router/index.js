@@ -88,6 +88,14 @@ const routes = [
     props: true,
   },
 
+  // === 예매 (로그인 필요) ===
+  {
+    path: '/reservations/new',
+    name: 'seat-selection',
+    component: () => import('@/views/reservation/SeatSelectionView.vue'),
+    meta: { requiresAuth: true },
+  },
+
   // === 마이페이지 (일반 회원 전용) ===
   {
     path: '/mypage',

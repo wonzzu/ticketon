@@ -61,6 +61,14 @@ export const SEAT_GRADE_LABEL = Object.freeze({
   A:   'A석',
 })
 
+// 등급별 좌석 색 (좌석 배치도 구분용) — 토큰 색과 별개의 의미색
+export const SEAT_GRADE_COLOR = Object.freeze({
+  VIP: '#7C3AED',   // 보라
+  R:   '#E11D48',   // 빨강
+  S:   '#2563EB',   // 파랑
+  A:   '#059669',   // 초록
+})
+
 // === 회원 종류 (백엔드 MemberType 미러링) ===
 export const MEMBER_TYPE = Object.freeze({
   NORMAL: 'NORMAL',
