@@ -46,6 +46,25 @@ export const SEAT_STATUS = Object.freeze({
   RESERVED:  'RESERVED',
 })
 
+// === 예매 상태 (백엔드 ReservationStatus 미러링) ===
+export const RESERVATION_STATUS = Object.freeze({
+  PENDING:   'PENDING',
+  CONFIRMED: 'CONFIRMED',
+  CANCEL:    'CANCEL',
+})
+
+export const RESERVATION_STATUS_LABEL = Object.freeze({
+  PENDING:   '결제 대기',
+  CONFIRMED: '예매 완료',
+  CANCEL:    '예매 취소',
+})
+
+export const RESERVATION_STATUS_BADGE = Object.freeze({
+  PENDING:   'bg-warning-subtle text-warning-emphasis',
+  CONFIRMED: 'bg-success-subtle text-success-emphasis',
+  CANCEL:    'bg-secondary-subtle text-secondary-emphasis',
+})
+
 // === 좌석 등급 (백엔드 SeatGrade 미러링) ===
 export const SEAT_GRADE = Object.freeze({
   VIP: 'VIP',
