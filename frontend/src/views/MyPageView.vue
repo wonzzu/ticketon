@@ -15,8 +15,13 @@ import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { memberApi } from '@/api/member.api'
 import { reviewApi } from '@/api/review.api'
+import { reservationApi } from '@/api/reservation.api'
+import {
+  RESERVATION_STATUS, RESERVATION_STATUS_LABEL, RESERVATION_STATUS_BADGE,
+} from '@/utils/constants'
 import AppLoading from '@/components/common/AppLoading.vue'
 import AppEmpty from '@/components/common/AppEmpty.vue'
+import AppButton from '@/components/common/AppButton.vue'
 import StarRating from '@/components/common/StarRating.vue'
 
 const activeMenu = ref('info')   // 'reservation' | 'coupon' | 'review' | 'info'
@@ -27,6 +32,11 @@ const infoLoading = ref(true)
 const myReviews = ref([])
 const reviewsLoaded = ref(false)
 const reviewsLoading = ref(false)
+
+const reservations = ref([])
+const reservationsLoaded = ref(false)
+const reservationsLoading = ref(false)
+const cancelingId = ref(null)
 
 async function loadInfo() {
   infoLoading.value = true
@@ -52,20 +62,61 @@ async function loadReviews() {
   }
 }
 
+async function loadReservations() {
+  reservationsLoading.value = true
+  try {
+    reservations.value = await reservationApi.findMine()
+    reservationsLoaded.value = true
+  } catch (e) {
+    reservations.value = []
+  } finally {
+    reservationsLoading.value = false
+  }
+}
+
+async function onCancel(id) {
+  if (!confirm('예매를 취소하시겠습니까?')) return
+  cancelingId.value = id
+  try {
+    await reservationApi.cancel(id)
+    await loadReservations()   // 목록 갱신
+  } catch (e) {
+    alert(e.response?.data?.message || '취소에 실패했습니다.')
+  } finally {
+    cancelingId.value = null
+  }
+}
+
+function canCancel(status) {
+  return status !== RESERVATION_STATUS.CANCEL
+}
+
 function selectMenu(menu) {
   activeMenu.value = menu
   if (menu === 'review') loadReviews()
+  if (menu === 'reservation') loadReservations()
 }
 
 function formatDate(iso) {
   return iso ? iso.slice(0, 10) : ''
+}
+function formatDateTime(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+function formatPrice(won) {
+  return (won ?? 0).toLocaleString('ko-KR') + '원'
 }
 function formatAddress(addr) {
   if (!addr) return '-'
   return [addr.city, addr.street, addr.zipcode].filter(Boolean).join(' ')
 }
 
-onMounted(loadReviews)   // 요약 위젯 리뷰 수 표시 위해 미리 로드
+// 요약 위젯 카운트(예매/리뷰) 표시 위해 미리 로드
+onMounted(loadReviews)
+onMounted(loadReservations)
 onMounted(loadInfo)
 </script>
 
@@ -85,7 +136,7 @@ onMounted(loadInfo)
             <button class="summary-item" @click="selectMenu('reservation')">
               <i class="bi bi-ticket-perforated d-block fs-4 mb-1"></i>
               <div class="small text-secondary">나의 예매</div>
-              <div class="fw-bold">0</div>
+              <div class="fw-bold">{{ reservations.length }}</div>
             </button>
             <div class="summary-divider"></div>
             <button class="summary-item" @click="selectMenu('coupon')">
@@ -166,12 +217,46 @@ onMounted(loadInfo)
             </div>
           </template>
 
-          <!-- 예매 내역 (준비 중) -->
+          <!-- 예매 내역 -->
           <template v-else-if="activeMenu === 'reservation'">
             <h2 class="h5 fw-bold mb-4">예매 내역</h2>
-            <AppEmpty icon="ticket-perforated"
-                      title="예매 내역 준비 중"
-                      message="예매 기능이 추가되면 이곳에서 내역을 확인할 수 있어요." />
+            <AppLoading v-if="reservationsLoading" message="예매 내역을 불러오는 중..." />
+            <AppEmpty v-else-if="reservations.length === 0"
+                      icon="ticket-perforated"
+                      title="예매 내역이 없어요"
+                      message="공연을 예매하면 이곳에서 확인할 수 있어요." />
+            <ul v-else class="list-unstyled d-flex flex-column gap-3 mb-0">
+              <li v-for="r in reservations" :key="r.id" class="bg-white border rounded p-3">
+                <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                  <div>
+                    <h3 class="h6 fw-bold mb-1">{{ r.eventTitle }}</h3>
+                    <div class="text-secondary small">
+                      <i class="bi bi-calendar-event me-1"></i>{{ formatDateTime(r.showDateTime) }}
+                      <span class="mx-1">·</span>{{ r.venueName }}
+                    </div>
+                  </div>
+                  <span :class="['badge rounded-pill', RESERVATION_STATUS_BADGE[r.status]]">
+                    {{ r.statusLabel || RESERVATION_STATUS_LABEL[r.status] }}
+                  </span>
+                </div>
+
+                <div class="text-secondary small mb-2">
+                  좌석
+                  <span v-for="(s, i) in r.seats" :key="i">
+                    {{ s.seatRow }}열 {{ s.seatColumn }}번<span v-if="i < r.seats.length - 1">, </span>
+                  </span>
+                  · <span class="fw-semibold text-body">{{ formatPrice(r.totalPrice) }}</span>
+                </div>
+
+                <div v-if="canCancel(r.status)" class="text-end">
+                  <AppButton variant="outline-danger" size="sm"
+                             :loading="cancelingId === r.id"
+                             @click="onCancel(r.id)">
+                    예매 취소
+                  </AppButton>
+                </div>
+              </li>
+            </ul>
           </template>
 
           <!-- 쿠폰 (준비 중) -->
