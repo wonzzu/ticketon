@@ -52,7 +52,7 @@ public class SeatHoldService {
         List<String> keys = eventSeatIds.stream().map(id -> key(scheduleId, id)).toList();
         List<String> values = redisTemplate.opsForValue().multiGet(keys);
 
-        if (values ==null) return heldSeat;
+        if (values == null) return heldSeat;
 
         for (int i = 0; i < eventSeatIds.size(); i++) {
             if (values.get(i) != null) {
@@ -62,4 +62,16 @@ public class SeatHoldService {
         return heldSeat;
     }
 
+    public boolean isHeldByAll(Long scheduleId, List<Long> eventSeatIds, Long memberId) {
+
+        List<String> keys = eventSeatIds.stream().map(id -> key(scheduleId, id)).toList();
+        List<String> values = redisTemplate.opsForValue().multiGet(keys);
+
+        if (values==null) return false;
+
+        String me = memberId.toString();
+
+        return values.size() == eventSeatIds.size() && values.stream().allMatch(me::equals);
+    }
 }
+

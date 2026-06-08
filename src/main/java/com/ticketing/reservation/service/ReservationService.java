@@ -120,5 +120,10 @@ public class ReservationService {
 
         reservation.getReservationSeats().forEach(rs -> rs.getEventSeat().cancel());
 
+        Long scheduleId = reservation.getEventSchedule().getId();
+        List<Long> seatIds = reservation.getReservationSeats().stream()
+                .map(rs -> rs.getEventSeat().getId()).toList();
+        seatHoldService.releaseAll(scheduleId, seatIds);
+
     }
 }

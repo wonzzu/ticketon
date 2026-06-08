@@ -36,6 +36,8 @@ public enum BaseResponseStatus {
     EXCEED_SEAT_LIMIT(false, 4004, "최대 3개 좌석까지 예매할 수 있습니다", HttpStatus.BAD_REQUEST),
     RESERVATION_NOT_OWNED(false, 4005, "본인 예매만 처리할 수 있습니다", HttpStatus.FORBIDDEN),
     EMPTY_SEAT_SELECTION(false, 4006, "좌석을 선택해주세요", HttpStatus.BAD_REQUEST),
+    SEAT_HOLD_EXPIRED(false, 4007, "선점 시간이 만료되었습니다..", HttpStatus.BAD_REQUEST),
+
 
     // 결제 5000
     PAYMENT_FAILED(false, 5001, "결제에 실패했습니다", HttpStatus.BAD_REQUEST),
@@ -56,7 +58,7 @@ public enum BaseResponseStatus {
 
 
     // 서버 9000
-    INTERNAL_SERVER_ERROR(false, 9001, "서버 오류가 발생했습e니다", HttpStatus.INTERNAL_SERVER_ERROR),
+    INTERNAL_SERVER_ERROR(false, 9001, "서버 오류가 발생했습니다", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_INPUT(false, 9002, "입력값이 올바르지 않습니다", HttpStatus.BAD_REQUEST),
     ;
 
