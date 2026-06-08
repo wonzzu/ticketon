@@ -2,8 +2,10 @@ package com.ticketing.reservation.service;
 
 import com.ticketing.event.domain.EventSchedule;
 import com.ticketing.event.domain.EventSeat;
+import com.ticketing.event.domain.EventSeatStatus;
 import com.ticketing.event.repository.EventScheduleRepository;
 import com.ticketing.event.repository.EventSeatRepository;
+import com.ticketing.event.service.SeatHoldService;
 import com.ticketing.global.BaseResponseStatus;
 import com.ticketing.global.exception.BaseException;
 import com.ticketing.member.domain.Member;
@@ -34,6 +36,7 @@ public class ReservationService {
     private final EventScheduleRepository eventScheduleRepository;
     private final EventSeatRepository eventSeatRepository;
     private final MemberRepository memberRepository;
+    private final SeatHoldService seatHoldService;
 
     @Transactional
     public ReservationResponseDto create(Long memberId, ReservationCreateDto dto) {
@@ -64,11 +67,16 @@ public class ReservationService {
             throw new BaseException(SEAT_NOT_AVAILABLE);
         }
 
-        int totalPrice = 0;
-        for (EventSeat seat : seats) {
-            seat.reserve();
-            totalPrice += seat.getPrice();
+        boolean anySold = seats.stream().anyMatch(s -> s.getStatus() == EventSeatStatus.RESERVED);
+        if (anySold) {
+            throw new BaseException(SEAT_NOT_AVAILABLE);
         }
+
+        if (!seatHoldService.holdAll(dto.getScheduleId(), seatIds, memberId)) {
+            throw new BaseException(SEAT_NOT_AVAILABLE);
+        }
+
+        int totalPrice = seats.stream().mapToInt(EventSeat::getPrice).sum();
 
         Reservation reservation = Reservation.create(member, schedule, dto.getIdempotencyKey(), totalPrice);
 
@@ -76,7 +84,9 @@ public class ReservationService {
             reservation.addReservationSeat(ReservationSeat.create(seat, seat.getPrice()));
         }
         reservationRepository.save(reservation);
+
         return ReservationResponseDto.from(reservation);
+
     }
 
     // TODO: findMine은 예매 N건마다 schedule/event/venue/seat을 LAZY 조회 → N+1 나중에 fetch join 생각.
