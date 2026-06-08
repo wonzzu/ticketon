@@ -1,6 +1,6 @@
 package com.ticketing.payment.service;
 
-import com.ticketing.global.BaseResponseStatus;
+import com.ticketing.event.service.SeatHoldService;
 import com.ticketing.global.exception.BaseException;
 import com.ticketing.payment.domain.Payment;
 import com.ticketing.payment.dto.request.PaymentCreateDto;
@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 import static com.ticketing.global.BaseResponseStatus.*;
 
 @Service
@@ -21,6 +23,7 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final ReservationRepository reservationRepository;
+    private final SeatHoldService seatHoldService;
 
     @Transactional
     public PaymentResponseDto pay(Long memberId, PaymentCreateDto dto) {
@@ -35,10 +38,22 @@ public class PaymentService {
             throw new BaseException(PAYMENT_ALREADY_COMPLETED);
         }
 
+        Long scheduleId = reservation.getEventSchedule().getId();
+        List<Long> seatIds = reservation.getReservationSeats().stream()
+                .map(rs -> rs.getEventSeat().getId()).toList();
+
+        if (!seatHoldService.isHeldByAll(scheduleId, seatIds, memberId)) {
+            throw new BaseException(SEAT_HOLD_EXPIRED);
+        }
+
+        reservation.getReservationSeats().forEach(re -> re.getEventSeat().reserve());
+
         Payment payment = Payment.paid(reservation, reservation.getTotalPrice());
         paymentRepository.save(payment);
 
         reservation.confirm();
+
+        seatHoldService.releaseAll(scheduleId, seatIds);
 
         return PaymentResponseDto.from(payment);
     }
