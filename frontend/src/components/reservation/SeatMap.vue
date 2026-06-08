@@ -8,9 +8,9 @@
  * props.maxSelect: 최대 선택 수 (기본 3)
  *
  * 동작:
- *  - AVAILABLE만 클릭 가능, RESERVED/HELD는 비활성
- *  - 등급별 색, 선택 시 강조
- *  - 최대 수 초과 시 더 선택 안 됨
+ *  - AVAILABLE만 클릭 가능, HELD/RESERVED는 매진(선택불가)으로 동일 처리
+ *  - 상태색: 선택=어두운색(흰 테두리) / 매진=회색 (의미 토큰 사용)
+ *  - 예매가능 좌석은 등급색, 최대 수 초과 시 더 선택 안 됨
  */
 import { computed } from 'vue'
 import { SEAT_STATUS, SEAT_GRADE_COLOR } from '@/utils/constants'
@@ -59,16 +59,26 @@ function toggle(seat) {
   emit('update:selectedIds', ids)
 }
 
-// 좌석 스타일 (등급색 + 상태/선택)
-function seatStyle(seat) {
+// 상태색은 클래스(토큰)로, 예매가능 등급색만 인라인(등급색은 JS 데이터)
+function seatClass(seat) {
   if (!seat) return {}
-  if (seat.status !== SEAT_STATUS.AVAILABLE) {
-    return { background: '#D1D5DB', cursor: 'not-allowed' }   // 매진/점유 = 회색
+  // 선점중(HELD)·매진(RESERVED) 모두 "매진(선택불가)"로 동일하게 표시
+  if (seat.status !== SEAT_STATUS.AVAILABLE) return { 'seat--reserved': true }
+  if (isSelected(seat))                      return { 'seat--selected': true }
+  return {}
+}
+
+function seatStyle(seat) {
+  if (seat && seat.status === SEAT_STATUS.AVAILABLE && !isSelected(seat)) {
+    return { background: SEAT_GRADE_COLOR[seat.grade] || '#9CA3AF', color: '#fff' }
   }
-  if (isSelected(seat)) {
-    return { background: '#111827', color: '#fff' }           // 선택 = 검정
-  }
-  return { background: SEAT_GRADE_COLOR[seat.grade] || '#9CA3AF', color: '#fff' }
+  return {}
+}
+
+function seatTitle(seat) {
+  const base = `${seat.seatRow}열 ${seat.seatColumn}번 · ${seat.grade}석`
+  if (seat.status !== SEAT_STATUS.AVAILABLE) return `${base} (매진)`
+  return base
 }
 </script>
 
@@ -84,9 +94,10 @@ function seatStyle(seat) {
           <button v-if="seatAt(row, col)"
                   type="button"
                   class="seat"
+                  :class="seatClass(seatAt(row, col))"
                   :style="seatStyle(seatAt(row, col))"
                   :disabled="seatAt(row, col).status !== SEAT_STATUS.AVAILABLE"
-                  :title="`${row}열 ${col}번 · ${seatAt(row, col).grade}석`"
+                  :title="seatTitle(seatAt(row, col))"
                   @click="toggle(seatAt(row, col))">
             {{ col }}
           </button>
@@ -121,7 +132,14 @@ function seatStyle(seat) {
   font-size: 0.7rem;
   font-weight: 600;
   flex-shrink: 0;
+  color: #fff;
 }
+
+// 상태색 (의미 토큰)
+.seat--selected { background: $color-seat-selected; box-shadow: inset 0 0 0 2px #fff; } // 흰 테두리로 선택 강조
+.seat--reserved { background: $color-seat-reserved; cursor: not-allowed; }
+
+.seat:disabled { opacity: 1; }   // 비활성이어도 상태색 그대로 보이게
 
 .seat-empty {
   background: transparent;
