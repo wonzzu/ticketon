@@ -4,13 +4,14 @@
  *
  * 진입: /reservations/new?scheduleId=N  (공연 상세 → 회차 선택 → 예매하기)
  * 백엔드:
- *   GET  /schedules/{id}/seats  — 좌석 배치도
- *   POST /reservations          — 예매 생성 (좌석 점유, PENDING)
+ *   GET  /schedules/{id}/seats  — 좌석 배치도 (status: AVAILABLE/HELD/RESERVED)
+ *   POST /reservations          — 예매 생성 (Redis 선점 + PENDING)
  *
  * 멱등성: 진입 시 idempotencyKey(UUID) 1번 생성 → 재시도해도 동일 (중복 예매 방지).
+ * 실시간 선점: 좌석맵을 N초마다 폴링 재조회 → 남이 선점한 좌석이 자동으로 회색 처리됨.
  * 라우터 가드: requiresAuth (비로그인 → 로그인)
  */
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { seatApi } from '@/api/seat.api'
 import { reservationApi } from '@/api/reservation.api'
@@ -27,6 +28,9 @@ const router = useRouter()
 const scheduleId = Number(route.query.scheduleId)
 const MAX_SELECT = 3
 
+// 좌석맵 폴링 주기(ms) — 대기열 폴링 간격 재사용
+const POLL_MS = Number(import.meta.env.VITE_QUEUE_POLL_INTERVAL_MS) || 3000
+
 // 멱등성 키 — 화면 진입 시 1번 (재시도해도 동일)
 const idempotencyKey = crypto.randomUUID()
 
@@ -36,14 +40,30 @@ const loading = ref(true)
 const submitting = ref(false)
 const errorMsg = ref('')
 
-async function load() {
-  loading.value = true
+let pollTimer = null
+
+// 좌석 조회. silent=true면 폴링용(스피너/에러 토글 없이 조용히 갱신)
+async function load(silent = false) {
+  if (!silent) loading.value = true
   try {
     seats.value = await seatApi.findBySchedule(scheduleId)
+    pruneStaleSelection()
   } catch (e) {
-    errorMsg.value = '좌석 정보를 불러오지 못했습니다.'
+    if (!silent) errorMsg.value = '좌석 정보를 불러오지 못했습니다.'
   } finally {
-    loading.value = false
+    if (!silent) loading.value = false
+  }
+}
+
+// 폴링 갱신 결과, 내가 고른 좌석이 더는 예매가능이 아니면(남이 선점/매진) 선택 해제
+function pruneStaleSelection() {
+  const availableIds = new Set(
+    seats.value.filter((s) => s.status === SEAT_STATUS.AVAILABLE).map((s) => s.id)
+  )
+  const before = selectedIds.value.length
+  selectedIds.value = selectedIds.value.filter((id) => availableIds.has(id))
+  if (selectedIds.value.length < before) {
+    errorMsg.value = '선택하신 좌석 중 일부를 다른 사용자가 먼저 선택해 해제되었습니다.'
   }
 }
 
@@ -90,12 +110,23 @@ async function onReserve() {
     router.push(`/reservations/${data.id}/payment`)
   } catch (e) {
     errorMsg.value = e.response?.data?.message || '예매에 실패했습니다.'
+    load(true)   // 실패(선점 충돌 등) 시 최신 좌석 상태로 즉시 갱신
   } finally {
     submitting.value = false
   }
 }
 
-onMounted(load)
+onMounted(() => {
+  load()
+  // 폴링: 제출 중에는 선택이 흔들리지 않게 건너뜀
+  pollTimer = setInterval(() => {
+    if (!submitting.value) load(true)
+  }, POLL_MS)
+})
+
+onBeforeUnmount(() => {
+  if (pollTimer) clearInterval(pollTimer)
+})
 </script>
 
 <template>
@@ -124,10 +155,10 @@ onMounted(load)
               {{ SEAT_GRADE_LABEL[g.grade] }} {{ formatPrice(g.price) }}
             </span>
             <span class="d-inline-flex align-items-center gap-1">
-              <span class="legend-dot" style="background:#D1D5DB"></span>매진
+              <span class="legend-dot legend-dot--reserved"></span>매진
             </span>
             <span class="d-inline-flex align-items-center gap-1">
-              <span class="legend-dot" style="background:#111827"></span>선택
+              <span class="legend-dot legend-dot--selected"></span>선택
             </span>
           </div>
         </div>
@@ -170,11 +201,17 @@ onMounted(load)
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
+@use '@/styles/tokens' as *;
+
 .legend-dot {
   width: 14px;
   height: 14px;
   border-radius: 3px;
   display: inline-block;
 }
+
+// 상태 범례 색 (의미 토큰 — SeatMap과 동일)
+.legend-dot--reserved { background: $color-seat-reserved; }
+.legend-dot--selected { background: $color-seat-selected; }
 </style>
