@@ -34,4 +34,15 @@ public class EventSeatResponseDto {
                 .price(eventSeat.getPrice())
                 .build();
     }
+
+    public static EventSeatResponseDto from(EventSeat eventSeat, EventSeatStatus status) {
+        return EventSeatResponseDto.builder()
+                .id(eventSeat.getId())
+                .seatRow(eventSeat.getSeat().getSeatRow())
+                .seatColumn(eventSeat.getSeat().getSeatColumn())
+                .grade(eventSeat.getSeat().getSeatGrade())
+                .status(status)
+                .price(eventSeat.getPrice())
+                .build();
+    }
 }
