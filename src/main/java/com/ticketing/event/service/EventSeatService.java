@@ -5,7 +5,6 @@ import com.ticketing.event.domain.EventSeat;
 import com.ticketing.event.domain.EventSeatStatus;
 import com.ticketing.event.dto.response.EventSeatResponseDto;
 import com.ticketing.event.repository.EventSeatRepository;
-import com.ticketing.venue.domain.Seat;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
