@@ -10,6 +10,7 @@ import com.ticketing.global.BaseResponseStatus;
 import com.ticketing.global.exception.BaseException;
 import com.ticketing.member.domain.Member;
 import com.ticketing.member.repository.MemberRepository;
+import com.ticketing.queue.service.QueueService;
 import com.ticketing.reservation.domain.Reservation;
 import com.ticketing.reservation.domain.ReservationSeat;
 import com.ticketing.reservation.dto.request.ReservationCreateDto;
@@ -37,6 +38,7 @@ public class ReservationService {
     private final EventSeatRepository eventSeatRepository;
     private final MemberRepository memberRepository;
     private final SeatHoldService seatHoldService;
+    private final QueueService queueService;
 
     @Transactional
     public ReservationResponseDto create(Long memberId, ReservationCreateDto dto) {
@@ -44,6 +46,11 @@ public class ReservationService {
 
         if (exist.isPresent()) {
             return ReservationResponseDto.from(exist.get());
+        }
+
+        // 대기열 입장(승급) 안 했으면 예매 불가
+        if (!queueService.isAdmitted(dto.getScheduleId(), memberId)) {
+            throw new BaseException(QUEUE_NOT_ADMITTED);
         }
 
         List<Long> seatIds = dto.getEventSeatIds();

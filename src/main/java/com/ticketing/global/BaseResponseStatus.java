@@ -48,6 +48,7 @@ public enum BaseResponseStatus {
     QUEUE_NOT_FOUND(false, 6001, "대기열 정보를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
     QUEUE_ALREADY_ENTERED(false, 6002, "이미 대기열에 등록되어 있습니다", HttpStatus.CONFLICT),
     QUEUE_EXPIRED(false, 6003, "대기열이 만료되었습니다", HttpStatus.BAD_REQUEST),
+    QUEUE_NOT_ADMITTED(false, 6004, "대기열을 먼저 통과해야 합니다", HttpStatus.FORBIDDEN),
 
     // 리뷰 7000
     REVIEW_NOT_FOUND(false, 7001, "존재하지 않는 후기입니다", HttpStatus.NOT_FOUND),
