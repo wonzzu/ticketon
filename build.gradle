@@ -56,6 +56,7 @@ dependencies {
 
 	// === 테스트 ===
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'   // Gradle 9+는 런처 자동제공 X → 명시 필수
 
 	// === JWT (jjwt) ===
 	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
@@ -81,4 +82,8 @@ clean {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	testLogging {
+		events "passed", "skipped", "failed"   // 통과/스킵/실패 다 콘솔에 표시
+		showStandardStreams = true              // System.out.println 출력도 보이게
+	}
 }
