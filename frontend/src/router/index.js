@@ -90,6 +90,12 @@ const routes = [
 
   // === 예매 (로그인 필요) ===
   {
+    path: '/queue',
+    name: 'queue',
+    component: () => import('@/views/queue/QueueView.vue'),
+    meta: { requiresAuth: true },   // 예매하기 → 대기열 진입 → 입장되면 좌석 선택으로
+  },
+  {
     path: '/reservations/new',
     name: 'seat-selection',
     component: () => import('@/views/reservation/SeatSelectionView.vue'),
