@@ -53,6 +53,7 @@ public class SecurityConfig {
                         .requestMatchers("/members/signup", "/sellers/signup").permitAll()
                         .requestMatchers(HttpMethod.GET, "/events/**", "/venues/**", "/schedules/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/coupons").hasRole("ADMIN")   // 쿠폰 생성은 admin만 (발급 /coupons/{id}/issue 는 회원)
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
