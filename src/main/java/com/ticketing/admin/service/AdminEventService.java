@@ -13,6 +13,8 @@ import com.ticketing.global.exception.BaseException;
 import com.ticketing.member.domain.AdminMember;
 import com.ticketing.member.repository.AdminMemberRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +39,10 @@ public class AdminEventService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "events", key = "'all'"),
+            @CacheEvict(cacheNames = "event", key = "#eventId")
+    })
     public void approve(Long eventId, Long adminId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new BaseException(PERFORMANCE_NOT_FOUND));
@@ -53,6 +59,10 @@ public class AdminEventService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "events", key = "'all'"),
+            @CacheEvict(cacheNames = "event", key = "#eventId")
+    })
     public void reject(Long eventId, Long adminId, String reason) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new BaseException(PERFORMANCE_NOT_FOUND));
