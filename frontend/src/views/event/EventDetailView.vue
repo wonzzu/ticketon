@@ -65,9 +65,9 @@ async function load() {
   }
 }
 
-// ScheduleSelector에서 회차 선택 후 [예매하기] → 좌석 선택 화면으로
+// ScheduleSelector에서 회차 선택 후 [예매하기] → 대기열 진입 (입장되면 좌석 화면으로)
 function onReserve(schedule) {
-  router.push({ path: '/reservations/new', query: { scheduleId: schedule.id } })
+  router.push({ path: '/queue', query: { scheduleId: schedule.id } })
 }
 
 onMounted(load)

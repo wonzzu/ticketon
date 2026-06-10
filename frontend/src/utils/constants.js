@@ -46,6 +46,13 @@ export const SEAT_STATUS = Object.freeze({
   RESERVED:  'RESERVED',
 })
 
+// === 대기열 상태 (백엔드 QueueStatus 미러링) ===
+export const QUEUE_STATUS = Object.freeze({
+  WAITING:  'WAITING',
+  ADMITTED: 'ADMITTED',
+  EXPIRED:  'EXPIRED',
+})
+
 // === 예매 상태 (백엔드 ReservationStatus 미러링) ===
 export const RESERVATION_STATUS = Object.freeze({
   PENDING:   'PENDING',
