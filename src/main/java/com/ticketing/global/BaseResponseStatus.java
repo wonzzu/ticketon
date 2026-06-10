@@ -56,7 +56,10 @@ public enum BaseResponseStatus {
     DUPLICATE_REVIEW(false, 7003, "이미 작성한 후기가 있습니다", HttpStatus.CONFLICT),
     REVIEW_NOT_OWNED(false, 7004, "본인이 작성한 후기만 삭제할 수 있습니다", HttpStatus.FORBIDDEN),
 
-
+    // 쿠폰 8000
+    COUPON_NOT_FOUND(false, 8001, "존재하지 않는 쿠폰입니다", HttpStatus.NOT_FOUND),
+    COUPON_ALREADY_ISSUED(false, 8002, "이미 발급받은 쿠폰입니다", HttpStatus.CONFLICT),
+    COUPON_SOLD_OUT(false, 8003, "쿠폰이 모두 소진되었습니다", HttpStatus.CONFLICT),
 
     // 서버 9000
     INTERNAL_SERVER_ERROR(false, 9001, "서버 오류가 발생했습니다", HttpStatus.INTERNAL_SERVER_ERROR),
