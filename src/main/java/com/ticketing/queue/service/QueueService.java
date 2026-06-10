@@ -2,6 +2,8 @@ package com.ticketing.queue.service;
 
 import com.ticketing.queue.dto.response.QueueStatusResponse;
 import lombok.RequiredArgsConstructor;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,10 @@ public class QueueService {
     private static final int CAPACITY = 100;
     private static final long ACTIVE_TTL_MS = 10 * 60 * 1000;
     private static final String SCHEDULES_KEY = "queue:schedules";
+    private static final String ADMIT_LOCK = "queue:admit:lock";
+    private final RedissonClient redissonClient;
+
+
 
     public QueueStatusResponse enter(Long scheduleId, Long memberId) {
         String member = memberId.toString();
@@ -56,6 +62,19 @@ public class QueueService {
 
     @Scheduled(fixedDelay = 3000)
     public void admit() {
+        RLock lock = redissonClient.getLock(ADMIT_LOCK);
+        if (!lock.tryLock()) return;
+
+        try {
+            doAdmit();
+        }finally {
+            if (lock.isHeldByCurrentThread()) lock.unlock();
+        }
+    }
+
+
+
+    public void doAdmit() {
         Set<String> scheduleIds = redisTemplate.opsForSet().members(SCHEDULES_KEY);
         if (scheduleIds == null) return;
         long now = System.currentTimeMillis();
