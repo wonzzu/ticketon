@@ -19,7 +19,7 @@ public class NormalMemberController {
 
     private final NormalMemberService normalMemberService;
 
-    @RateLimit(key = RateLimit.KeyType.IP, limit = 3, windowSeconds = 60)
+    @RateLimit(key = RateLimit.KeyType.IP, limit = 20, windowSeconds = 60)
     @PostMapping("/signup")
     public ResponseEntity<BaseResponse<Void>> signup(@Validated @RequestBody NormalMemberSignupDto dto) {
         normalMemberService.create(dto);
