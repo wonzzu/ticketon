@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static com.ticketing.global.BaseResponseStatus.*;
+import static com.ticketing.global.baseresponse.BaseResponseStatus.*;
 
 @Service
 @RequiredArgsConstructor

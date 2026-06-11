@@ -1,7 +1,7 @@
 package com.ticketing.member.controller;
 
 import com.ticketing.auth.CustomUserDetails;
-import com.ticketing.global.BaseResponse;
+import com.ticketing.global.baseresponse.BaseResponse;
 import com.ticketing.member.dto.response.MyInfoResponseDto;
 import com.ticketing.member.service.MemberService;
 import lombok.RequiredArgsConstructor;

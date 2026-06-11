@@ -2,7 +2,7 @@ package com.ticketing.review.controller;
 
 
 import com.ticketing.auth.CustomUserDetails;
-import com.ticketing.global.BaseResponse;
+import com.ticketing.global.baseresponse.BaseResponse;
 import com.ticketing.review.dto.request.ReviewCreateDto;
 import com.ticketing.review.dto.response.MyReviewResponseDto;
 import com.ticketing.review.dto.response.ReviewListResponseDto;

@@ -6,7 +6,6 @@ import com.ticketing.event.domain.EventSeatStatus;
 import com.ticketing.event.repository.EventScheduleRepository;
 import com.ticketing.event.repository.EventSeatRepository;
 import com.ticketing.event.service.SeatHoldService;
-import com.ticketing.global.BaseResponseStatus;
 import com.ticketing.global.exception.BaseException;
 import com.ticketing.member.domain.Member;
 import com.ticketing.member.repository.MemberRepository;
@@ -22,9 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-import static com.ticketing.global.BaseResponseStatus.*;
+import static com.ticketing.global.baseresponse.BaseResponseStatus.*;
 
 @Service
 @RequiredArgsConstructor

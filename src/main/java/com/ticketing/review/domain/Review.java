@@ -2,11 +2,9 @@ package com.ticketing.review.domain;
 
 
 import com.ticketing.event.domain.Event;
-import com.ticketing.global.BaseResponseStatus;
 import com.ticketing.global.entity.BaseEntity;
 import com.ticketing.global.exception.BaseException;
 import com.ticketing.member.domain.Member;
-import com.ticketing.member.domain.NormalMember;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -14,7 +12,7 @@ import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDateTime;
 
-import static com.ticketing.global.BaseResponseStatus.*;
+import static com.ticketing.global.baseresponse.BaseResponseStatus.*;
 
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(

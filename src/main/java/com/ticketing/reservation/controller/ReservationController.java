@@ -2,7 +2,7 @@ package com.ticketing.reservation.controller;
 
 
 import com.ticketing.auth.CustomUserDetails;
-import com.ticketing.global.BaseResponse;
+import com.ticketing.global.baseresponse.BaseResponse;
 import com.ticketing.reservation.dto.request.ReservationCreateDto;
 import com.ticketing.reservation.dto.response.ReservationResponseDto;
 import com.ticketing.reservation.service.ReservationService;

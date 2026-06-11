@@ -8,7 +8,6 @@ import com.ticketing.event.domain.ReviewAction;
 import com.ticketing.event.dto.response.EventListResponseDto;
 import com.ticketing.event.repository.EventRepository;
 import com.ticketing.event.repository.EventReviewHistoryRepository;
-import com.ticketing.global.BaseResponseStatus;
 import com.ticketing.global.exception.BaseException;
 import com.ticketing.member.domain.AdminMember;
 import com.ticketing.member.repository.AdminMemberRepository;
@@ -20,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static com.ticketing.global.BaseResponseStatus.*;
+import static com.ticketing.global.baseresponse.BaseResponseStatus.*;
 
 @Service
 @RequiredArgsConstructor
