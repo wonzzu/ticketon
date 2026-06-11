@@ -3,6 +3,7 @@ package com.ticketing.auth.service;
 import com.ticketing.auth.CustomUserDetails;
 import com.ticketing.auth.dto.request.LoginRequestDto;
 import com.ticketing.auth.jwt.JwtTokenProvider;
+import com.ticketing.auth.jwt.RefreshTokenStore;
 import com.ticketing.global.exception.BaseException;
 import com.ticketing.member.domain.Member;
 import com.ticketing.member.repository.MemberRepository;
@@ -14,7 +15,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.ticketing.global.baseresponse.BaseResponseStatus.*;
+import static com.ticketing.global.baseresponse.BaseResponseStatus.MEMBER_NOT_FOUND;
+import static com.ticketing.global.baseresponse.BaseResponseStatus.UNAUTHORIZED_ACCESS;
 
 @Slf4j
 @Service
@@ -25,6 +27,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final MemberRepository memberRepository;
+    private final RefreshTokenStore refreshTokenStore;
 
 
     public TokenPair login(LoginRequestDto dto) {
@@ -40,7 +43,10 @@ public class AuthService {
         String accessToken = jwtTokenProvider.createAccessToken(memberId, role);
         String refreshToken = jwtTokenProvider.createRefreshToken(memberId);
 
+        refreshTokenStore.save(memberId, refreshToken);
+
         log.info("로그인 성공: memberId={}, role={}", memberId, role);
+
         return new TokenPair(accessToken, refreshToken);
     }
 
@@ -50,12 +56,27 @@ public class AuthService {
         }
 
         Long memberId = jwtTokenProvider.getMemberId(refreshToken);
+
+        if (!refreshTokenStore.isValid(memberId, refreshToken)) {
+            throw new BaseException(UNAUTHORIZED_ACCESS);
+        }
+
+
         Member member = memberRepository.findById(memberId).orElseThrow(() -> new BaseException(MEMBER_NOT_FOUND));
 
         String role = member.getMemberType().name();
         return jwtTokenProvider.createAccessToken(memberId, role);
     }
 
+    public void logout(String refreshToken) {
+        if (refreshToken == null || !jwtTokenProvider.validate(refreshToken)) {
+            return;
+        }
+
+        Long memberId = jwtTokenProvider.getMemberId(refreshToken);
+        refreshTokenStore.delete(memberId);
+
+    }
 
     public record TokenPair(String accessToken, String refreshToken) {
     }
