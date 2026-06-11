@@ -3,7 +3,6 @@ package com.ticketing.auth.service;
 import com.ticketing.auth.CustomUserDetails;
 import com.ticketing.auth.dto.request.LoginRequestDto;
 import com.ticketing.auth.jwt.JwtTokenProvider;
-import com.ticketing.global.BaseResponseStatus;
 import com.ticketing.global.exception.BaseException;
 import com.ticketing.member.domain.Member;
 import com.ticketing.member.repository.MemberRepository;
@@ -15,7 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.ticketing.global.BaseResponseStatus.*;
+import static com.ticketing.global.baseresponse.BaseResponseStatus.*;
 
 @Slf4j
 @Service

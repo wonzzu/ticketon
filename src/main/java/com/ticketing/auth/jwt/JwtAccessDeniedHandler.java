@@ -1,8 +1,8 @@
 package com.ticketing.auth.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ticketing.global.BaseResponse;
-import com.ticketing.global.BaseResponseStatus;
+import com.ticketing.global.baseresponse.BaseResponse;
+import com.ticketing.global.baseresponse.BaseResponseStatus;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

@@ -1,6 +1,6 @@
 package com.ticketing.venue.controller;
 
-import com.ticketing.global.BaseResponse;
+import com.ticketing.global.baseresponse.BaseResponse;
 import com.ticketing.venue.dto.request.VenueCreateDto;
 import com.ticketing.venue.dto.request.VenueUpdateDto;
 import com.ticketing.venue.dto.response.VenueResponseDto;

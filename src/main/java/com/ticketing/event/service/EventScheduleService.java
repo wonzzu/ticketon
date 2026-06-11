@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.ticketing.global.BaseResponseStatus.*;
+import static com.ticketing.global.baseresponse.BaseResponseStatus.*;
 
 @Service
 @RequiredArgsConstructor

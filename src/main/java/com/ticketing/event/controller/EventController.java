@@ -7,7 +7,7 @@ import com.ticketing.event.dto.request.EventUpdateDto;
 import com.ticketing.event.dto.response.EventListResponseDto;
 import com.ticketing.event.dto.response.EventResponseDto;
 import com.ticketing.event.service.EventService;
-import com.ticketing.global.BaseResponse;
+import com.ticketing.global.baseresponse.BaseResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
