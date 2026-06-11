@@ -11,7 +11,7 @@ import lombok.experimental.SuperBuilder;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.ticketing.global.BaseResponseStatus.*;
+import static com.ticketing.global.baseresponse.BaseResponseStatus.*;
 
 @Entity
 @Getter

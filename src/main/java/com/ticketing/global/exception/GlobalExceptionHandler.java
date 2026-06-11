@@ -1,10 +1,9 @@
 package com.ticketing.global.exception;
 
-import com.ticketing.global.BaseResponse;
-import com.ticketing.global.BaseResponseStatus;
+import com.ticketing.global.baseresponse.BaseResponse;
+import com.ticketing.global.baseresponse.BaseResponseStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice

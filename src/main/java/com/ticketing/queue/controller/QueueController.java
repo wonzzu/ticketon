@@ -1,7 +1,7 @@
 package com.ticketing.queue.controller;
 
 import com.ticketing.auth.CustomUserDetails;
-import com.ticketing.global.BaseResponse;
+import com.ticketing.global.baseresponse.BaseResponse;
 import com.ticketing.queue.dto.response.QueueStatusResponse;
 import com.ticketing.queue.service.QueueService;
 import lombok.RequiredArgsConstructor;

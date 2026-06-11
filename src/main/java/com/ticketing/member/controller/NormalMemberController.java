@@ -1,6 +1,7 @@
 package com.ticketing.member.controller;
 
-import com.ticketing.global.BaseResponse;
+import com.ticketing.global.baseresponse.BaseResponse;
+import com.ticketing.global.ratelimit.RateLimit;
 import com.ticketing.member.dto.request.MemberUpdateDto;
 import com.ticketing.member.dto.request.NormalMemberSignupDto;
 import com.ticketing.member.dto.response.NormalMemberResponseDto;
@@ -18,6 +19,7 @@ public class NormalMemberController {
 
     private final NormalMemberService normalMemberService;
 
+    @RateLimit(key = RateLimit.KeyType.IP, limit = 20, windowSeconds = 60)
     @PostMapping("/signup")
     public ResponseEntity<BaseResponse<Void>> signup(@Validated @RequestBody NormalMemberSignupDto dto) {
         normalMemberService.create(dto);

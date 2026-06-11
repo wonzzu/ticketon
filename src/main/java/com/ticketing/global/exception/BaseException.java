@@ -1,6 +1,6 @@
 package com.ticketing.global.exception;
 
-import com.ticketing.global.BaseResponseStatus;
+import com.ticketing.global.baseresponse.BaseResponseStatus;
 import lombok.Getter;
 
 @Getter

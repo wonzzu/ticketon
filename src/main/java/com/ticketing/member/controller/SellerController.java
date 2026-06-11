@@ -4,7 +4,8 @@ import com.ticketing.auth.CustomUserDetails;
 import com.ticketing.event.dto.response.EventListResponseDto;
 import com.ticketing.event.dto.response.EventResponseDto;
 import com.ticketing.event.service.EventService;
-import com.ticketing.global.BaseResponse;
+import com.ticketing.global.baseresponse.BaseResponse;
+import com.ticketing.global.ratelimit.RateLimit;
 import com.ticketing.member.dto.request.SellerSignupDto;
 import com.ticketing.member.dto.request.SellerUpdateDto;
 import com.ticketing.member.dto.response.SellerResponseDto;
@@ -26,6 +27,7 @@ public class SellerController {
     private final SellerService sellerService;
     private final EventService eventService;
 
+    @RateLimit(key = RateLimit.KeyType.IP, limit = 20, windowSeconds = 60)
     @PostMapping("/signup")
     public ResponseEntity<BaseResponse<Void>> signup(@Validated @RequestBody SellerSignupDto dto) {
         sellerService.create(dto);

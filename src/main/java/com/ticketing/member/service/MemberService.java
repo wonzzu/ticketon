@@ -1,6 +1,5 @@
 package com.ticketing.member.service;
 
-import com.ticketing.global.BaseResponseStatus;
 import com.ticketing.global.exception.BaseException;
 import com.ticketing.member.domain.Member;
 import com.ticketing.member.dto.response.MyInfoResponseDto;
@@ -9,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.ticketing.global.BaseResponseStatus.*;
+import static com.ticketing.global.baseresponse.BaseResponseStatus.*;
 
 @Service
 @RequiredArgsConstructor

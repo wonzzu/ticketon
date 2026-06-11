@@ -1,4 +1,4 @@
-package com.ticketing.global;
+package com.ticketing.global.baseresponse;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -64,7 +64,7 @@ public enum BaseResponseStatus {
     // 서버 9000
     INTERNAL_SERVER_ERROR(false, 9001, "서버 오류가 발생했습니다", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_INPUT(false, 9002, "입력값이 올바르지 않습니다", HttpStatus.BAD_REQUEST),
-    ;
+    TOO_MANY_REQUESTS(false, 9003, "요청이 너무 많습니다. 잠시 후 다시 시도해주세요", HttpStatus.TOO_MANY_REQUESTS),;
 
     private final boolean success;
     private final int code;

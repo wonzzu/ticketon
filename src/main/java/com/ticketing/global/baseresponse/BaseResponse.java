@@ -1,4 +1,4 @@
-package com.ticketing.global;
+package com.ticketing.global.baseresponse;
 
 import lombok.Getter;
 
