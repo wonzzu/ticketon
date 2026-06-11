@@ -5,7 +5,6 @@ import com.ticketing.coupon.domain.CouponIssue;
 import com.ticketing.coupon.dto.request.CouponCreateDto;
 import com.ticketing.coupon.repository.CouponIssueRepository;
 import com.ticketing.coupon.repository.CouponRepository;
-import com.ticketing.global.BaseResponseStatus;
 import com.ticketing.global.exception.BaseException;
 import com.ticketing.member.domain.Member;
 import com.ticketing.member.repository.MemberRepository;
@@ -14,7 +13,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.ticketing.global.BaseResponseStatus.*;
+import static com.ticketing.global.baseresponse.BaseResponseStatus.*;
 
 @Service
 @RequiredArgsConstructor

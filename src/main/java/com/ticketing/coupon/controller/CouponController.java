@@ -3,7 +3,7 @@ package com.ticketing.coupon.controller;
 import com.ticketing.auth.CustomUserDetails;
 import com.ticketing.coupon.dto.request.CouponCreateDto;
 import com.ticketing.coupon.service.CouponService;
-import com.ticketing.global.BaseResponse;
+import com.ticketing.global.baseresponse.BaseResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

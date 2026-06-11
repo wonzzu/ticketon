@@ -4,7 +4,8 @@ package com.ticketing.auth.controller;
 import com.ticketing.auth.dto.request.LoginRequestDto;
 import com.ticketing.auth.dto.response.TokenResponse;
 import com.ticketing.auth.service.AuthService;
-import com.ticketing.global.BaseResponse;
+import com.ticketing.global.baseresponse.BaseResponse;
+import com.ticketing.global.ratelimit.RateLimit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -27,6 +28,7 @@ public class AuthController {
 
     private final AuthService authService;
 
+    @RateLimit(key = RateLimit.KeyType.IP, limit = 5, windowSeconds = 60)
     @PostMapping("/login")
     public ResponseEntity<BaseResponse<TokenResponse>> login(@Validated @RequestBody LoginRequestDto dto) {
         TokenPair pair = authService.login(dto);

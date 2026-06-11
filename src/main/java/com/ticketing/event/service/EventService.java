@@ -7,7 +7,7 @@ import com.ticketing.event.dto.request.EventUpdateDto;
 import com.ticketing.event.dto.response.EventListResponseDto;
 import com.ticketing.event.dto.response.EventResponseDto;
 import com.ticketing.event.repository.EventRepository;
-import com.ticketing.global.BaseResponseStatus;
+import com.ticketing.global.baseresponse.BaseResponseStatus;
 import com.ticketing.global.exception.BaseException;
 import com.ticketing.member.domain.Seller;
 import com.ticketing.member.repository.SellerRepository;
@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static com.ticketing.global.BaseResponseStatus.EVENT_NOT_OWNED;
+import static com.ticketing.global.baseresponse.BaseResponseStatus.EVENT_NOT_OWNED;
 
 @Service
 @RequiredArgsConstructor

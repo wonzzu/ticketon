@@ -2,7 +2,7 @@ package com.ticketing.event.controller;
 
 import com.ticketing.event.dto.response.EventSeatResponseDto;
 import com.ticketing.event.service.EventSeatService;
-import com.ticketing.global.BaseResponse;
+import com.ticketing.global.baseresponse.BaseResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

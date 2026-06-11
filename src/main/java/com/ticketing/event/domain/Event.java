@@ -1,6 +1,5 @@
 package com.ticketing.event.domain;
 
-import com.ticketing.global.BaseResponseStatus;
 import com.ticketing.global.entity.BaseEntity;
 import com.ticketing.global.exception.BaseException;
 import com.ticketing.member.domain.Seller;
@@ -14,7 +13,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.ticketing.global.BaseResponseStatus.*;
+import static com.ticketing.global.baseresponse.BaseResponseStatus.*;
 
 @Entity
 @Getter
