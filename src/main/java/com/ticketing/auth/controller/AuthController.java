@@ -53,10 +53,12 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<BaseResponse<Void>> logout() {
+    public ResponseEntity<BaseResponse<Void>> logout(
+            @CookieValue(value = REFRESH_COOKIE_NAME, required = false) String refreshToken) {
+
+        authService.logout(refreshToken);
 
         ResponseCookie expired = buildRefreshCookie("", Duration.ZERO);
-
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, expired.toString())
                 .body(BaseResponse.success());
     }
