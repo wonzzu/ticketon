@@ -27,7 +27,7 @@ public class SellerController {
     private final SellerService sellerService;
     private final EventService eventService;
 
-    @RateLimit(key = RateLimit.KeyType.IP, limit = 3, windowSeconds = 60)
+    @RateLimit(key = RateLimit.KeyType.IP, limit = 20, windowSeconds = 60)
     @PostMapping("/signup")
     public ResponseEntity<BaseResponse<Void>> signup(@Validated @RequestBody SellerSignupDto dto) {
         sellerService.create(dto);

@@ -28,7 +28,7 @@ public class AuthController {
 
     private final AuthService authService;
 
-    @RateLimit(key = RateLimit.KeyType.IP, limit = 5, windowSeconds = 60)
+    @RateLimit(key = RateLimit.KeyType.IP, limit = 20, windowSeconds = 60)
     @PostMapping("/login")
     public ResponseEntity<BaseResponse<TokenResponse>> login(@Validated @RequestBody LoginRequestDto dto) {
         TokenPair pair = authService.login(dto);
