@@ -1,6 +1,7 @@
 package com.ticketing.payment.domain;
 
 import com.ticketing.global.entity.BaseEntity;
+import com.ticketing.global.exception.BaseException;
 import com.ticketing.reservation.domain.Reservation;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -8,6 +9,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+
+import static com.ticketing.global.baseresponse.BaseResponseStatus.PAYMENT_CANCEL_NOT_ALLOWED;
 
 
 @Entity
@@ -42,5 +45,12 @@ public class Payment extends BaseEntity {
                 .status(PaymentStatus.PAID)
                 .method("MOCK")
                 .build();
+    }
+
+    public void cancel() {
+        if (this.status != PaymentStatus.PAID) {
+            throw new BaseException(PAYMENT_CANCEL_NOT_ALLOWED);
+        }
+        this.status = PaymentStatus.CANCELED;
     }
 }
