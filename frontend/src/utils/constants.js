@@ -72,6 +72,23 @@ export const RESERVATION_STATUS_BADGE = Object.freeze({
   CANCEL:    'bg-secondary-subtle text-secondary-emphasis',
 })
 
+// === 예매 취소 사유 (백엔드 CancelReason 미러링) ===
+export const CANCEL_REASON = Object.freeze({
+  CHANGE_OF_MIND:    'CHANGE_OF_MIND',
+  SCHEDULE_CONFLICT: 'SCHEDULE_CONFLICT',
+  DUPLICATE_BOOKING: 'DUPLICATE_BOOKING',
+  EVENT_CHANGED:     'EVENT_CHANGED',
+  OTHER:             'OTHER',
+})
+
+export const CANCEL_REASON_LABEL = Object.freeze({
+  CHANGE_OF_MIND:    '단순 변심',
+  SCHEDULE_CONFLICT: '일정 변경',
+  DUPLICATE_BOOKING: '중복 예매',
+  EVENT_CHANGED:     '공연 정보 변경',
+  OTHER:             '기타',
+})
+
 // === 좌석 등급 (백엔드 SeatGrade 미러링) ===
 export const SEAT_GRADE = Object.freeze({
   VIP: 'VIP',
