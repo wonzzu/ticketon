@@ -10,10 +10,13 @@ import com.ticketing.global.exception.BaseException;
 import com.ticketing.member.domain.Member;
 import com.ticketing.member.repository.MemberRepository;
 import com.ticketing.queue.service.QueueService;
+import com.ticketing.reservation.domain.CancelReason;
 import com.ticketing.reservation.domain.Reservation;
+import com.ticketing.reservation.domain.ReservationHistory;
 import com.ticketing.reservation.domain.ReservationSeat;
 import com.ticketing.reservation.dto.request.ReservationCreateDto;
 import com.ticketing.reservation.dto.response.ReservationResponseDto;
+import com.ticketing.reservation.repository.ReservationHistoryRepository;
 import com.ticketing.reservation.repository.ReservationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -37,6 +40,7 @@ public class ReservationService {
     private final MemberRepository memberRepository;
     private final SeatHoldService seatHoldService;
     private final QueueService queueService;
+    private final ReservationHistoryRepository reservationHistoryRepository;
 
     @Transactional
     public ReservationResponseDto create(Long memberId, ReservationCreateDto dto) {
@@ -90,8 +94,9 @@ public class ReservationService {
         }
         reservationRepository.save(reservation);
 
-        return ReservationResponseDto.from(reservation);
+        reservationHistoryRepository.save(ReservationHistory.of(reservation));
 
+        return ReservationResponseDto.from(reservation);
     }
 
     // TODO: findMine은 예매 N건마다 schedule/event/venue/seat을 LAZY 조회 → N+1 나중에 fetch join 생각.
@@ -113,7 +118,12 @@ public class ReservationService {
     }
 
     @Transactional
-    public void cancel(Long reservationId, Long memberId) {
+    public void cancel(Long reservationId, Long memberId, CancelReason cancelReason,String detail) {
+
+        if (cancelReason == CancelReason.OTHER && (detail == null || detail.isBlank())) {
+            throw new BaseException(CANCEL_DETAIL_REQUIRED);
+        }
+
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new BaseException(RESERVATION_NOT_FOUND));
 
@@ -122,13 +132,14 @@ public class ReservationService {
         }
 
         reservation.cancel();
-
         reservation.getReservationSeats().forEach(rs -> rs.getEventSeat().cancel());
 
         Long scheduleId = reservation.getEventSchedule().getId();
         List<Long> seatIds = reservation.getReservationSeats().stream()
                 .map(rs -> rs.getEventSeat().getId()).toList();
+
         seatHoldService.releaseAll(scheduleId, seatIds);
 
+        reservationHistoryRepository.save(ReservationHistory.ofCancel(reservation,cancelReason,detail));
     }
 }

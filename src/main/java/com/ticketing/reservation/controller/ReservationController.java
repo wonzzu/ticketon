@@ -3,6 +3,7 @@ package com.ticketing.reservation.controller;
 
 import com.ticketing.auth.CustomUserDetails;
 import com.ticketing.global.baseresponse.BaseResponse;
+import com.ticketing.reservation.dto.request.ReservationCancelDto;
 import com.ticketing.reservation.dto.request.ReservationCreateDto;
 import com.ticketing.reservation.dto.response.ReservationResponseDto;
 import com.ticketing.reservation.service.ReservationService;
@@ -49,8 +50,10 @@ public class ReservationController {
 
     @PostMapping("/{id}/cancel")
     public ResponseEntity<BaseResponse<Void>> cancel(
-            @PathVariable Long id, @AuthenticationPrincipal CustomUserDetails user) {
-        reservationService.cancel(id, user.getMemberId());
+            @PathVariable Long id, @AuthenticationPrincipal CustomUserDetails user, @Validated @RequestBody ReservationCancelDto dto) {
+
+        reservationService.cancel(id, user.getMemberId(), dto.getCancelReason(), dto.getDetail());
+
         return ResponseEntity.ok(BaseResponse.success());
     }
 
