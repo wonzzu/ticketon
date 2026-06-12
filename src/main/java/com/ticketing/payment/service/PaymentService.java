@@ -7,6 +7,8 @@ import com.ticketing.payment.dto.request.PaymentCreateDto;
 import com.ticketing.payment.dto.response.PaymentResponseDto;
 import com.ticketing.payment.repository.PaymentRepository;
 import com.ticketing.reservation.domain.Reservation;
+import com.ticketing.reservation.domain.ReservationHistory;
+import com.ticketing.reservation.repository.ReservationHistoryRepository;
 import com.ticketing.reservation.repository.ReservationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,7 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final ReservationRepository reservationRepository;
     private final SeatHoldService seatHoldService;
+    private final ReservationHistoryRepository reservationHistoryRepository;
 
     @Transactional
     public PaymentResponseDto pay(Long memberId, PaymentCreateDto dto) {
@@ -52,6 +55,8 @@ public class PaymentService {
         paymentRepository.save(payment);
 
         reservation.confirm();
+
+        reservationHistoryRepository.save(ReservationHistory.of(reservation));
 
         seatHoldService.releaseAll(scheduleId, seatIds);
 
