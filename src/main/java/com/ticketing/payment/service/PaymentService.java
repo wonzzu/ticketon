@@ -3,8 +3,10 @@ package com.ticketing.payment.service;
 import com.ticketing.event.service.SeatHoldService;
 import com.ticketing.global.exception.BaseException;
 import com.ticketing.payment.domain.Payment;
+import com.ticketing.payment.domain.PaymentHistory;
 import com.ticketing.payment.dto.request.PaymentCreateDto;
 import com.ticketing.payment.dto.response.PaymentResponseDto;
+import com.ticketing.payment.repository.PaymentHistoryRepository;
 import com.ticketing.payment.repository.PaymentRepository;
 import com.ticketing.reservation.domain.Reservation;
 import com.ticketing.reservation.domain.ReservationHistory;
@@ -27,6 +29,7 @@ public class PaymentService {
     private final ReservationRepository reservationRepository;
     private final SeatHoldService seatHoldService;
     private final ReservationHistoryRepository reservationHistoryRepository;
+    private final PaymentHistoryRepository paymentHistoryRepository;
 
     @Transactional
     public PaymentResponseDto pay(Long memberId, PaymentCreateDto dto) {
@@ -53,6 +56,7 @@ public class PaymentService {
 
         Payment payment = Payment.paid(reservation, reservation.getTotalPrice());
         paymentRepository.save(payment);
+        paymentHistoryRepository.save(PaymentHistory.of(payment, null));
 
         reservation.confirm();
 
