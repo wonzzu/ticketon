@@ -23,6 +23,7 @@ import AppLoading from '@/components/common/AppLoading.vue'
 import AppEmpty from '@/components/common/AppEmpty.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import StarRating from '@/components/common/StarRating.vue'
+import CancelReasonModal from '@/components/reservation/CancelReasonModal.vue'
 
 const activeMenu = ref('info')   // 'reservation' | 'coupon' | 'review' | 'info'
 
@@ -36,7 +37,11 @@ const reviewsLoading = ref(false)
 const reservations = ref([])
 const reservationsLoaded = ref(false)
 const reservationsLoading = ref(false)
-const cancelingId = ref(null)
+
+// 예매 취소 모달
+const cancelModalOpen = ref(false)
+const cancelTargetId = ref(null)
+const canceling = ref(false)
 
 async function loadInfo() {
   infoLoading.value = true
@@ -74,16 +79,21 @@ async function loadReservations() {
   }
 }
 
-async function onCancel(id) {
-  if (!confirm('예매를 취소하시겠습니까?')) return
-  cancelingId.value = id
+function onCancel(id) {
+  cancelTargetId.value = id
+  cancelModalOpen.value = true
+}
+
+async function onCancelSubmit(payload) {
+  canceling.value = true
   try {
-    await reservationApi.cancel(id)
+    await reservationApi.cancel(cancelTargetId.value, payload)
+    cancelModalOpen.value = false
     await loadReservations()   // 목록 갱신
   } catch (e) {
     alert(e.response?.data?.message || '취소에 실패했습니다.')
   } finally {
-    cancelingId.value = null
+    canceling.value = false
   }
 }
 
@@ -250,7 +260,6 @@ onMounted(loadInfo)
 
                 <div v-if="canCancel(r.status)" class="text-end">
                   <AppButton variant="outline-danger" size="sm"
-                             :loading="cancelingId === r.id"
                              @click="onCancel(r.id)">
                     예매 취소
                   </AppButton>
@@ -294,6 +303,8 @@ onMounted(loadInfo)
         </section>
       </div>
     </div>
+
+    <CancelReasonModal v-model="cancelModalOpen" :loading="canceling" @submit="onCancelSubmit" />
   </div>
 </template>
 
