@@ -37,7 +37,7 @@ public enum BaseResponseStatus {
     RESERVATION_NOT_OWNED(false, 4005, "본인 예매만 처리할 수 있습니다", HttpStatus.FORBIDDEN),
     EMPTY_SEAT_SELECTION(false, 4006, "좌석을 선택해주세요", HttpStatus.BAD_REQUEST),
     SEAT_HOLD_EXPIRED(false, 4007, "선점 시간이 만료되었습니다..", HttpStatus.BAD_REQUEST),
-
+    CANCEL_DETAIL_REQUIRED(false, 4008, "기타 사유는 상세 입력이 필요합니다", HttpStatus.BAD_REQUEST),
 
     // 결제 5000
     PAYMENT_FAILED(false, 5001, "결제에 실패했습니다", HttpStatus.BAD_REQUEST),
