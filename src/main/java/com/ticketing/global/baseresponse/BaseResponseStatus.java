@@ -43,6 +43,7 @@ public enum BaseResponseStatus {
     PAYMENT_FAILED(false, 5001, "결제에 실패했습니다", HttpStatus.BAD_REQUEST),
     PAYMENT_NOT_FOUND(false, 5002, "존재하지 않는 결제입니다", HttpStatus.NOT_FOUND),
     PAYMENT_ALREADY_COMPLETED(false, 5003, "이미 완료된 결제입니다", HttpStatus.CONFLICT),
+    PAYMENT_CANCEL_NOT_ALLOWED(false, 5004, "취소할 수 없는 결제 상태입니다", HttpStatus.BAD_REQUEST),
 
     // 대기열 6000
     QUEUE_NOT_FOUND(false, 6001, "대기열 정보를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
@@ -64,7 +65,8 @@ public enum BaseResponseStatus {
     // 서버 9000
     INTERNAL_SERVER_ERROR(false, 9001, "서버 오류가 발생했습니다", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_INPUT(false, 9002, "입력값이 올바르지 않습니다", HttpStatus.BAD_REQUEST),
-    TOO_MANY_REQUESTS(false, 9003, "요청이 너무 많습니다. 잠시 후 다시 시도해주세요", HttpStatus.TOO_MANY_REQUESTS),;
+    TOO_MANY_REQUESTS(false, 9003, "요청이 너무 많습니다. 잠시 후 다시 시도해주세요", HttpStatus.TOO_MANY_REQUESTS),
+    ;
 
     private final boolean success;
     private final int code;
