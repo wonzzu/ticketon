@@ -9,6 +9,9 @@ import com.ticketing.event.service.SeatHoldService;
 import com.ticketing.global.exception.BaseException;
 import com.ticketing.member.domain.Member;
 import com.ticketing.member.repository.MemberRepository;
+import com.ticketing.payment.domain.PaymentHistory;
+import com.ticketing.payment.repository.PaymentHistoryRepository;
+import com.ticketing.payment.repository.PaymentRepository;
 import com.ticketing.queue.service.QueueService;
 import com.ticketing.reservation.domain.CancelReason;
 import com.ticketing.reservation.domain.Reservation;
@@ -41,6 +44,9 @@ public class ReservationService {
     private final SeatHoldService seatHoldService;
     private final QueueService queueService;
     private final ReservationHistoryRepository reservationHistoryRepository;
+    private final PaymentRepository paymentRepository;
+    private final PaymentHistoryRepository paymentHistoryRepository;
+
 
     @Transactional
     public ReservationResponseDto create(Long memberId, ReservationCreateDto dto) {
@@ -139,6 +145,11 @@ public class ReservationService {
                 .map(rs -> rs.getEventSeat().getId()).toList();
 
         seatHoldService.releaseAll(scheduleId, seatIds);
+
+        paymentRepository.findByReservationId(reservationId).ifPresent(payment -> {
+            payment.cancel();
+            paymentHistoryRepository.save(PaymentHistory.of(payment, cancelReason.getDescription()));
+        });
 
         reservationHistoryRepository.save(ReservationHistory.ofCancel(reservation,cancelReason,detail));
     }
