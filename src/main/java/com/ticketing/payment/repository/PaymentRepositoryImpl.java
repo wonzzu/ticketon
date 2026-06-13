@@ -4,13 +4,16 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticketing.payment.domain.PaymentStatus;
-import com.ticketing.payment.domain.QPayment;
+import com.ticketing.payment.dto.EventOrderCount;
 import com.ticketing.payment.dto.PaymentSalesAggregate;
+import com.ticketing.reservation.domain.QReservation;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static com.ticketing.payment.domain.QPayment.*;
+import static com.ticketing.reservation.domain.QReservation.*;
 
 @RequiredArgsConstructor
 public class PaymentRepositoryImpl implements PaymentRepositoryCustom {
@@ -30,6 +33,21 @@ public class PaymentRepositoryImpl implements PaymentRepositoryCustom {
                 ).fetchOne();
 
     }
+
+    @Override
+    public List<EventOrderCount> aggregatePaidByEvent(LocalDateTime start, LocalDateTime end) {
+
+        return queryFactory
+                .select(Projections.constructor(EventOrderCount.class,
+                        reservation.eventSchedule.event.id,
+                        payment.count()))
+                .from(payment)
+                .join(payment.reservation, reservation)
+                .where(payment.status.eq(PaymentStatus.PAID), createdBetween(start, end))
+                .groupBy(reservation.eventSchedule.event.id)
+                .fetch();
+    }
+
 
     private BooleanExpression createdBetween(LocalDateTime from, LocalDateTime to) {
         if (from == null || to == null) return null;

@@ -13,14 +13,15 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
 
-@Configuration
-@EnableCaching
+// 캐시 임시 비활성화 (@Configuration / @EnableCaching 주석 처리)
+// @Configuration
+// @EnableCaching
 public class CacheConfig {
 
     @Bean
@@ -34,12 +35,11 @@ public class CacheConfig {
 
         mapper.activateDefaultTyping(
                 BasicPolymorphicTypeValidator.builder()
-                        .allowIfBaseType(Object.class)
+                        .allowIfSubType(Object.class)
                         .build(),
-                ObjectMapper.DefaultTyping.NON_FINAL,
-                JsonTypeInfo.As.PROPERTY);
+                ObjectMapper.DefaultTyping.NON_FINAL);
 
-        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(mapper);
+        Jackson2JsonRedisSerializer<Object> serializer = new Jackson2JsonRedisSerializer<>(mapper, Object.class);
 
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(5))

@@ -6,16 +6,17 @@
  *   GET /events/{id}            — 공개 공연 상세 (APPROVED만, 누구나)
  *   GET /events/{id}/schedules  — 회차 목록
  *
- * 레이아웃: 좌(포스터 + 회차선택) / 우(공연 정보 + 가격/할인)
- * 가격·할인은 Mock (백엔드 가격/할인 도메인 연동 전). 예매는 Phase 2.
+ * 레이아웃: 좌(포스터 + 회차선택) / 우(공연 정보 + 가격)
+ * 가격은 첫 회차 좌석의 등급별 실제 가격. 할인은 쿠폰으로 처리(상시할인 도메인 없음).
  */
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { eventApi } from '@/api/event.api'
 import { scheduleApi } from '@/api/schedule.api'
+import { seatApi } from '@/api/seat.api'
 import {
   CATEGORY_LABEL, AGE_LIMIT_LABEL,
-  MOCK_PRICES, MOCK_DISCOUNTS,
+  SEAT_GRADE, SEAT_GRADE_LABEL,
 } from '@/utils/constants'
 import AppButton from '@/components/common/AppButton.vue'
 import AppLoading from '@/components/common/AppLoading.vue'
@@ -38,9 +39,22 @@ const errorMsg = ref('')
 
 const activeTab = ref('info')   // 'info' | 'review'
 
-// 가격/할인 — Mock (백엔드 도메인 없음)
-const prices = MOCK_PRICES
-const discounts = MOCK_DISCOUNTS
+// 가격 — 첫 회차 좌석의 등급별 가격 (할인은 쿠폰으로 처리)
+const prices = ref([])   // [{ grade, label, price }]
+
+async function loadPrices(scheduleId) {
+  try {
+    const seats = await seatApi.findBySchedule(scheduleId)
+    const byGrade = {}
+    seats.forEach((s) => { byGrade[s.grade] = s.price })
+    // 등급 정의 순서(VIP/R/S/A)로 정렬, 가격 있는 등급만
+    prices.value = Object.values(SEAT_GRADE)
+      .filter((g) => byGrade[g] != null)
+      .map((g) => ({ grade: g, label: SEAT_GRADE_LABEL[g], price: byGrade[g] }))
+  } catch (e) {
+    prices.value = []
+  }
+}
 
 const venueName = computed(() => schedules.value[0]?.venueName || '미정')
 
@@ -58,6 +72,7 @@ async function load() {
     ])
     event.value = ev
     schedules.value = sch
+    if (sch.length > 0) loadPrices(sch[0].id)
   } catch (e) {
     errorMsg.value = e.response?.data?.message || '공연 정보를 불러오지 못했습니다.'
   } finally {
@@ -116,22 +131,13 @@ onMounted(load)
             <dd class="detail-span">{{ event.cast }}</dd>
           </dl>
 
-          <!-- 가격 / 할인 (Mock) -->
-          <div class="detail-grid py-3 mb-0">
+          <!-- 가격 (회차 좌석 등급별) -->
+          <div v-if="prices.length" class="detail-grid py-3 mb-0">
             <div class="detail-label">가격</div>
-            <div>
-              <span v-for="p in prices" :key="p.grade">
-                {{ p.grade }} <span class="fw-semibold">{{ formatPrice(p.price) }}</span>
-              </span>
-            </div>
-
-            <div class="detail-label">할인</div>
             <div class="d-flex flex-column gap-1">
-              <div v-for="d in discounts" :key="d.label">
-                {{ d.label }}
-                <span class="fw-semibold">
-                  {{ d.price !== null ? formatPrice(d.price) : d.rate + ' 할인' }}
-                </span>
+              <div v-for="p in prices" :key="p.grade">
+                <span class="text-secondary">{{ p.label }}</span>
+                <span class="fw-semibold ms-1">{{ formatPrice(p.price) }}</span>
               </div>
             </div>
           </div>
