@@ -67,17 +67,18 @@ onMounted(load)
         </div>
       </div>
 
-      <!-- 통계 (준비 중) -->
+      <!-- 통계 -->
       <div class="col-md-6 col-lg-4">
-        <div class="admin-card-disabled d-flex align-items-center gap-3 p-3 bg-white border rounded">
-          <div class="admin-icon bg-secondary-subtle text-secondary d-flex align-items-center justify-content-center rounded fs-4 flex-shrink-0">
+        <RouterLink to="/admin/stats"
+                    class="d-flex align-items-center gap-3 p-3 bg-white border rounded text-reset hover-lift">
+          <div class="admin-icon bg-success-subtle text-success-emphasis d-flex align-items-center justify-content-center rounded fs-4 flex-shrink-0">
             <i class="bi bi-graph-up"></i>
           </div>
           <div>
-            <h3 class="h6 fw-bold mb-1">통계</h3>
-            <p class="text-secondary small mb-0">준비 중</p>
+            <h3 class="h6 fw-bold mb-1">매출 통계</h3>
+            <p class="text-secondary small mb-0">일별 매출 · 예매수</p>
           </div>
-        </div>
+        </RouterLink>
       </div>
     </div>
   </div>
