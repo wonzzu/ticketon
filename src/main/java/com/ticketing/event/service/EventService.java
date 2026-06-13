@@ -51,7 +51,8 @@ public class EventService {
 
     //TODO event가 많이 쌓이면 N+1문제 생기니 나중에 레포지토리에 쿼리로 날아가게 하는 방향성 고려.
 
-    @Cacheable(cacheNames = "events", key = "'all'")
+    // 목록(List) 캐시는 Jackson이 컬렉션 루트에 타입을 못 박아 역직렬화가 깨짐 → 캐시 미적용.
+    // (단건 find는 캐시 정상. List 캐시는 래퍼 DTO로 추후 복구 예정)
     public List<EventListResponseDto> findAll() {
         return eventRepository.findByStatus(EventStatus.APPROVED)
                 .stream().filter(e -> !e.getSchedules().isEmpty())
@@ -59,7 +60,7 @@ public class EventService {
                 .toList();
     }
 
-    @Cacheable(cacheNames = "event", key = "#id")
+    // @Cacheable(cacheNames = "event", key = "#id")   // 캐시 임시 비활성화
     public EventResponseDto find(Long id) {
 
         Event event = eventRepository.findById(id).orElseThrow
@@ -71,9 +72,10 @@ public class EventService {
     }
 
     @Transactional
-    @Caching(evict =
-            {@CacheEvict(cacheNames = "events", key = "'all'"), @CacheEvict(cacheNames = "event", key = "#id")}
-            )
+    // 캐시 임시 비활성화
+    // @Caching(evict =
+    //         {@CacheEvict(cacheNames = "events", key = "'all'"), @CacheEvict(cacheNames = "event", key = "#id")}
+    //         )
     public void update(Long id, EventUpdateDto dto, Long sellerId) {
         Event event = eventRepository.findById(id).orElseThrow
                 (() -> new BaseException(BaseResponseStatus.PERFORMANCE_NOT_FOUND));
@@ -108,9 +110,10 @@ public class EventService {
     }
 
     @Transactional
-    @Caching(evict =
-            {@CacheEvict(cacheNames = "events", key = "'all'"), @CacheEvict(cacheNames = "event", key = "#id")}
-    )
+    // 캐시 임시 비활성화
+    // @Caching(evict =
+    //         {@CacheEvict(cacheNames = "events", key = "'all'"), @CacheEvict(cacheNames = "event", key = "#id")}
+    // )
     public void delete(Long id, Long sellerId) {
         Event event = eventRepository.findById(id).orElseThrow
                 (() -> new BaseException(BaseResponseStatus.PERFORMANCE_NOT_FOUND));

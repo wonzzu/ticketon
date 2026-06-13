@@ -1,11 +1,17 @@
 package com.ticketing.statistics.service;
 
+import com.ticketing.event.domain.Event;
+import com.ticketing.event.dto.response.EventListResponseDto;
+import com.ticketing.event.repository.EventRepository;
 import com.ticketing.payment.dto.PaymentSalesAggregate;
 import com.ticketing.payment.repository.PaymentRepository;
+import com.ticketing.statistics.domain.DailyEventStats;
 import com.ticketing.statistics.domain.DailySalesStats;
 import com.ticketing.statistics.dto.response.DailySalesStatsResponseDto;
+import com.ticketing.statistics.repository.DailyEventStatsRepository;
 import com.ticketing.statistics.repository.DailySalesStatsRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +19,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +30,8 @@ public class StatisticsService {
 
     private final PaymentRepository paymentRepository;
     private final DailySalesStatsRepository dailySalesStatsRepository;
+    private final DailyEventStatsRepository dailyEventStatsRepository;
+    private final EventRepository eventRepository;
 
     @Transactional
     public void aggregateDaily(LocalDate date) {
@@ -31,6 +42,12 @@ public class StatisticsService {
 
         dailySalesStatsRepository.deleteByStatDate(date);
         dailySalesStatsRepository.save(DailySalesStats.of(date, agg.orderCount(), agg.salesAmount()));
+
+        dailyEventStatsRepository.deleteByStatDate(date);
+        paymentRepository.aggregatePaidByEvent(start, end)
+                .forEach(e -> dailyEventStatsRepository.save(
+                        DailyEventStats.of(date, e.eventId(), e.orderCount())
+                ));
 
     }
 
@@ -54,4 +71,20 @@ public class StatisticsService {
 
         return result;
     }
+
+    public List<EventListResponseDto> getRanking(int days, int limit) {
+        LocalDate from = LocalDate.now().minusDays(days);
+        List<Long> rankedIds = dailyEventStatsRepository.findRankedEventIds(from, PageRequest.of(0, limit));
+
+        Map<Long, Event> eventMap = eventRepository.findAllById(rankedIds).stream()
+                .collect(Collectors.toMap(Event::getId, e -> e));
+
+        return rankedIds.stream()
+                .map(eventMap::get)
+                .filter(Objects::nonNull)
+                .map(EventListResponseDto::from)
+                .toList();
+    }
+
+
 }

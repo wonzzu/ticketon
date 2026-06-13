@@ -49,11 +49,29 @@ public class SecurityConfig {
                 .formLogin(f -> f.disable())
                 .httpBasic(h -> h.disable())
                 .authorizeHttpRequests(auth -> auth
+                        // ── 공개 (로그인 불필요) ──
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/members/signup", "/sellers/signup").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/events/**", "/venues/**", "/schedules/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/members/signup", "/sellers/signup").permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/events", "/events/**",       // 공연 목록·상세·회차·리뷰 조회
+                                "/venues", "/venues/**",       // 공연장 조회
+                                "/schedules/**").permitAll()   // 좌석 조회
+
+                        // ── 어드민 전용 ──
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/coupons").hasRole("ADMIN")   // 쿠폰 생성은 admin만 (발급 /coupons/{id}/issue 는 회원)
+                        .requestMatchers(HttpMethod.POST, "/coupons").hasRole("ADMIN")            // 쿠폰 생성(발급 issue는 회원)
+                        .requestMatchers(HttpMethod.POST,   "/venues").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH,  "/venues/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/venues/**").hasRole("ADMIN")
+
+                        // ── 셀러 전용 ──
+                        .requestMatchers(HttpMethod.POST,   "/events").hasRole("SELLER")          // 공연 등록
+                        .requestMatchers(HttpMethod.PATCH,  "/events/**").hasRole("SELLER")       // 공연 수정
+                        .requestMatchers(HttpMethod.DELETE, "/events/**").hasRole("SELLER")       // 공연 삭제
+                        .requestMatchers(HttpMethod.POST,   "/events/*/schedules").hasRole("SELLER")  // 회차 등록
+                        .requestMatchers("/sellers/me/**").hasRole("SELLER")                     // 셀러 대시보드
+
+                        // ── 그 외 전부 로그인 필요 (예매·결제·대기열·마이페이지·쿠폰발급·리뷰작성) ──
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
