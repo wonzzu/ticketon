@@ -93,6 +93,11 @@ const routes = [
     component: () => import('@/views/event/EventDetailView.vue'),
     props: true,
   },
+  {
+    path: '/ranking',
+    name: 'ranking',
+    component: () => import('@/views/event/RankingView.vue'),
+  },
 
   // === 예매 (로그인 필요) ===
   {
