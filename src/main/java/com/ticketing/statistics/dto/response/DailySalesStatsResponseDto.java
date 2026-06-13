@@ -25,4 +25,13 @@ public class DailySalesStatsResponseDto {
                 .aggregatedAt(s.getCreatedAt())
                 .build();
     }
+
+    public static DailySalesStatsResponseDto ofToday(LocalDate date, long orderCount, long salesAmount) {
+        return DailySalesStatsResponseDto.builder()
+                .statDate(date)
+                .orderCount(orderCount)
+                .salesAmount(salesAmount)
+                .aggregatedAt(LocalDateTime.now())
+                .build();
+    }
 }
