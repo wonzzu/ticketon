@@ -38,10 +38,11 @@ public class AdminEventService {
     }
 
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(cacheNames = "events", key = "'all'"),
-            @CacheEvict(cacheNames = "event", key = "#eventId")
-    })
+    // 캐시 임시 비활성화
+    // @Caching(evict = {
+    //         @CacheEvict(cacheNames = "events", key = "'all'"),
+    //         @CacheEvict(cacheNames = "event", key = "#eventId")
+    // })
     public void approve(Long eventId, Long adminId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new BaseException(PERFORMANCE_NOT_FOUND));
@@ -58,10 +59,11 @@ public class AdminEventService {
     }
 
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(cacheNames = "events", key = "'all'"),
-            @CacheEvict(cacheNames = "event", key = "#eventId")
-    })
+    // 캐시 임시 비활성화
+    // @Caching(evict = {
+    //         @CacheEvict(cacheNames = "events", key = "'all'"),
+    //         @CacheEvict(cacheNames = "event", key = "#eventId")
+    // })
     public void reject(Long eventId, Long adminId, String reason) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new BaseException(PERFORMANCE_NOT_FOUND));
