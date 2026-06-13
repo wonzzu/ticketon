@@ -8,6 +8,7 @@ import com.ticketing.event.dto.response.EventListResponseDto;
 import com.ticketing.event.dto.response.EventResponseDto;
 import com.ticketing.event.service.EventService;
 import com.ticketing.global.baseresponse.BaseResponse;
+import com.ticketing.statistics.service.StatisticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,7 @@ import java.util.List;
 public class EventController {
 
     private final EventService eventService;
+    private final StatisticsService statisticsService;
 
 
     @PostMapping
@@ -60,4 +62,12 @@ public class EventController {
         return ResponseEntity.ok(BaseResponse.success());
     }
 
+    @GetMapping("/ranking")
+    public ResponseEntity<BaseResponse<List<EventListResponseDto>>> ranking(
+            @RequestParam(defaultValue = "7") int days, @RequestParam(defaultValue = "10") int limit) {
+
+        List<EventListResponseDto> ranking = statisticsService.getRanking(days, limit);
+
+        return ResponseEntity.ok(BaseResponse.success(ranking));
+    }
 }
