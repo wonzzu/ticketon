@@ -15,8 +15,7 @@ const categories = Object.values(CATEGORY)
 const isHomeActive = () => route.path === '/'
 const isCategoryActive = (cat) =>
   route.path === '/events' && route.query.category === cat
-const isRankingActive = () =>
-  route.path === '/events' && route.query.sort === 'hot'
+const isRankingActive = () => route.path === '/ranking'
 
 function onSearch() {
   if (!keyword.value.trim()) return
@@ -96,7 +95,7 @@ async function onLogout() {
               </RouterLink>
             </li>
             <li class="nav-item ms-auto">
-              <RouterLink to="/events?sort=hot" class="category-link text-danger fw-semibold"
+              <RouterLink to="/ranking" class="category-link text-danger fw-semibold"
                           :class="{ active: isRankingActive() }">
                 <i class="bi bi-fire me-1"></i>랭킹
               </RouterLink>

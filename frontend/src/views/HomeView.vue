@@ -10,12 +10,21 @@ import {
 
 const events = ref([])
 const slides = ref(HERO_SLIDES)
+const popular = ref([])   // 인기 랭킹 미리보기 (최근 7일 예매수 TOP 5)
 
 async function loadEvents(){
    try{
    events.value = await eventApi.findAll()
    }catch(e){
    events.value=[]
+   }
+}
+
+async function loadPopular(){
+   try{
+   popular.value = await eventApi.ranking({ days: 7, limit: 5 })
+   }catch(e){
+   popular.value = []
    }
 }
 
@@ -26,6 +35,7 @@ const musicalList = computed(() => events.value.filter(e => e.category === CATEG
 const sportsList  = computed(() => events.value.filter(e => e.category === CATEGORY.SPORTS))
 
 onMounted(loadEvents)
+onMounted(loadPopular)
 </script>
 
 <template>
@@ -82,6 +92,24 @@ onMounted(loadEvents)
           </div>
           <div class="label">{{ CATEGORY_LABEL[cat] }}</div>
         </RouterLink>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 인기 공연 (랭킹 미리보기) ===== -->
+  <section v-if="popular.length" class="container py-4">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+      <h2 class="section-title mb-0">
+        <i class="bi bi-fire text-danger me-2"></i>인기 공연
+      </h2>
+      <RouterLink to="/ranking" class="more-link">
+        랭킹 전체보기 <i class="bi bi-chevron-right"></i>
+      </RouterLink>
+    </div>
+    <div class="row g-3">
+      <div v-for="(event, i) in popular" :key="event.id"
+           class="col-6 col-md-4 col-lg-2">
+        <EventCard :event="event" :rank="i + 1" />
       </div>
     </div>
   </section>
