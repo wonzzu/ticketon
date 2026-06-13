@@ -74,6 +74,12 @@ const routes = [
     component: () => import('@/views/admin/AdminEventReviewView.vue'),
     meta: { requiresAuth: true, requiresRole: 'ADMIN' },
   },
+  {
+    path: '/admin/stats',
+    name: 'admin-stats',
+    component: () => import('@/views/admin/AdminStatsView.vue'),
+    meta: { requiresAuth: true, requiresRole: 'ADMIN' },
+  },
 
   // === 공개 공연 (누구나 접근) ===
   {
