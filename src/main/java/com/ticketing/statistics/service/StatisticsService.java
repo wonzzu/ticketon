@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -34,7 +35,23 @@ public class StatisticsService {
     }
 
     public List<DailySalesStatsResponseDto> findRange(LocalDate from, LocalDate to) {
-        return dailySalesStatsRepository.findByStatDateBetweenOrderByStatDate(from, to)
-                .stream().map(DailySalesStatsResponseDto::from).toList();
+
+        LocalDate today = LocalDate.now();
+        LocalDate pastTo = to.isBefore(today) ? to : today.minusDays(1);
+
+        ArrayList<DailySalesStatsResponseDto> result = new ArrayList<>();
+
+        if (!from.isAfter(pastTo)) {
+            dailySalesStatsRepository.findByStatDateBetweenOrderByStatDate(from, pastTo)
+                    .forEach(s -> result.add(DailySalesStatsResponseDto.from(s)));
+        }
+
+        if (!to.isBefore(today) && !from.isAfter(today)) {
+            PaymentSalesAggregate t = paymentRepository.aggregatePaid(
+                    today.atStartOfDay(), today.plusDays(1).atStartOfDay());
+            result.add(DailySalesStatsResponseDto.ofToday(today, t.orderCount(), t.salesAmount()));
+        }
+
+        return result;
     }
 }
