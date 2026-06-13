@@ -41,13 +41,11 @@ public class StatisticsService {
 
         ArrayList<DailySalesStatsResponseDto> result = new ArrayList<>();
 
-        // 1) 과거(오늘 이전)는 통계 테이블에서
         if (!from.isAfter(pastTo)) {
             dailySalesStatsRepository.findByStatDateBetweenOrderByStatDate(from, pastTo)
                     .forEach(s -> result.add(DailySalesStatsResponseDto.from(s)));
         }
 
-        // 2) 오늘이 기간에 포함되면 원본 즉석 집계 (to >= today && from <= today)
         if (!to.isBefore(today) && !from.isAfter(today)) {
             PaymentSalesAggregate t = paymentRepository.aggregatePaid(
                     today.atStartOfDay(), today.plusDays(1).atStartOfDay());
