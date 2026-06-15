@@ -3,6 +3,8 @@ package com.ticketing.coupon.service;
 import com.ticketing.coupon.domain.Coupon;
 import com.ticketing.coupon.domain.CouponIssue;
 import com.ticketing.coupon.dto.request.CouponCreateDto;
+import com.ticketing.coupon.dto.response.CouponResponseDto;
+import com.ticketing.coupon.dto.response.MyCouponResponseDto;
 import com.ticketing.coupon.repository.CouponIssueRepository;
 import com.ticketing.coupon.repository.CouponRepository;
 import com.ticketing.global.exception.BaseException;
@@ -13,10 +15,13 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 import static com.ticketing.global.baseresponse.BaseResponseStatus.*;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CouponService {
 
     private final StringRedisTemplate redisTemplate;
@@ -69,6 +74,19 @@ public class CouponService {
             throw e;
         }
 
+    }
+
+    public List<CouponResponseDto> findAll() {
+        return couponRepository.findAll().stream()
+                .map(CouponResponseDto::from)
+                .toList();
+    }
+
+    //TODO 발급 많아지면 N+1문제 발생 나중에 fetch join 생각.
+    public List<MyCouponResponseDto> findMyCoupon(Long memberId) {
+        return couponIssueRepository.findByMemberId(memberId).stream()
+                .map(MyCouponResponseDto::from)
+                .toList();
     }
 
 
