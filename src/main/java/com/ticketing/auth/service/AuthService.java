@@ -6,6 +6,7 @@ import com.ticketing.auth.jwt.JwtTokenProvider;
 import com.ticketing.auth.jwt.RefreshTokenStore;
 import com.ticketing.global.exception.BaseException;
 import com.ticketing.member.domain.Member;
+import com.ticketing.member.domain.MemberStatus;
 import com.ticketing.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,8 +62,13 @@ public class AuthService {
             throw new BaseException(UNAUTHORIZED_ACCESS);
         }
 
-
         Member member = memberRepository.findById(memberId).orElseThrow(() -> new BaseException(MEMBER_NOT_FOUND));
+
+        MemberStatus status = member.getMemberStatus();
+        if (status != MemberStatus.ACTIVE && status != MemberStatus.PENDING) {
+            refreshTokenStore.delete(memberId);
+            throw new BaseException(UNAUTHORIZED_ACCESS);
+        }
 
         String role = member.getMemberType().name();
         return jwtTokenProvider.createAccessToken(memberId, role);

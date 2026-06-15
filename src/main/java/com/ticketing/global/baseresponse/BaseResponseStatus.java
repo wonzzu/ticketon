@@ -19,6 +19,7 @@ public enum BaseResponseStatus {
     UNAUTHORIZED_ACCESS(false, 2005, "인증이 필요합니다", HttpStatus.UNAUTHORIZED),
     FORBIDDEN_ACCESS(false, 2006, "접근 권한이 없습니다", HttpStatus.FORBIDDEN),
     MEMBER_ALREADY_DELETED(false, 2007, "이미 탈퇴한 회원입니다", HttpStatus.BAD_REQUEST),
+    INVALID_MEMBER_STATUS(false, 2008, "현재 상태에서는 처리할 수 없습니다", HttpStatus.BAD_REQUEST),
 
     // 공연 3000
     PERFORMANCE_NOT_FOUND(false, 3001, "존재하지 않는 공연입니다", HttpStatus.NOT_FOUND),
