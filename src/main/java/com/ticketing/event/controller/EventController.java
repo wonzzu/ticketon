@@ -64,9 +64,11 @@ public class EventController {
 
     @GetMapping("/ranking")
     public ResponseEntity<BaseResponse<List<EventListResponseDto>>> ranking(
-            @RequestParam(defaultValue = "7") int days, @RequestParam(defaultValue = "10") int limit) {
+            @RequestParam(defaultValue = "popular") String sort,
+            @RequestParam(defaultValue = "7") int days,
+            @RequestParam(defaultValue = "10") int limit) {
 
-        List<EventListResponseDto> ranking = statisticsService.getRanking(days, limit);
+        List<EventListResponseDto> ranking = statisticsService.getRanking(sort,days, limit);
 
         return ResponseEntity.ok(BaseResponse.success(ranking));
     }
