@@ -96,6 +96,23 @@ onMounted(loadPopular)
     </div>
   </section>
 
+  <!-- ===== 쿠폰 발급 배너 ===== -->
+  <section class="container py-2">
+    <RouterLink to="/mypage?tab=coupon"
+                class="coupon-banner d-flex align-items-center justify-content-between text-reset">
+      <div class="d-flex align-items-center gap-3">
+        <i class="bi bi-ticket-detailed fs-1"></i>
+        <div>
+          <div class="fw-bold fs-5">선착순 할인 쿠폰 받기</div>
+          <div class="small opacity-75">지금 발급받고 예매할 때 할인받으세요</div>
+        </div>
+      </div>
+      <span class="btn btn-light btn-sm fw-bold flex-shrink-0">
+        받으러 가기 <i class="bi bi-arrow-right ms-1"></i>
+      </span>
+    </RouterLink>
+  </section>
+
   <!-- ===== 인기 공연 (랭킹 미리보기) ===== -->
   <section v-if="popular.length" class="container py-4">
     <div class="d-flex justify-content-between align-items-end mb-4">
@@ -255,6 +272,21 @@ onMounted(loadPopular)
   .label {
     font-weight: 700;
     font-size: 0.95rem;
+  }
+}
+
+// ===== 쿠폰 발급 배너 =====
+.coupon-banner {
+  background: linear-gradient(135deg, $color-primary, $color-dark);
+  color: #fff;
+  padding: 1.25rem 1.75rem;
+  border-radius: 12px;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
   }
 }
 </style>
