@@ -11,19 +11,23 @@
  * 메뉴: 예매 내역(준비중) / 쿠폰(준비중) / 내 리뷰 / 내 정보
  * 라우터 가드: requiresAuth + requiresRole='NORMAL'
  */
-import { ref, onMounted } from 'vue'
-import { RouterLink } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { RouterLink, useRoute } from 'vue-router'
 import { memberApi } from '@/api/member.api'
 import { reviewApi } from '@/api/review.api'
 import { reservationApi } from '@/api/reservation.api'
+import { couponApi } from '@/api/coupon.api'
 import {
   RESERVATION_STATUS, RESERVATION_STATUS_LABEL, RESERVATION_STATUS_BADGE,
+  DISCOUNT_TYPE,
 } from '@/utils/constants'
 import AppLoading from '@/components/common/AppLoading.vue'
 import AppEmpty from '@/components/common/AppEmpty.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import StarRating from '@/components/common/StarRating.vue'
 import CancelReasonModal from '@/components/reservation/CancelReasonModal.vue'
+
+const route = useRoute()
 
 const activeMenu = ref('info')   // 'reservation' | 'coupon' | 'review' | 'info'
 
@@ -42,6 +46,13 @@ const reservationsLoading = ref(false)
 const cancelModalOpen = ref(false)
 const cancelTargetId = ref(null)
 const canceling = ref(false)
+
+// 쿠폰
+const coupons = ref([])          // 발급 가능 쿠폰
+const myCoupons = ref([])        // 보유 쿠폰
+const couponsLoading = ref(false)
+const issuing = ref(null)        // 발급 중인 couponId (버튼 로딩 표시)
+const myCouponIds = computed(() => new Set(myCoupons.value.map(c => c.couponId)))
 
 async function loadInfo() {
   infoLoading.value = true
@@ -76,6 +87,34 @@ async function loadReservations() {
     reservations.value = []
   } finally {
     reservationsLoading.value = false
+  }
+}
+
+async function loadCoupons() {
+  couponsLoading.value = true
+  try {
+    const [all, mine] = await Promise.all([couponApi.findAll(), couponApi.findMine()])
+    coupons.value = all
+    myCoupons.value = mine
+  } catch (e) {
+    coupons.value = []
+    myCoupons.value = []
+  } finally {
+    couponsLoading.value = false
+  }
+}
+
+async function onIssue(couponId) {
+  issuing.value = couponId
+  try {
+    await couponApi.issue(couponId)
+    await loadCoupons()            // 발급 후 목록 갱신 (받음/보유로 이동)
+    alert('쿠폰을 받았습니다.')
+  } catch (e) {
+    // COUPON_SOLD_OUT(마감) / COUPON_ALREADY_ISSUED(중복) → 백엔드 메시지 그대로 표시
+    alert(e.response?.data?.message || '쿠폰 발급에 실패했습니다.')
+  } finally {
+    issuing.value = null
   }
 }
 
@@ -123,11 +162,21 @@ function formatAddress(addr) {
   if (!addr) return '-'
   return [addr.city, addr.street, addr.zipcode].filter(Boolean).join(' ')
 }
+function formatDiscount(type, value) {
+  return type === DISCOUNT_TYPE.RATE
+    ? `${value}% 할인`
+    : `${(value ?? 0).toLocaleString('ko-KR')}원 할인`
+}
 
 // 요약 위젯 카운트(예매/리뷰) 표시 위해 미리 로드
 onMounted(loadReviews)
 onMounted(loadReservations)
 onMounted(loadInfo)
+onMounted(loadCoupons)
+// 배너(HomeView)에서 /mypage?tab=coupon 으로 진입 시 쿠폰 탭 바로 열기
+onMounted(() => {
+  if (route.query.tab === 'coupon') activeMenu.value = 'coupon'
+})
 </script>
 
 <template>
@@ -152,7 +201,7 @@ onMounted(loadInfo)
             <button class="summary-item" @click="selectMenu('coupon')">
               <i class="bi bi-ticket-detailed d-block fs-4 mb-1"></i>
               <div class="small text-secondary">나의 쿠폰</div>
-              <div class="fw-bold">0</div>
+              <div class="fw-bold">{{ myCoupons.length }}</div>
             </button>
             <div class="summary-divider"></div>
             <button class="summary-item" @click="selectMenu('review')">
@@ -268,12 +317,57 @@ onMounted(loadInfo)
             </ul>
           </template>
 
-          <!-- 쿠폰 (준비 중) -->
+          <!-- 쿠폰 -->
           <template v-else-if="activeMenu === 'coupon'">
             <h2 class="h5 fw-bold mb-4">쿠폰</h2>
-            <AppEmpty icon="ticket-detailed"
-                      title="쿠폰 기능 준비 중"
-                      message="보유한 쿠폰을 이곳에서 확인할 수 있어요." />
+            <AppLoading v-if="couponsLoading" message="쿠폰을 불러오는 중..." />
+            <template v-else>
+              <!-- 받을 수 있는 쿠폰 -->
+              <h3 class="h6 fw-bold mb-3">받을 수 있는 쿠폰</h3>
+              <AppEmpty v-if="coupons.length === 0"
+                        icon="ticket-detailed"
+                        title="발급 가능한 쿠폰이 없어요"
+                        message="진행 중인 쿠폰 이벤트가 없습니다." />
+              <ul v-else class="list-unstyled d-flex flex-column gap-2 mb-5">
+                <li v-for="c in coupons" :key="c.id"
+                    class="d-flex align-items-center justify-content-between bg-white border rounded p-3">
+                  <div>
+                    <div class="fw-semibold">{{ c.name }}</div>
+                    <div class="text-primary small fw-bold">
+                      {{ formatDiscount(c.discountType, c.discountValue) }}
+                    </div>
+                  </div>
+                  <AppButton v-if="!myCouponIds.has(c.id)"
+                             variant="primary" size="sm"
+                             :loading="issuing === c.id"
+                             @click="onIssue(c.id)">
+                    받기
+                  </AppButton>
+                  <span v-else class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis">
+                    받음
+                  </span>
+                </li>
+              </ul>
+
+              <!-- 보유 쿠폰 -->
+              <h3 class="h6 fw-bold mb-3">보유 쿠폰</h3>
+              <AppEmpty v-if="myCoupons.length === 0"
+                        icon="ticket-detailed"
+                        title="보유한 쿠폰이 없어요"
+                        message="위에서 쿠폰을 발급받아 보세요." />
+              <ul v-else class="list-unstyled d-flex flex-column gap-2 mb-0">
+                <li v-for="c in myCoupons" :key="c.couponId"
+                    class="d-flex align-items-center justify-content-between bg-white border rounded p-3">
+                  <div>
+                    <div class="fw-semibold">{{ c.name }}</div>
+                    <div class="text-primary small fw-bold">
+                      {{ formatDiscount(c.discountType, c.discountValue) }}
+                    </div>
+                  </div>
+                  <span class="text-secondary small">{{ formatDate(c.issueAt) }} 발급</span>
+                </li>
+              </ul>
+            </template>
           </template>
 
           <!-- 내 리뷰 -->

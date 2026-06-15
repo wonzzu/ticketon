@@ -89,6 +89,12 @@ export const CANCEL_REASON_LABEL = Object.freeze({
   OTHER:             '기타',
 })
 
+// === 쿠폰 할인 타입 (백엔드 DiscountType 미러링) ===
+export const DISCOUNT_TYPE = Object.freeze({
+  FIXED: 'FIXED',   // 정액 (원 단위)
+  RATE:  'RATE',    // 정률 (% 단위)
+})
+
 // === 좌석 등급 (백엔드 SeatGrade 미러링) ===
 export const SEAT_GRADE = Object.freeze({
   VIP: 'VIP',
