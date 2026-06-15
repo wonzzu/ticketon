@@ -67,6 +67,10 @@ dependencies {
 	runtimeOnly   'io.jsonwebtoken:jjwt-impl:0.12.6'
 	runtimeOnly   'io.jsonwebtoken:jjwt-jackson:0.12.6'
 
+
+	// === prometheus ===
+	implementation 'io.micrometer:micrometer-registry-prometheus'
+
 }
 
 // === QueryDSL Q클래스 생성 경로 ===
