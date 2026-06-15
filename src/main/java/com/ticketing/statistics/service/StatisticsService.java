@@ -1,10 +1,12 @@
 package com.ticketing.statistics.service;
 
 import com.ticketing.event.domain.Event;
+import com.ticketing.event.domain.EventStatus;
 import com.ticketing.event.dto.response.EventListResponseDto;
 import com.ticketing.event.repository.EventRepository;
 import com.ticketing.payment.dto.PaymentSalesAggregate;
 import com.ticketing.payment.repository.PaymentRepository;
+import com.ticketing.review.repository.ReviewRepository;
 import com.ticketing.statistics.domain.DailyEventStats;
 import com.ticketing.statistics.domain.DailySalesStats;
 import com.ticketing.statistics.dto.response.DailySalesStatsResponseDto;
@@ -28,10 +30,13 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class StatisticsService {
 
+    private static final long MIN_REVIEWS = 10;
+
     private final PaymentRepository paymentRepository;
     private final DailySalesStatsRepository dailySalesStatsRepository;
     private final DailyEventStatsRepository dailyEventStatsRepository;
     private final EventRepository eventRepository;
+    private final ReviewRepository reviewRepository;
 
     @Transactional
     public void aggregateDaily(LocalDate date) {
@@ -72,19 +77,24 @@ public class StatisticsService {
         return result;
     }
 
-    public List<EventListResponseDto> getRanking(int days, int limit) {
-        LocalDate from = LocalDate.now().minusDays(days);
-        List<Long> rankedIds = dailyEventStatsRepository.findRankedEventIds(from, PageRequest.of(0, limit));
+    public List<EventListResponseDto> getRanking(String sort, int days, int limit) {
 
-        Map<Long, Event> eventMap = eventRepository.findAllById(rankedIds).stream()
+        List<Long> ids = "rating".equals(sort)
+                ? reviewRepository.findTopRatedEventIds(EventStatus.APPROVED, MIN_REVIEWS, limit)
+                : dailyEventStatsRepository.findRankedEventIds(LocalDate.now().minusDays(days), PageRequest.of(0, limit));
+
+        return toRanked(ids);
+    }
+
+    private List<EventListResponseDto> toRanked(List<Long> ids) {
+
+        Map<Long, Event> eventMap = eventRepository.findAllById(ids).stream()
                 .collect(Collectors.toMap(Event::getId, e -> e));
 
-        return rankedIds.stream()
+        return ids.stream()
                 .map(eventMap::get)
                 .filter(Objects::nonNull)
                 .map(EventListResponseDto::from)
                 .toList();
     }
-
-
 }
