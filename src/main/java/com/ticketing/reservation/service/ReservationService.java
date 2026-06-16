@@ -18,10 +18,13 @@ import com.ticketing.reservation.domain.Reservation;
 import com.ticketing.reservation.domain.ReservationHistory;
 import com.ticketing.reservation.domain.ReservationSeat;
 import com.ticketing.reservation.dto.request.ReservationCreateDto;
+import com.ticketing.reservation.dto.request.ReservationSearchCond;
 import com.ticketing.reservation.dto.response.ReservationResponseDto;
 import com.ticketing.reservation.repository.ReservationHistoryRepository;
 import com.ticketing.reservation.repository.ReservationRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -106,10 +109,10 @@ public class ReservationService {
     }
 
     // TODO: findMine은 예매 N건마다 schedule/event/venue/seat을 LAZY 조회 → N+1 나중에 fetch join 생각.
-    public List<ReservationResponseDto> findMine(Long memberId) {
-        return reservationRepository.findByMemberIdOrderByCreatedAtDesc(memberId)
-                .stream().map(ReservationResponseDto::from)
-                .toList();
+    public Page<ReservationResponseDto> findMine(Long memberId, ReservationSearchCond cond, Pageable pageable) {
+
+        return reservationRepository.search(memberId, cond, pageable)
+                .map(ReservationResponseDto::from);
     }
 
     public ReservationResponseDto findOne(Long reservationId, Long memberId) {
@@ -124,7 +127,7 @@ public class ReservationService {
     }
 
     @Transactional
-    public void cancel(Long reservationId, Long memberId, CancelReason cancelReason,String detail) {
+    public void cancel(Long reservationId, Long memberId, CancelReason cancelReason, String detail) {
 
         if (cancelReason == CancelReason.OTHER && (detail == null || detail.isBlank())) {
             throw new BaseException(CANCEL_DETAIL_REQUIRED);
@@ -151,6 +154,6 @@ public class ReservationService {
             paymentHistoryRepository.save(PaymentHistory.of(payment, cancelReason.getDescription()));
         });
 
-        reservationHistoryRepository.save(ReservationHistory.ofCancel(reservation,cancelReason,detail));
+        reservationHistoryRepository.save(ReservationHistory.ofCancel(reservation, cancelReason, detail));
     }
 }
