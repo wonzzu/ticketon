@@ -2,6 +2,7 @@ package com.ticketing.event.controller;
 
 
 import com.ticketing.auth.CustomUserDetails;
+import com.ticketing.event.domain.Category;
 import com.ticketing.event.dto.request.EventCreateDto;
 import com.ticketing.event.dto.request.EventUpdateDto;
 import com.ticketing.event.dto.response.EventListResponseDto;
@@ -35,8 +36,11 @@ public class EventController {
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<List<EventListResponseDto>>> findAll() {
-        List<EventListResponseDto> eventList = eventService.findAll();
+    public ResponseEntity<BaseResponse<List<EventListResponseDto>>> findAll(
+            @RequestParam(required = false) Category category,
+            @RequestParam(name = "q", required = false) String keyword) {
+
+        List<EventListResponseDto> eventList = eventService.search(category, keyword);
         return ResponseEntity.ok(BaseResponse.success(eventList));
     }
 
