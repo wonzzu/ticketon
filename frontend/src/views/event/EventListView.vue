@@ -10,7 +10,7 @@
  *   ?q=아이유           제목 검색
  *   ?sort=name          정렬 (latest 기본 | name)
  */
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { eventApi } from '@/api/event.api'
 import { CATEGORY_LABEL, CATEGORY_HERO } from '@/utils/constants'
@@ -24,7 +24,7 @@ const router = useRouter()
 const events = ref([])
 const loading = ref(true)
 
-// URL 쿼리 (반응형 — 바뀌면 filtered 자동 재계산)
+// URL 쿼리 (반응형 — 바뀌면 sorted 자동 재계산)
 // 카테고리·검색은 헤더에서 들어옴 (?category=, ?q=). 페이지에선 필터링만.
 const activeCategory = computed(() => route.query.category || '')
 const activeSort = computed(() => route.query.sort || 'latest')
@@ -34,17 +34,9 @@ const activeQuery = computed(() => route.query.q || '')
 const heroImage = computed(() => CATEGORY_HERO[activeCategory.value] || '')
 const heroLabel = computed(() => CATEGORY_LABEL[activeCategory.value] || '전체 공연')
 
-// 필터 + 검색 + 정렬
-const filtered = computed(() => {
-  let list = [...events.value]
-
-  if (activeCategory.value) {
-    list = list.filter((e) => e.category === activeCategory.value)
-  }
-  if (activeQuery.value) {
-    const q = activeQuery.value.toLowerCase()
-    list = list.filter((e) => e.title.toLowerCase().includes(q))
-  }
+// 카테고리·검색은 백엔드가 필터 → 프론트는 정렬만
+const sorted = computed(() => {
+  const list = [...events.value]
   if (activeSort.value === 'name') {
     list.sort((a, b) => a.title.localeCompare(b.title))
   } else {
@@ -61,13 +53,20 @@ function changeSort(e) {
 async function load() {
   loading.value = true
   try {
-    events.value = await eventApi.findAll()
+    // 카테고리·검색어를 백엔드로 (null이면 백엔드 동적쿼리에서 조건 제외 → 전체)
+    events.value = await eventApi.findAll({
+      category: activeCategory.value || undefined,
+      q: activeQuery.value || undefined,
+    })
   } catch (e) {
     events.value = []
   } finally {
     loading.value = false
   }
 }
+
+// 카테고리·검색어 바뀌면 백엔드 재조회 (정렬은 프론트라 재조회 불필요)
+watch(() => [route.query.category, route.query.q], load)
 
 onMounted(load)
 </script>
@@ -94,13 +93,13 @@ onMounted(load)
     <!-- 목록 -->
     <AppLoading v-if="loading" message="공연을 불러오는 중..." />
 
-    <AppEmpty v-else-if="filtered.length === 0"
+    <AppEmpty v-else-if="sorted.length === 0"
               icon="search"
               title="검색 결과가 없어요"
               message="다른 카테고리나 검색어로 찾아보세요." />
 
     <div v-else class="row g-3">
-      <div v-for="event in filtered" :key="event.id"
+      <div v-for="event in sorted" :key="event.id"
            class="col-6 col-md-4 col-lg-3">
         <EventCard :event="event" />
       </div>

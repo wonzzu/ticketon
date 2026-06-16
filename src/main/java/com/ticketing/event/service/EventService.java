@@ -1,5 +1,6 @@
 package com.ticketing.event.service;
 
+import com.ticketing.event.domain.Category;
 import com.ticketing.event.domain.Event;
 import com.ticketing.event.domain.EventStatus;
 import com.ticketing.event.dto.request.EventCreateDto;
@@ -12,9 +13,6 @@ import com.ticketing.global.exception.BaseException;
 import com.ticketing.member.domain.Seller;
 import com.ticketing.member.repository.SellerRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,12 +49,9 @@ public class EventService {
 
     //TODO event가 많이 쌓이면 N+1문제 생기니 나중에 레포지토리에 쿼리로 날아가게 하는 방향성 고려.
 
-    // 목록(List) 캐시는 Jackson이 컬렉션 루트에 타입을 못 박아 역직렬화가 깨짐 → 캐시 미적용.
-    // (단건 find는 캐시 정상. List 캐시는 래퍼 DTO로 추후 복구 예정)
-    public List<EventListResponseDto> findAll() {
-        return eventRepository.findByStatus(EventStatus.APPROVED)
-                .stream().filter(e -> !e.getSchedules().isEmpty())
-                .map(EventListResponseDto::from)
+    public List<EventListResponseDto> search(Category category,String keyword) {
+        return eventRepository.search(category, keyword)
+                .stream().map(EventListResponseDto::from)
                 .toList();
     }
 
