@@ -1,6 +1,8 @@
 package com.ticketing.review.repository;
 
 import com.ticketing.review.domain.Review;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -8,9 +10,9 @@ import java.util.List;
 
 public interface ReviewRepository extends JpaRepository<Review, Long>, ReviewRepositoryCustom {
 
-    List<Review> findByEventIdOrderByCreatedAtDesc(Long eventId);
+    Page<Review> findByEventIdOrderByCreatedAtDesc(Long eventId, Pageable pageable);
 
-    List<Review> findByEventIdOrderByRatingDesc(Long eventId);
+    Page<Review> findByEventIdOrderByRatingDesc(Long eventId,Pageable pageable);
 
     List<Review> findByMemberIdOrderByCreatedAtDesc(Long memberId);
 
