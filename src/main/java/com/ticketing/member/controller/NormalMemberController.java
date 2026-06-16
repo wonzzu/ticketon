@@ -1,5 +1,6 @@
 package com.ticketing.member.controller;
 
+import com.ticketing.auth.CustomUserDetails;
 import com.ticketing.global.baseresponse.BaseResponse;
 import com.ticketing.global.ratelimit.RateLimit;
 import com.ticketing.member.dto.request.MemberUpdateDto;
@@ -9,6 +10,7 @@ import com.ticketing.member.service.NormalMemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,21 +28,21 @@ public class NormalMemberController {
         return ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse.success());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<BaseResponse<NormalMemberResponseDto>> getMember(@PathVariable Long id) {
-        NormalMemberResponseDto data = normalMemberService.findById(id);
+    @GetMapping("/me")
+    public ResponseEntity<BaseResponse<NormalMemberResponseDto>> getMember(@AuthenticationPrincipal CustomUserDetails user) {
+        NormalMemberResponseDto data = normalMemberService.findById(user.getMemberId());
         return ResponseEntity.ok(BaseResponse.success(data));
     }
 
-    @PatchMapping("/{id}")
-    public ResponseEntity<BaseResponse<Void>> update(@PathVariable Long id, @Validated @RequestBody MemberUpdateDto dto) {
-        normalMemberService.update(id, dto);
+    @PatchMapping("/me")
+    public ResponseEntity<BaseResponse<Void>> update(@AuthenticationPrincipal CustomUserDetails user, @Validated @RequestBody MemberUpdateDto dto) {
+        normalMemberService.update(user.getMemberId(), dto);
         return ResponseEntity.ok(BaseResponse.success());
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<BaseResponse<Void>> delete(@PathVariable Long id) {
-        normalMemberService.delete(id);
+    @DeleteMapping("/me")
+    public ResponseEntity<BaseResponse<Void>> delete(@AuthenticationPrincipal CustomUserDetails user) {
+        normalMemberService.delete(user.getMemberId());
         return ResponseEntity.ok(BaseResponse.success());
     }
 }
