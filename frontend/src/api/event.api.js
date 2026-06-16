@@ -16,8 +16,9 @@ export const eventApi = {
   create: (payload) =>
     http.post('/events', payload),
 
-  findAll: () =>
-    http.get('/events'),
+  // params: { category, q } — 생략 시 전체 (메인은 파라미터 없이 호출)
+  findAll: (params) =>
+    http.get('/events', { params }),
 
   // params: { days, limit } — 생략 시 백엔드 기본값(7일/10개)
   ranking: (params) =>
