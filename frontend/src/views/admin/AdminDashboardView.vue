@@ -54,17 +54,18 @@ onMounted(load)
         </RouterLink>
       </div>
 
-      <!-- 회원 관리 (준비 중) -->
+      <!-- 회원 관리 -->
       <div class="col-md-6 col-lg-4">
-        <div class="admin-card-disabled d-flex align-items-center gap-3 p-3 bg-white border rounded">
-          <div class="admin-icon bg-secondary-subtle text-secondary d-flex align-items-center justify-content-center rounded fs-4 flex-shrink-0">
+        <RouterLink to="/admin/members"
+                    class="d-flex align-items-center gap-3 p-3 bg-white border rounded text-reset hover-lift">
+          <div class="admin-icon bg-info-subtle text-info-emphasis d-flex align-items-center justify-content-center rounded fs-4 flex-shrink-0">
             <i class="bi bi-people"></i>
           </div>
           <div>
             <h3 class="h6 fw-bold mb-1">회원 관리</h3>
-            <p class="text-secondary small mb-0">준비 중</p>
+            <p class="text-secondary small mb-0">회원 조회 · 정지/해제</p>
           </div>
-        </div>
+        </RouterLink>
       </div>
 
       <!-- 통계 -->

@@ -80,6 +80,12 @@ const routes = [
     component: () => import('@/views/admin/AdminStatsView.vue'),
     meta: { requiresAuth: true, requiresRole: 'ADMIN' },
   },
+  {
+    path: '/admin/members',
+    name: 'admin-members',
+    component: () => import('@/views/admin/AdminMemberView.vue'),
+    meta: { requiresAuth: true, requiresRole: 'ADMIN' },   // 회원 조회·정지/해제·이력
+  },
 
   // === 공개 공연 (누구나 접근) ===
   {

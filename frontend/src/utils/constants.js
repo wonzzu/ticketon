@@ -125,6 +125,37 @@ export const MEMBER_TYPE = Object.freeze({
   ADMIN:  'ADMIN',
 })
 
+export const MEMBER_TYPE_LABEL = Object.freeze({
+  NORMAL: '일반 회원',
+  SELLER: '판매자',
+  ADMIN:  '관리자',
+})
+
+// === 회원 상태 (백엔드 MemberStatus 미러링) ===
+export const MEMBER_STATUS = Object.freeze({
+  PENDING:   'PENDING',
+  ACTIVE:    'ACTIVE',
+  DORMANT:   'DORMANT',
+  SUSPENDED: 'SUSPENDED',
+  WITHDRAWN: 'WITHDRAWN',
+})
+
+export const MEMBER_STATUS_LABEL = Object.freeze({
+  PENDING:   '인증 대기',
+  ACTIVE:    '정상',
+  DORMANT:   '휴면',
+  SUSPENDED: '정지',
+  WITHDRAWN: '탈퇴',
+})
+
+export const MEMBER_STATUS_BADGE = Object.freeze({
+  PENDING:   'bg-warning-subtle text-warning-emphasis',
+  ACTIVE:    'bg-success-subtle text-success-emphasis',
+  DORMANT:   'bg-secondary-subtle text-secondary-emphasis',
+  SUSPENDED: 'bg-danger-subtle text-danger-emphasis',
+  WITHDRAWN: 'bg-dark-subtle text-dark-emphasis',
+})
+
 // === 연령 등급 (백엔드 AgeLimit 미러링) ===
 export const AGE_LIMIT = Object.freeze({
   ALL:    'ALL',
