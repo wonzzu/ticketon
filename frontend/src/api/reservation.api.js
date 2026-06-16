@@ -16,8 +16,9 @@ export const reservationApi = {
   create: (payload) =>
     http.post('/reservations', payload),
 
-  findMine: () =>
-    http.get('/reservations/me'),
+  // params: { page, size } — 응답은 Spring Page (content/number/totalPages/totalElements)
+  findMine: (params) =>
+    http.get('/reservations/me', { params }),
 
   findOne: (id) =>
     http.get(`/reservations/${id}`),

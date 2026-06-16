@@ -39,6 +39,8 @@ const reviewsLoaded = ref(false)
 const reviewsLoading = ref(false)
 
 const reservations = ref([])
+const reservationPage = ref({ number: 0, totalPages: 0, totalElements: 0 })
+const reservationFilter = ref({ period: '', status: '' })   // period: '' | '1' | '3' | '6' (개월)
 const reservationsLoaded = ref(false)
 const reservationsLoading = ref(false)
 
@@ -78,16 +80,45 @@ async function loadReviews() {
   }
 }
 
-async function loadReservations() {
+// 검색 조건(기간/상태)을 백엔드 파라미터로 — period(개월)는 from/to 날짜로 환산
+function buildReservationParams(page) {
+  const params = { page, size: 10 }
+  if (reservationFilter.value.status) params.status = reservationFilter.value.status
+  if (reservationFilter.value.period) {
+    const fromDate = new Date()
+    fromDate.setMonth(fromDate.getMonth() - Number(reservationFilter.value.period))
+    params.from = fromDate.toISOString().slice(0, 10)
+    params.to = new Date().toISOString().slice(0, 10)
+  }
+  return params
+}
+
+async function loadReservations(page = 0) {
   reservationsLoading.value = true
   try {
-    reservations.value = await reservationApi.findMine()
+    const res = await reservationApi.findMine(buildReservationParams(page))
+    reservations.value = res.content
+    reservationPage.value = {
+      number: res.number,
+      totalPages: res.totalPages,
+      totalElements: res.totalElements,
+    }
     reservationsLoaded.value = true
   } catch (e) {
     reservations.value = []
+    reservationPage.value = { number: 0, totalPages: 0, totalElements: 0 }
   } finally {
     reservationsLoading.value = false
   }
+}
+
+function onReservationSearch() {
+  loadReservations(0)
+}
+
+function goReservationPage(p) {
+  if (p < 0 || p >= reservationPage.value.totalPages) return
+  loadReservations(p)
 }
 
 async function loadCoupons() {
@@ -195,7 +226,7 @@ onMounted(() => {
             <button class="summary-item" @click="selectMenu('reservation')">
               <i class="bi bi-ticket-perforated d-block fs-4 mb-1"></i>
               <div class="small text-secondary">나의 예매</div>
-              <div class="fw-bold">{{ reservations.length }}</div>
+              <div class="fw-bold">{{ reservationPage.totalElements }}</div>
             </button>
             <div class="summary-divider"></div>
             <button class="summary-item" @click="selectMenu('coupon')">
@@ -279,6 +310,22 @@ onMounted(() => {
           <!-- 예매 내역 -->
           <template v-else-if="activeMenu === 'reservation'">
             <h2 class="h5 fw-bold mb-4">예매 내역</h2>
+            <div class="d-flex flex-wrap gap-2 mb-3">
+              <select v-model="reservationFilter.period" class="form-select form-select-sm w-auto"
+                      @change="onReservationSearch">
+                <option value="">전체 기간</option>
+                <option value="1">최근 1개월</option>
+                <option value="3">최근 3개월</option>
+                <option value="6">최근 6개월</option>
+              </select>
+              <select v-model="reservationFilter.status" class="form-select form-select-sm w-auto"
+                      @change="onReservationSearch">
+                <option value="">전체 상태</option>
+                <option v-for="s in Object.values(RESERVATION_STATUS)" :key="s" :value="s">
+                  {{ RESERVATION_STATUS_LABEL[s] }}
+                </option>
+              </select>
+            </div>
             <AppLoading v-if="reservationsLoading" message="예매 내역을 불러오는 중..." />
             <AppEmpty v-else-if="reservations.length === 0"
                       icon="ticket-perforated"
@@ -315,6 +362,15 @@ onMounted(() => {
                 </div>
               </li>
             </ul>
+            <div v-if="reservationPage.totalPages > 1"
+                 class="d-flex justify-content-center align-items-center gap-3 mt-3">
+              <AppButton variant="outline-dark" size="sm" :disabled="reservationPage.number === 0"
+                         @click="goReservationPage(reservationPage.number - 1)">이전</AppButton>
+              <span class="small text-secondary">{{ reservationPage.number + 1 }} / {{ reservationPage.totalPages }}</span>
+              <AppButton variant="outline-dark" size="sm"
+                         :disabled="reservationPage.number >= reservationPage.totalPages - 1"
+                         @click="goReservationPage(reservationPage.number + 1)">다음</AppButton>
+            </div>
           </template>
 
           <!-- 쿠폰 -->
