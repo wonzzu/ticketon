@@ -11,6 +11,8 @@ import com.ticketing.review.dto.response.MyReviewResponseDto;
 import com.ticketing.review.dto.response.ReviewListResponseDto;
 import com.ticketing.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,10 +46,10 @@ public class ReviewService {
         reviewRepository.save(review);
     }
 
-    public ReviewListResponseDto findByEvent(Long eventId, String sort) {
-        List<Review> reviews = "rating".equals(sort)
-                ? reviewRepository.findByEventIdOrderByRatingDesc(eventId)
-                : reviewRepository.findByEventIdOrderByCreatedAtDesc(eventId);
+    public ReviewListResponseDto findByEvent(Long eventId, String sort, Pageable pageable) {
+        Page<Review> reviews = "rating".equals(sort)
+                ? reviewRepository.findByEventIdOrderByRatingDesc(eventId,pageable)
+                : reviewRepository.findByEventIdOrderByCreatedAtDesc(eventId,pageable);
 
         long count = reviewRepository.countByEventId(eventId);
         Double averageRating = reviewRepository.findAverageRating(eventId);

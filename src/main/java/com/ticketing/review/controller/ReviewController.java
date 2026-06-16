@@ -8,6 +8,8 @@ import com.ticketing.review.dto.response.MyReviewResponseDto;
 import com.ticketing.review.dto.response.ReviewListResponseDto;
 import com.ticketing.review.service.ReviewService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,9 +26,12 @@ public class ReviewController {
 
     @GetMapping("/events/{eventId}/reviews")
     public ResponseEntity<BaseResponse<ReviewListResponseDto>> findAll(
-            @PathVariable Long eventId, @RequestParam(defaultValue = "latest") String sort
+            @PathVariable Long eventId,
+            @RequestParam(defaultValue = "latest") String sort,
+            @PageableDefault(size = 10) Pageable pageable
     ) {
-        ReviewListResponseDto reviewDto = reviewService.findByEvent(eventId, sort);
+
+        ReviewListResponseDto reviewDto = reviewService.findByEvent(eventId, sort,pageable);
 
         return ResponseEntity.ok(BaseResponse.success(reviewDto));
     }
