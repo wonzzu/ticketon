@@ -27,4 +27,14 @@ export default defineConfig({
     //   },
     // },
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        // Bootstrap 5.3이 옛 Sass 색함수(red/green/blue)·@import를 써서 나는 deprecation 경고 숨김.
+        // quietDeps: node_modules(의존성) 경고만 끄고 우리 코드 경고는 유지.
+        quietDeps: true,
+        silenceDeprecations: ['import', 'color-functions', 'global-builtin'],
+      },
+    },
+  },
 })
