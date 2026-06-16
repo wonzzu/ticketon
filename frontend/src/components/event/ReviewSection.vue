@@ -28,18 +28,22 @@ const auth = useAuthStore()
 const reviewCount = ref(0)
 const avgRating = ref(0)
 const reviews = ref([])
+const reviewPage = ref({ number: 0, totalPages: 0 })
 const sort = ref('latest')        // 'latest' | 'rating'
 const loading = ref(false)
 
-async function load() {
+async function load(page = 0) {
   loading.value = true
   try {
-    const data = await reviewApi.findByEvent(props.eventId, sort.value)
+    // reviews만 Page(content/totalPages/number), reviewCount·avgRating은 전체 통계
+    const data = await reviewApi.findByEvent(props.eventId, sort.value, { page, size: 10 })
     reviewCount.value = data.reviewCount
     avgRating.value = data.avgRating
-    reviews.value = data.reviews
+    reviews.value = data.reviews.content
+    reviewPage.value = { number: data.reviews.number, totalPages: data.reviews.totalPages }
   } catch (e) {
     reviews.value = []
+    reviewPage.value = { number: 0, totalPages: 0 }
   } finally {
     loading.value = false
   }
@@ -48,12 +52,17 @@ async function load() {
 function changeSort(next) {
   if (sort.value === next) return
   sort.value = next
-  load()
+  load(0)
 }
 
-// 작성 폼에서 등록 성공 → 목록 갱신
+// 작성 폼에서 등록 성공 → 첫 페이지로 갱신
 function onCreated() {
-  load()
+  load(0)
+}
+
+function goReviewPage(p) {
+  if (p < 0 || p >= reviewPage.value.totalPages) return
+  load(p)
 }
 
 function formatDate(iso) {
@@ -116,5 +125,17 @@ onMounted(load)
         <p class="mb-0 small">{{ review.content }}</p>
       </li>
     </ul>
+
+    <!-- 페이징 -->
+    <div v-if="reviewPage.totalPages > 1"
+         class="d-flex justify-content-center align-items-center gap-3 mt-4">
+      <button type="button" class="btn btn-sm btn-outline-secondary"
+              :disabled="reviewPage.number === 0"
+              @click="goReviewPage(reviewPage.number - 1)">이전</button>
+      <span class="small text-secondary">{{ reviewPage.number + 1 }} / {{ reviewPage.totalPages }}</span>
+      <button type="button" class="btn btn-sm btn-outline-secondary"
+              :disabled="reviewPage.number >= reviewPage.totalPages - 1"
+              @click="goReviewPage(reviewPage.number + 1)">다음</button>
+    </div>
   </div>
 </template>
