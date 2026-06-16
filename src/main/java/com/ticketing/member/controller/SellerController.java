@@ -34,20 +34,20 @@ public class SellerController {
         return ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse.success());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<BaseResponse<SellerResponseDto>> getSeller(@PathVariable Long id) {
-        return ResponseEntity.ok(BaseResponse.success(sellerService.findById(id)));
+    @GetMapping("/me")
+    public ResponseEntity<BaseResponse<SellerResponseDto>> getSeller(@AuthenticationPrincipal CustomUserDetails user) {
+        return ResponseEntity.ok(BaseResponse.success(sellerService.findById(user.getMemberId())));
     }
 
-    @PatchMapping("/{id}")
-    public ResponseEntity<BaseResponse<Void>> update(@PathVariable Long id, @Validated @RequestBody SellerUpdateDto dto) {
-        sellerService.update(id, dto);
+    @PatchMapping("/me")
+    public ResponseEntity<BaseResponse<Void>> update(@AuthenticationPrincipal CustomUserDetails user, @Validated @RequestBody SellerUpdateDto dto) {
+        sellerService.update(user.getMemberId(), dto);
         return ResponseEntity.ok(BaseResponse.success());
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<BaseResponse<Void>> delete(@PathVariable Long id) {
-        sellerService.delete(id);
+    @DeleteMapping("/me")
+    public ResponseEntity<BaseResponse<Void>> delete(@AuthenticationPrincipal CustomUserDetails user) {
+        sellerService.delete(user.getMemberId());
         return ResponseEntity.ok(BaseResponse.success());
     }
 
