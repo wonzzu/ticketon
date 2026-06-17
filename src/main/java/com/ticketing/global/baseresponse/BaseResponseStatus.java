@@ -29,6 +29,8 @@ public enum BaseResponseStatus {
     EVENT_ALREADY_REVIEWED(false, 3005, "이미 검수가 완료된 공연입니다", HttpStatus.CONFLICT),
     REJECT_REASON_REQUIRED(false, 3006, "반려 사유는 필수입니다", HttpStatus.BAD_REQUEST),
     EVENT_NOT_OWNED(false, 3007, "본인이 등록한 공연만 수정할 수 있습니다", HttpStatus.FORBIDDEN),
+    INVALID_EVENT_PERIOD(false, 3008, "종료일이 시작일보다 빠를 수 없습니다", HttpStatus.BAD_REQUEST),
+    GRADE_PRICE_REQUIRED(false, 3009, "모든 좌석 등급의 가격을 지정해야 합니다", HttpStatus.BAD_REQUEST),
 
     // 예매 4000
     RESERVATION_NOT_FOUND(false, 4001, "존재하지 않는 예매입니다", HttpStatus.NOT_FOUND),

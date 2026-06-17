@@ -1,6 +1,7 @@
 package com.ticketing.event.domain;
 
 import com.ticketing.global.entity.BaseEntity;
+import com.ticketing.global.exception.BaseException;
 import com.ticketing.venue.domain.Seat;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -9,6 +10,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+
+import static com.ticketing.global.baseresponse.BaseResponseStatus.SEAT_NOT_AVAILABLE;
 
 @Entity
 @Getter
@@ -43,7 +46,7 @@ public class EventSeat extends BaseEntity {
 
     public void reserve() {
         if (this.status != EventSeatStatus.AVAILABLE) {
-            throw new IllegalStateException("예매할 수 없는 좌석입니다.");
+            throw new BaseException(SEAT_NOT_AVAILABLE);
         }
         this.status = EventSeatStatus.RESERVED;
     }
