@@ -10,6 +10,7 @@ import com.ticketing.venue.dto.response.VenueResponseDto;
 import com.ticketing.venue.repository.SeatRepository;
 import com.ticketing.venue.repository.VenueRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,7 @@ import java.util.List;
 
 import static com.ticketing.global.baseresponse.BaseResponseStatus.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -34,6 +36,7 @@ public class VenueService {
                 .map(GradeRangeDto::toGradeRange)
                 .toList();
         seatRepository.saveAll(venue.assignSeats(dto.getRowCount(), dto.getColumnCount(), ranges));
+        log.info("공연장 등록: venueId={}, name={}", venue.getId(), dto.getName());
     }
 
     public VenueResponseDto findById(Long id) {

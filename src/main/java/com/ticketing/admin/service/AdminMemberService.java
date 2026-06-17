@@ -10,6 +10,7 @@ import com.ticketing.member.dto.request.MemberSearchCond;
 import com.ticketing.member.repository.MemberHistoryRepository;
 import com.ticketing.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ import java.util.List;
 
 import static com.ticketing.global.baseresponse.BaseResponseStatus.MEMBER_NOT_FOUND;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -50,6 +52,7 @@ public class AdminMemberService {
 
         member.suspend();
         memberHistoryRepository.save(MemberHistory.of(member, prev, member.getMemberStatus(), reason));
+        log.info("회원 정지: memberId={}, {}->{},사유={}", memberId, prev, member.getMemberStatus(), reason);
     }
 
     @Transactional
@@ -62,5 +65,6 @@ public class AdminMemberService {
         member.release();
 
         memberHistoryRepository.save(MemberHistory.of(member, prev, member.getMemberStatus(), null));
+        log.info("회원 정지 해제: memberId={}, {}->{}", memberId, prev, member.getMemberStatus());
     }
 }

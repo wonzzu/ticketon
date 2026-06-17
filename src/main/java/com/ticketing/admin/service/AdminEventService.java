@@ -12,6 +12,7 @@ import com.ticketing.global.exception.BaseException;
 import com.ticketing.member.domain.AdminMember;
 import com.ticketing.member.repository.AdminMemberRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import java.util.List;
 
 import static com.ticketing.global.baseresponse.BaseResponseStatus.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -56,6 +58,7 @@ public class AdminEventService {
         historyRepository.save(
                 EventReviewHistory.of(event, ReviewAction.APPROVED, prev, event.getStatus(), null, adminMember)
         );
+        log.info("공연 승인: eventId={},adminId={}, {}->{}", eventId, adminId, prev, event.getStatus());
     }
 
     @Transactional
@@ -77,6 +80,8 @@ public class AdminEventService {
         historyRepository.save(
                 EventReviewHistory.of(event, ReviewAction.REJECTED, prev, event.getStatus(), reason, adminMember)
         );
+
+        log.info("공연 반려: eventId={},adminId={},사유={}", eventId, adminId, reason);
     }
 
 }

@@ -67,6 +67,7 @@ public class AuthService {
         MemberStatus status = member.getMemberStatus();
         if (status != MemberStatus.ACTIVE && status != MemberStatus.PENDING) {
             refreshTokenStore.delete(memberId);
+            log.warn("정지/탈퇴 회원은 토큰 재발급 거부: memberId={},status={}", memberId, status);
             throw new BaseException(UNAUTHORIZED_ACCESS);
         }
 
@@ -81,6 +82,7 @@ public class AuthService {
 
         Long memberId = jwtTokenProvider.getMemberId(refreshToken);
         refreshTokenStore.delete(memberId);
+        log.info("로그아웃: memberId={}", memberId);
 
     }
 
