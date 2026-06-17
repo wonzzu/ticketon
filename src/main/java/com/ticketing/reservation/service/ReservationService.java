@@ -23,6 +23,7 @@ import com.ticketing.reservation.dto.response.ReservationResponseDto;
 import com.ticketing.reservation.repository.ReservationHistoryRepository;
 import com.ticketing.reservation.repository.ReservationRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ import java.util.Optional;
 
 import static com.ticketing.global.baseresponse.BaseResponseStatus.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -56,10 +58,10 @@ public class ReservationService {
         Optional<Reservation> exist = reservationRepository.findByIdempotencyKey(dto.getIdempotencyKey());
 
         if (exist.isPresent()) {
+            log.debug("멱등 재요청 - 기존 예매 정보 반환: idempotencyKey ={}", dto.getIdempotencyKey());
             return ReservationResponseDto.from(exist.get());
         }
 
-        // 대기열 입장(승급) 안 했으면 예매 불가
         if (!queueService.isAdmitted(dto.getScheduleId(), memberId)) {
             throw new BaseException(QUEUE_NOT_ADMITTED);
         }
@@ -104,6 +106,8 @@ public class ReservationService {
         reservationRepository.save(reservation);
 
         reservationHistoryRepository.save(ReservationHistory.of(reservation));
+
+        log.info("예매 생성: memberId={},reservationId={},좌석 {}개,금액 ={}", memberId, reservation.getId(), seats.size(), totalPrice);
 
         return ReservationResponseDto.from(reservation);
     }
@@ -155,5 +159,7 @@ public class ReservationService {
         });
 
         reservationHistoryRepository.save(ReservationHistory.ofCancel(reservation, cancelReason, detail));
+
+        log.info("예매 취소: reservationId={},memberId={},reason={}", reservationId, memberId, cancelReason);
     }
 }
