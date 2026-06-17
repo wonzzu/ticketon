@@ -11,6 +11,7 @@ import com.ticketing.review.dto.response.MyReviewResponseDto;
 import com.ticketing.review.dto.response.ReviewListResponseDto;
 import com.ticketing.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import java.util.List;
 
 import static com.ticketing.global.baseresponse.BaseResponseStatus.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -44,6 +46,7 @@ public class ReviewService {
         Review review = Review.create(event, member, dto.getRating(), dto.getContent());
 
         reviewRepository.save(review);
+        log.debug("리뷰 작성: eventId={}, memberId={}", eventId, memberId);
     }
 
     public ReviewListResponseDto findByEvent(Long eventId, String sort, Pageable pageable) {
@@ -67,7 +70,7 @@ public class ReviewService {
         }
 
         review.delete();
-
+        log.debug("리뷰 삭제: reviewId={}, memberId={}", reviewId, memberId);
     }
 
     public List<MyReviewResponseDto> findMyReviews(Long memberId) {

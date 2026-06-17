@@ -2,6 +2,7 @@ package com.ticketing.queue.service;
 
 import com.ticketing.queue.dto.response.QueueStatusResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Set;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class QueueService {
@@ -21,7 +23,6 @@ public class QueueService {
     private static final String SCHEDULES_KEY = "queue:schedules";
     private static final String ADMIT_LOCK = "queue:admit:lock";
     private final RedissonClient redissonClient;
-
 
 
     public QueueStatusResponse enter(Long scheduleId, Long memberId) {
@@ -63,15 +64,17 @@ public class QueueService {
     @Scheduled(fixedDelay = 3000)
     public void admit() {
         RLock lock = redissonClient.getLock(ADMIT_LOCK);
-        if (!lock.tryLock()) return;
+        if (!lock.tryLock()) {
+            log.debug("대기열 승급 락 획득 실패 - 다른 인스턴스가 처리 중.");
+            return;
+        }
 
         try {
             doAdmit();
-        }finally {
+        } finally {
             if (lock.isHeldByCurrentThread()) lock.unlock();
         }
     }
-
 
 
     public void doAdmit() {
@@ -96,8 +99,9 @@ public class QueueService {
 
             for (String member : front) {
                 redisTemplate.opsForZSet().remove(waitKey(scheduleId), member);
-                redisTemplate.opsForZSet().add(activeKey(scheduleId), member,expireAt);
+                redisTemplate.opsForZSet().add(activeKey(scheduleId), member, expireAt);
             }
+            log.info("대기열 승급: scheduleId={}, {}명 입장", scheduleId, front.size());
         }
 
     }

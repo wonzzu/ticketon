@@ -9,12 +9,14 @@ import com.ticketing.member.dto.response.SellerResponseDto;
 import com.ticketing.member.repository.MemberRepository;
 import com.ticketing.member.repository.SellerRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import static com.ticketing.global.baseresponse.BaseResponseStatus.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -40,6 +42,7 @@ public class SellerService {
                 dto.getBusinessNumber()
         );
         sellerRepository.save(seller);
+        log.info("셀러 가입: sellerId={}, 회사={}", seller.getId(), dto.getCompanyName());
     }
 
     public SellerResponseDto findById(Long id) {
@@ -67,5 +70,6 @@ public class SellerService {
         Member member = memberRepository.findById(id)
                 .orElseThrow(() -> new BaseException(MEMBER_NOT_FOUND));
         member.withdraw();
+        log.info("셀러 탈퇴: memberId={}", id);
     }
 }
