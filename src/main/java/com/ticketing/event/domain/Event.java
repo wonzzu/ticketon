@@ -108,7 +108,7 @@ public class Event extends BaseEntity {
 
     private static void validatePeriod(LocalDate startDate, LocalDate endDate) {
         if (startDate.isAfter(endDate)) {
-            throw new IllegalArgumentException("종료일이 시작일보다 빠를 수 없습니다.");
+            throw new BaseException(INVALID_EVENT_PERIOD);
         }
     }
 

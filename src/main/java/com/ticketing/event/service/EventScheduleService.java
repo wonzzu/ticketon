@@ -84,7 +84,7 @@ public class EventScheduleService {
                 .collect(Collectors.toSet());
         for (SeatGrade grade : grades) {
             if (!priceMap.containsKey(grade)) {
-                throw new IllegalArgumentException("등급 " + grade + " 의 가격이 누락되었습니다.");
+                throw new BaseException(GRADE_PRICE_REQUIRED);
             }
         }
     }
