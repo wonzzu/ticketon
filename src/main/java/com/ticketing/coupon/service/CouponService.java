@@ -11,6 +11,7 @@ import com.ticketing.global.exception.BaseException;
 import com.ticketing.member.domain.Member;
 import com.ticketing.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import java.util.List;
 
 import static com.ticketing.global.baseresponse.BaseResponseStatus.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -63,12 +65,15 @@ public class CouponService {
         if (remaining == null || remaining < 0) {
             redisTemplate.opsForValue().increment(stockKey);
             redisTemplate.opsForSet().remove(issuedKey, me);
+            log.warn("쿠폰 소진: couponId={}, memberId={}", couponId, memberId);
             throw new BaseException(COUPON_SOLD_OUT);
         }
 
         try {
             couponIssueRepository.save(CouponIssue.create(coupon, member));
+            log.info("쿠폰 발급 완료: couponId={}, memberId={}, 남은재고={}", couponId, memberId, remaining);
         } catch (RuntimeException e) {
+            log.error("쿠폰 발급 DB 저장 실패 → Redis 재고·발급 롤백(보상): couponId={}, memberId={}", couponId, memberId, e);
             redisTemplate.opsForValue().increment(stockKey);
             redisTemplate.opsForSet().remove(issuedKey, me);
             throw e;

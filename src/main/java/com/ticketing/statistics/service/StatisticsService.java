@@ -13,6 +13,7 @@ import com.ticketing.statistics.dto.response.DailySalesStatsResponseDto;
 import com.ticketing.statistics.repository.DailyEventStatsRepository;
 import com.ticketing.statistics.repository.DailySalesStatsRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -54,6 +56,7 @@ public class StatisticsService {
                         DailyEventStats.of(date, e.eventId(), e.orderCount())
                 ));
 
+        log.info("일별 통계 집계 완료: date={},주문수={},매출={}", date, agg.orderCount(), agg.salesAmount());
     }
 
     public List<DailySalesStatsResponseDto> findRange(LocalDate from, LocalDate to) {

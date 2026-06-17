@@ -16,6 +16,7 @@ import com.ticketing.venue.domain.Venue;
 import com.ticketing.venue.repository.SeatRepository;
 import com.ticketing.venue.repository.VenueRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 
 import static com.ticketing.global.baseresponse.BaseResponseStatus.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -65,6 +67,7 @@ public class EventScheduleService {
         eventSeats.forEach(schedule::addEventSeat);
 
         eventSeatRepository.saveAll(eventSeats);
+        log.info("회차 등록: eventId={}, scheduleId={}, {}회차, 좌석 {}개", eventId, schedule.getId(), nextRound, eventSeats.size());
     }
 
     public List<EventScheduleResponseDto> findByEvent(Long eventId) {

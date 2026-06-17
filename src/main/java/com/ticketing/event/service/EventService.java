@@ -13,6 +13,7 @@ import com.ticketing.global.exception.BaseException;
 import com.ticketing.member.domain.Seller;
 import com.ticketing.member.repository.SellerRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,7 @@ import java.util.List;
 
 import static com.ticketing.global.baseresponse.BaseResponseStatus.EVENT_NOT_OWNED;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -45,6 +47,7 @@ public class EventService {
                 seller);
 
         eventRepository.save(event);
+        log.info("공연 등록: eventId={}, sellerId={}, title={}", event.getId(), sellerId, dto.getTitle());
     }
 
     //TODO event가 많이 쌓이면 N+1문제 생기니 나중에 레포지토리에 쿼리로 날아가게 하는 방향성 고려.
@@ -117,5 +120,6 @@ public class EventService {
         }
 
         event.delete();
+        log.info("공연 삭제: eventId={}, sellerId={}", id, sellerId);
     }
 }
