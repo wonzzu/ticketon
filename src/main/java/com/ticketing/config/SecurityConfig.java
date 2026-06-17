@@ -51,6 +51,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // ── 공개 (로그인 불필요) ──
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/members/signup", "/sellers/signup").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/events", "/events/**",       // 공연 목록·상세·회차·리뷰 조회
