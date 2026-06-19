@@ -15,7 +15,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BaseException.class)
     public ResponseEntity<BaseResponse<Void>> handleBaseException(BaseException e) {
-        BaseResponseStatus status = e.getStatus();
+        BaseResponseStatus status = e.getBaseResponseStatus();
         log.warn("비즈니스 예외: code={}, message={}", status.getCode(), status.getMessage());
         return ResponseEntity
                 .status(status.getHttpStatus())
