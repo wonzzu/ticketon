@@ -29,6 +29,7 @@ public class SecurityConfig {
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
 
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -61,15 +62,15 @@ public class SecurityConfig {
                         // ── 어드민 전용 ──
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/coupons").hasRole("ADMIN")            // 쿠폰 생성(발급 issue는 회원)
-                        .requestMatchers(HttpMethod.POST,   "/venues").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH,  "/venues/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/venues").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/venues/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/venues/**").hasRole("ADMIN")
 
                         // ── 셀러 전용 ──
-                        .requestMatchers(HttpMethod.POST,   "/events").hasRole("SELLER")          // 공연 등록
-                        .requestMatchers(HttpMethod.PATCH,  "/events/**").hasRole("SELLER")       // 공연 수정
+                        .requestMatchers(HttpMethod.POST, "/events").hasRole("SELLER")          // 공연 등록
+                        .requestMatchers(HttpMethod.PATCH, "/events/**").hasRole("SELLER")       // 공연 수정
                         .requestMatchers(HttpMethod.DELETE, "/events/**").hasRole("SELLER")       // 공연 삭제
-                        .requestMatchers(HttpMethod.POST,   "/events/*/schedules").hasRole("SELLER")  // 회차 등록
+                        .requestMatchers(HttpMethod.POST, "/events/*/schedules").hasRole("SELLER")  // 회차 등록
                         .requestMatchers("/sellers/me/**").hasRole("SELLER")                     // 셀러 대시보드
 
                         // ── 그 외 전부 로그인 필요 (예매·결제·대기열·마이페이지·쿠폰발급·리뷰작성) ──

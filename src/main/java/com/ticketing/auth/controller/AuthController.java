@@ -25,7 +25,6 @@ public class AuthController {
     private static final String REFRESH_COOKIE_NAME = "refreshToken";
     private static final String REFRESH_COOKIE_PATH = "/auth";
     private static final Duration REFRESH_COOKIE_MAX_AGE = Duration.ofDays(14);
-
     private final AuthService authService;
 
     @RateLimit(key = RateLimit.KeyType.IP, limit = 20, windowSeconds = 60)

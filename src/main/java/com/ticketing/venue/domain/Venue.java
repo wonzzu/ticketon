@@ -1,7 +1,9 @@
 package com.ticketing.venue.domain;
 
+import com.ticketing.global.baseresponse.BaseResponseStatus;
 import com.ticketing.global.entity.Address;
 import com.ticketing.global.entity.BaseEntity;
+import com.ticketing.global.exception.BaseException;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -72,6 +74,6 @@ public class Venue extends BaseEntity {
                 .filter(r -> row >= r.fromRow() && row <= r.toRow())
                 .map(SeatGradeRange::grade)
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("등급 범위에 포함안되는 행입니다."));
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.SEAT_GRADE_RANGE_REQUIRED));
     }
 }
