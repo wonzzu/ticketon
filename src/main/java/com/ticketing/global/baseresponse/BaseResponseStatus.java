@@ -31,6 +31,7 @@ public enum BaseResponseStatus {
     EVENT_NOT_OWNED(false, 3007, "본인이 등록한 공연만 수정할 수 있습니다", HttpStatus.FORBIDDEN),
     INVALID_EVENT_PERIOD(false, 3008, "종료일이 시작일보다 빠를 수 없습니다", HttpStatus.BAD_REQUEST),
     GRADE_PRICE_REQUIRED(false, 3009, "모든 좌석 등급의 가격을 지정해야 합니다", HttpStatus.BAD_REQUEST),
+    SEAT_GRADE_RANGE_REQUIRED(false, 3010, "모든 좌석 행의 등급 구간을 지정해야 합니다", HttpStatus.BAD_REQUEST),
 
     // 예매 4000
     RESERVATION_NOT_FOUND(false, 4001, "존재하지 않는 예매입니다", HttpStatus.NOT_FOUND),
