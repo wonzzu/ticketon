@@ -5,10 +5,12 @@
  * 레이아웃: 상단 검정 바(요약 위젯) + 좌측 사이드바 메뉴 + 우측 콘텐츠
  *
  * 백엔드:
- *   GET /me          — 내 정보 (이름/이메일/전화/주소)
- *   GET /me/reviews  — 내가 쓴 리뷰 (공연 제목 포함)
+ *   GET /me                   — 내 정보 (이름/이메일/전화/주소)
+ *   GET /me/reviews           — 내가 쓴 리뷰 (공연 제목 포함)
+ *   GET /reservations/me      — 예매 내역 (페이징 · 기간/상태 필터 · 취소)
+ *   GET /coupons, /coupons/me — 쿠폰 (발급 가능 / 보유 · 선착순 발급)
  *
- * 메뉴: 예매 내역(준비중) / 쿠폰(준비중) / 내 리뷰 / 내 정보
+ * 메뉴: 예매 내역 / 쿠폰 / 내 리뷰 / 내 정보
  * 라우터 가드: requiresAuth + requiresRole='NORMAL'
  */
 import { ref, computed, onMounted } from 'vue'

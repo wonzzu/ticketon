@@ -81,6 +81,20 @@ onMounted(load)
           </div>
         </RouterLink>
       </div>
+
+      <!-- 공연장 관리 -->
+      <div class="col-md-6 col-lg-4">
+        <RouterLink to="/admin/venues"
+                    class="d-flex align-items-center gap-3 p-3 bg-white border rounded text-reset hover-lift">
+          <div class="admin-icon bg-primary-subtle text-primary-emphasis d-flex align-items-center justify-content-center rounded fs-4 flex-shrink-0">
+            <i class="bi bi-building"></i>
+          </div>
+          <div>
+            <h3 class="h6 fw-bold mb-1">공연장 관리</h3>
+            <p class="text-secondary small mb-0">공연장 등록 · 수정 · 삭제</p>
+          </div>
+        </RouterLink>
+      </div>
     </div>
   </div>
 </template>
