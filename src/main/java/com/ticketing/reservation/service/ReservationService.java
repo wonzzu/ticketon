@@ -84,12 +84,12 @@ public class ReservationService {
         List<EventSeat> seats = eventSeatRepository.findAllById(seatIds);
 
         if (seats.size() != seatIds.size()) {
-            throw new BaseException(SEAT_NOT_AVAILABLE);
+            throw new BaseException(SEAT_NOT_FOUND);
         }
 
         boolean anySold = seats.stream().anyMatch(s -> s.getStatus() == EventSeatStatus.RESERVED);
         if (anySold) {
-            throw new BaseException(SEAT_NOT_AVAILABLE);
+            throw new BaseException(SEAT_ALREADY_RESERVED);
         }
 
         if (!seatHoldService.holdAll(dto.getScheduleId(), seatIds, memberId)) {
