@@ -11,7 +11,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import static com.ticketing.global.baseresponse.BaseResponseStatus.SEAT_NOT_AVAILABLE;
+import static com.ticketing.global.baseresponse.BaseResponseStatus.SEAT_ALREADY_RESERVED;
 
 @Entity
 @Getter
@@ -46,7 +46,7 @@ public class EventSeat extends BaseEntity {
 
     public void reserve() {
         if (this.status != EventSeatStatus.AVAILABLE) {
-            throw new BaseException(SEAT_NOT_AVAILABLE);
+            throw new BaseException(SEAT_ALREADY_RESERVED);
         }
         this.status = EventSeatStatus.RESERVED;
     }
