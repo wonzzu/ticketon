@@ -36,12 +36,14 @@ public enum BaseResponseStatus {
     // 예매 4000
     RESERVATION_NOT_FOUND(false, 4001, "존재하지 않는 예매입니다", HttpStatus.NOT_FOUND),
     INVALID_RESERVATION_STATUS(false, 4002, "현재 상태에서는 처리할 수 없습니다", HttpStatus.BAD_REQUEST),
-    SEAT_NOT_AVAILABLE(false, 4003, "이미 선택된 좌석입니다", HttpStatus.CONFLICT),
+    SEAT_NOT_AVAILABLE(false, 4003, "다른 사용자가 선점 중인 좌석입니다", HttpStatus.CONFLICT),
     EXCEED_SEAT_LIMIT(false, 4004, "최대 3개 좌석까지 예매할 수 있습니다", HttpStatus.BAD_REQUEST),
     RESERVATION_NOT_OWNED(false, 4005, "본인 예매만 처리할 수 있습니다", HttpStatus.FORBIDDEN),
     EMPTY_SEAT_SELECTION(false, 4006, "좌석을 선택해주세요", HttpStatus.BAD_REQUEST),
     SEAT_HOLD_EXPIRED(false, 4007, "선점 시간이 만료되었습니다..", HttpStatus.BAD_REQUEST),
     CANCEL_DETAIL_REQUIRED(false, 4008, "기타 사유는 상세 입력이 필요합니다", HttpStatus.BAD_REQUEST),
+    SEAT_NOT_FOUND(false, 4009, "존재하지 않는 좌석입니다", HttpStatus.NOT_FOUND),
+    SEAT_ALREADY_RESERVED(false, 4010, "이미 예매된 좌석입니다", HttpStatus.CONFLICT),
 
     // 결제 5000
     PAYMENT_FAILED(false, 5001, "결제에 실패했습니다", HttpStatus.BAD_REQUEST),

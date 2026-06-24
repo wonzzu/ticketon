@@ -19,6 +19,7 @@ public class SeatHoldService {
         return "seat:hold:" + scheduleId + ":" + eventSeatId;
     }
 
+    // 선택 좌석 전부를 선점 시도 -> 하나라도 실패하면 롤백 후 false
     public boolean holdAll(Long scheduleId, List<Long> eventSeatIds, Long memberId) {
         List<Long> heldByMe = new ArrayList<>();
 
@@ -44,6 +45,7 @@ public class SeatHoldService {
     }
 
 
+    // 이미 선점 중인 좌석 찾기.(좌석 전체에서)
     public Set<Long> findHeldSeatIds(Long scheduleId, List<Long> eventSeatIds) {
         HashSet<Long> heldSeat = new HashSet<>();
 
@@ -62,6 +64,7 @@ public class SeatHoldService {
         return heldSeat;
     }
 
+    // 결제 직전에 전부 내 선점 상태인지 한번 더 체크 -> TTL 만료 됐는지 체크.
     public boolean isHeldByAll(Long scheduleId, List<Long> eventSeatIds, Long memberId) {
 
         List<String> keys = eventSeatIds.stream().map(id -> key(scheduleId, id)).toList();
