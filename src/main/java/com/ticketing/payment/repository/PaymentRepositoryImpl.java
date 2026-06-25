@@ -6,14 +6,13 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticketing.payment.domain.PaymentStatus;
 import com.ticketing.payment.dto.EventOrderCount;
 import com.ticketing.payment.dto.PaymentSalesAggregate;
-import com.ticketing.reservation.domain.QReservation;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static com.ticketing.payment.domain.QPayment.*;
-import static com.ticketing.reservation.domain.QReservation.*;
+import static com.ticketing.payment.domain.QPayment.payment;
+import static com.ticketing.reservation.domain.QReservation.reservation;
 
 @RequiredArgsConstructor
 public class PaymentRepositoryImpl implements PaymentRepositoryCustom {
