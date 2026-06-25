@@ -32,6 +32,7 @@ public class QueueService {
             return QueueStatusResponse.admitted();
         }
 
+        // 이미 대기열에 진입 한지 체크.
         boolean already = redisTemplate.opsForZSet().score(waitKey(scheduleId), member) != null;
 
         if (!already) {
@@ -39,6 +40,7 @@ public class QueueService {
             redisTemplate.opsForZSet().add(waitKey(scheduleId), member, seq);
             redisTemplate.opsForSet().add(SCHEDULES_KEY, scheduleId.toString());
         }
+
         return status(scheduleId, memberId);
     }
 
