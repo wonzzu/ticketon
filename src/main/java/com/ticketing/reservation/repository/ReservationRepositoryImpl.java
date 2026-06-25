@@ -25,6 +25,7 @@ public class ReservationRepositoryImpl implements ReservationRepositoryCustom {
     @Override
     public Page<Reservation> search(Long memberId, ReservationSearchCond cond, Pageable pageable) {
 
+        //content
         List<Reservation> result = queryFactory.selectFrom(reservation)
                 .where(reservation.member.id.eq(memberId),
                         statusEq(cond.status()),
@@ -35,6 +36,7 @@ public class ReservationRepositoryImpl implements ReservationRepositoryCustom {
                 .limit(pageable.getPageSize())
                 .fetch();
 
+        //count
         JPAQuery<Long> count = queryFactory
                 .select(reservation.count())
                 .from(reservation)
