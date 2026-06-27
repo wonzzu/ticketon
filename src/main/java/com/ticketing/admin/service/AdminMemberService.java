@@ -51,7 +51,7 @@ public class AdminMemberService {
         MemberStatus prev = member.getMemberStatus();
 
         member.suspend();
-        memberHistoryRepository.save(MemberHistory.of(member, prev, member.getMemberStatus(), reason));
+        memberHistoryRepository.save(MemberHistory.of(member.getId(), prev, member.getMemberStatus(), reason));
         log.info("회원 정지: memberId={}, {}->{},사유={}", memberId, prev, member.getMemberStatus(), reason);
     }
 
@@ -64,7 +64,7 @@ public class AdminMemberService {
 
         member.release();
 
-        memberHistoryRepository.save(MemberHistory.of(member, prev, member.getMemberStatus(), null));
+        memberHistoryRepository.save(MemberHistory.of(member.getId(), prev, member.getMemberStatus(), null));
         log.info("회원 정지 해제: memberId={}, {}->{}", memberId, prev, member.getMemberStatus());
     }
 }
