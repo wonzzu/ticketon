@@ -67,4 +67,12 @@ public class PaymentService {
         return PaymentResponseDto.from(payment);
     }
 
+    @Transactional
+    public void cancelByReservation(Long reservationId, String reason) {
+        paymentRepository.findByReservationId(reservationId).ifPresent(payment -> {
+            payment.cancel();
+            paymentHistoryRepository.save(PaymentHistory.of(payment, reason));
+        });
+    }
+
 }
