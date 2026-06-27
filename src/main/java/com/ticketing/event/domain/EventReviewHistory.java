@@ -1,7 +1,6 @@
 package com.ticketing.event.domain;
 
 import com.ticketing.global.entity.BaseEntity;
-import com.ticketing.member.domain.AdminMember;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -17,9 +16,8 @@ public class EventReviewHistory extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_id", nullable = false)
-    private Event event;
+    @Column(nullable = false)
+    private Long eventId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -36,20 +34,19 @@ public class EventReviewHistory extends BaseEntity {
     @Column(length = 500)
     private String reason;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reviewer_id", nullable = false)
-    private AdminMember reviewer;
+    @Column(nullable = false)
+    private Long reviewerId;
 
-    public static EventReviewHistory of(Event event, ReviewAction action, EventStatus prev, EventStatus next,
-                                        String reason, AdminMember reviewer) {
+    public static EventReviewHistory of(Long eventId, ReviewAction action, EventStatus prev, EventStatus next,
+                                        String reason, Long reviewerId) {
 
         return EventReviewHistory.builder()
-                .event(event)
+                .eventId(eventId)
                 .action(action)
                 .previousStatus(prev)
                 .newStatus(next)
                 .reason(reason)
-                .reviewer(reviewer)
+                .reviewerId(reviewerId)
                 .build();
     }
 }
