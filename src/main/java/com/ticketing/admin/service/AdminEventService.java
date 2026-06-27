@@ -56,7 +56,7 @@ public class AdminEventService {
         event.approve();
 
         historyRepository.save(
-                EventReviewHistory.of(event, ReviewAction.APPROVED, prev, event.getStatus(), null, adminMember)
+                EventReviewHistory.of(event.getId(), ReviewAction.APPROVED, prev, event.getStatus(), null, adminMember.getId())
         );
         log.info("공연 승인: eventId={},adminId={}, {}->{}", eventId, adminId, prev, event.getStatus());
     }
@@ -78,7 +78,7 @@ public class AdminEventService {
         event.reject();
 
         historyRepository.save(
-                EventReviewHistory.of(event, ReviewAction.REJECTED, prev, event.getStatus(), reason, adminMember)
+                EventReviewHistory.of(event.getId(), ReviewAction.REJECTED, prev, event.getStatus(), reason, adminMember.getId())
         );
 
         log.info("공연 반려: eventId={},adminId={},사유={}", eventId, adminId, reason);

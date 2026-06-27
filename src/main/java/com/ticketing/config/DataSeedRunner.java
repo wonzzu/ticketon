@@ -292,7 +292,7 @@ public class DataSeedRunner implements CommandLineRunner {
         EventStatus prev = event.getStatus();
         event.approve();
         historyRepository.save(EventReviewHistory.of(
-                event, ReviewAction.APPROVED, prev, event.getStatus(), null, admin
+                event.getId(), ReviewAction.APPROVED, prev, event.getStatus(), null, admin.getId()
         ));
         seedSchedule(event, venue, showAt, priceMap);
     }
@@ -313,7 +313,7 @@ public class DataSeedRunner implements CommandLineRunner {
         EventStatus prev = event.getStatus();
         event.reject();
         historyRepository.save(EventReviewHistory.of(
-                event, ReviewAction.REJECTED, prev, event.getStatus(), reason, admin
+                event.getId(), ReviewAction.REJECTED, prev, event.getStatus(), reason, admin.getId()
         ));
     }
 
@@ -553,7 +553,7 @@ public class DataSeedRunner implements CommandLineRunner {
             EventStatus prev = event.getStatus();
             event.approve();
             historyRepository.save(EventReviewHistory.of(
-                    event, ReviewAction.APPROVED, prev, event.getStatus(), null, admin));
+                    event.getId(), ReviewAction.APPROVED, prev, event.getStatus(), null, admin.getId()));
 
             // 회차 2~3개 (날짜 다양, roundNumber 자동 1·2·3)
             int rounds = 2 + rnd.nextInt(2);
@@ -599,7 +599,7 @@ public class DataSeedRunner implements CommandLineRunner {
             MemberStatus prev = m.getMemberStatus();
             m.suspend();
             memberHistoryRepository.save(
-                    MemberHistory.of(m, prev, m.getMemberStatus(), "결제 어뷰징 신고 누적 (시드)"));
+                    MemberHistory.of(m.getId(), prev, m.getMemberStatus(), "결제 어뷰징 신고 누적 (시드)"));
         }
     }
 }
