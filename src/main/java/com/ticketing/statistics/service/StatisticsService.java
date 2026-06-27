@@ -59,6 +59,7 @@ public class StatisticsService {
         log.info("일별 통계 집계 완료: date={},주문수={},매출={}", date, agg.orderCount(), agg.salesAmount());
     }
 
+    //하이브리드 조회
     public List<DailySalesStatsResponseDto> findRange(LocalDate from, LocalDate to) {
 
         LocalDate today = LocalDate.now();

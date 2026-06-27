@@ -9,9 +9,7 @@ import com.ticketing.event.service.SeatHoldService;
 import com.ticketing.global.exception.BaseException;
 import com.ticketing.member.domain.Member;
 import com.ticketing.member.repository.MemberRepository;
-import com.ticketing.payment.domain.PaymentHistory;
-import com.ticketing.payment.repository.PaymentHistoryRepository;
-import com.ticketing.payment.repository.PaymentRepository;
+import com.ticketing.payment.service.PaymentService;
 import com.ticketing.queue.service.QueueService;
 import com.ticketing.reservation.domain.CancelReason;
 import com.ticketing.reservation.domain.Reservation;
@@ -49,8 +47,7 @@ public class ReservationService {
     private final SeatHoldService seatHoldService;
     private final QueueService queueService;
     private final ReservationHistoryRepository reservationHistoryRepository;
-    private final PaymentRepository paymentRepository;
-    private final PaymentHistoryRepository paymentHistoryRepository;
+    private final PaymentService paymentService;
 
 
     @Transactional
@@ -153,10 +150,7 @@ public class ReservationService {
 
         seatHoldService.releaseAll(scheduleId, seatIds);
 
-        paymentRepository.findByReservationId(reservationId).ifPresent(payment -> {
-            payment.cancel();
-            paymentHistoryRepository.save(PaymentHistory.of(payment, cancelReason.getDescription()));
-        });
+        paymentService.cancelByReservation(reservationId, cancelReason.getDescription());
 
         reservationHistoryRepository.save(ReservationHistory.ofCancel(reservation, cancelReason, detail));
 
