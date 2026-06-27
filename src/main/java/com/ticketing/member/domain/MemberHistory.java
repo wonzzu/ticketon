@@ -19,9 +19,8 @@ public class MemberHistory extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id",nullable = false)
-    private Member member;
+    @Column(nullable = false)
+    private Long memberId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -35,9 +34,9 @@ public class MemberHistory extends BaseEntity {
     private String reason;
 
 
-    public static MemberHistory of(Member member, MemberStatus previousStatus, MemberStatus newStatus, String reason) {
+    public static MemberHistory of(Long memberId, MemberStatus previousStatus, MemberStatus newStatus, String reason) {
         return MemberHistory.builder()
-                .member(member)
+                .memberId(memberId)
                 .previousStatus(previousStatus)
                 .newStatus(newStatus)
                 .reason(reason)
