@@ -56,7 +56,9 @@ import com.ticketing.payment.repository.PaymentRepository;
 import com.ticketing.review.domain.Review;
 import com.ticketing.review.repository.ReviewRepository;
 import com.ticketing.coupon.domain.Coupon;
+import com.ticketing.coupon.domain.CouponIssue;
 import com.ticketing.coupon.domain.DiscountType;
+import com.ticketing.coupon.repository.CouponIssueRepository;
 import com.ticketing.coupon.repository.CouponRepository;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import jakarta.persistence.EntityManager;
@@ -86,7 +88,7 @@ public class DataSeedRunner implements CommandLineRunner {
 
     // 측정엔 10만이면 충분(인덱스 EXPLAIN·N+1 차이 극명). 100만은 단일 트랜잭션이라 메모리 폭발 → 10만 유지
     private static final int PERF_MEMBERS = 10000;
-    private static final int PERF_RESERVATIONS = 500000;
+    private static final int PERF_RESERVATIONS = 3000000;
     private static final int PERF_HEAVY_RESERVATIONS = 500;
     private static final int REVIEWS_PER_EVENT = 150;
 
@@ -107,6 +109,7 @@ public class DataSeedRunner implements CommandLineRunner {
     private final PaymentHistoryRepository paymentHistoryRepository;
     private final ReviewRepository reviewRepository;
     private final CouponRepository couponRepository;
+    private final CouponIssueRepository couponIssueRepository;
     private final StringRedisTemplate redisTemplate;
     private final DailySalesStatsRepository dailySalesStatsRepository;
     private final DailyEventStatsRepository dailyEventStatsRepository;
@@ -294,7 +297,10 @@ public class DataSeedRunner implements CommandLineRunner {
         historyRepository.save(EventReviewHistory.of(
                 event.getId(), ReviewAction.APPROVED, prev, event.getStatus(), null, admin.getId()
         ));
-        seedSchedule(event, venue, showAt, priceMap);
+        int rounds = 2 + new Random().nextInt(2);
+        for (int r = 0; r < rounds; r++) {
+            seedSchedule(event, venue, showAt.plusDays(r * 7L), priceMap);
+        }
     }
 
     private void seedPendingEvent(Seller seller, String title, String posterSeed,
@@ -388,14 +394,21 @@ public class DataSeedRunner implements CommandLineRunner {
 
     // ===== 쿠폰 (선착순 — Redis 재고 세팅) =====
     private void seedCoupons() {
-        seedCoupon("신규가입 축하 5,000원 할인", DiscountType.FIXED, 5000, 1000);
-        seedCoupon("주말 특가 20% 할인", DiscountType.RATE, 20, 500);
-        seedCoupon("선착순 10,000원 할인", DiscountType.FIXED, 10000, 100);
+        Coupon c1 = seedCoupon("신규가입 축하 5,000원 할인", DiscountType.FIXED, 5000, 1000);
+        Coupon c2 = seedCoupon("주말 특가 20% 할인", DiscountType.RATE, 20, 500);
+        Coupon c3 = seedCoupon("선착순 10,000원 할인", DiscountType.FIXED, 10000, 100);
+
+        // 내 쿠폰 조회(N+1) 테스트용 — normal 회원에게 3종 발급
+        Member normal = memberRepository.findByEmail("normal@test.com").orElseThrow();
+        couponIssueRepository.save(CouponIssue.create(c1, normal));
+        couponIssueRepository.save(CouponIssue.create(c2, normal));
+        couponIssueRepository.save(CouponIssue.create(c3, normal));
     }
 
-    private void seedCoupon(String name, DiscountType type, int value, int quantity) {
+    private Coupon seedCoupon(String name, DiscountType type, int value, int quantity) {
         Coupon coupon = couponRepository.save(Coupon.create(name, type, value, quantity));
         redisTemplate.opsForValue().set("coupon:stock:" + coupon.getId(), String.valueOf(quantity));
+        return coupon;
     }
 
     // ===== 성능 측정용 대량 시드 =====
@@ -526,7 +539,7 @@ public class DataSeedRunner implements CommandLineRunner {
                             List<Long> seatIds, List<Integer> prices) {
     }
 
-    // ===== 다양한 운영 공연 ~90개 (카테고리·제목·날짜·회차 다양) =====
+    // ===== 다양한 운영 공연 ~200개 (카테고리·제목·날짜·회차 다양) =====
     private void seedManyApprovedEvents(Seller s1, Seller s2, AdminMember admin,
                                         List<Venue> venues, List<Map<SeatGrade, Integer>> priceMaps) {
         Map<Category, String[]> pool = titlePool();
@@ -535,7 +548,7 @@ public class DataSeedRunner implements CommandLineRunner {
         Random rnd = new Random();
         LocalDate base = LocalDate.now();
 
-        for (int i = 0; i < 90; i++) {
+        for (int i = 0; i < 200; i++) {
             Category cat = cats[rnd.nextInt(cats.length)];
             String[] titles = pool.get(cat);
             String title = titles[rnd.nextInt(titles.length)] + " " + (i + 1) + "기";
