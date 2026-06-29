@@ -24,6 +24,7 @@ public class ReservationSeat extends BaseEntity {
     @JoinColumn(name = "reservation_id", nullable = false)
     private Reservation reservation;
 
+    //OneToOne 이면 예매 취소 시 다른 사람의 에매가 막히기 때문에 다대일
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_seat_id", nullable = false)
     private EventSeat eventSeat;
