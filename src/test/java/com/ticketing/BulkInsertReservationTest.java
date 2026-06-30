@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.support.TransactionTemplate; // 👈 추가
 
 import java.time.LocalDate;
@@ -29,16 +29,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SpringBootTest
+@ActiveProfiles("test")   // 공통 테스트 설정(application-test.properties) — ticketing_test DB
 // ⚠️ 클래스 레벨의 @Transactional은 제거된 상태를 유지하여 OOM을 방지합니다.
-@TestPropertySource(properties = {
-        "spring.datasource.url=jdbc:mysql://localhost:3306/ticketing?serverTimezone=Asia/Seoul&characterEncoding=UTF-8&rewriteBatchedStatements=true",
-        "spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver",
-        "spring.datasource.username=${DB_USERNAME:root}",
-        "spring.datasource.password=${DB_PASSWORD:qwer1234}",
-        "spring.jpa.hibernate.ddl-auto=create",
-        "spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect",
-        "spring.jpa.show-sql=false"
-})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class BulkInsertReservationTest {
 
@@ -85,32 +77,21 @@ class BulkInsertReservationTest {
         });
     }
 
-    @AfterEach
-    void tearDown() {
-        // 1. 안전한 데이터 청소를 위해 임시로 외래 키(FK) 체크를 끕니다.
-        jdbc.execute("SET FOREIGN_KEY_CHECKS = 0");
-
-        // 2. 관련 테이블들을 모두 비워줍니다. (중복 에러의 원인 완벽 차단)
-        jdbc.execute("TRUNCATE TABLE reservation_seat"); // 혹시 자식 테이블이 있다면 추가
-        jdbc.execute("TRUNCATE TABLE reservation");
-        jdbc.execute("TRUNCATE TABLE event_schedule");
-        jdbc.execute("TRUNCATE TABLE event");
-        jdbc.execute("TRUNCATE TABLE venue");
-        jdbc.execute("TRUNCATE TABLE member");
-        jdbc.execute("TRUNCATE TABLE seller");
-
-        // 3. 청소가 끝난 후 외래 키 체크를 다시 켭니다.
-        jdbc.execute("SET FOREIGN_KEY_CHECKS = 1");
-    }
+    // @AfterEach 정리 불필요 — @DirtiesContext(BEFORE_EACH)가 매 테스트 전 컨텍스트+스키마를 재생성한다.
 
     @Test
-    void bench_1k() {
+    void bench_100() {
         bench(100);
     }
 
     @Test
-    void bench_10k() {
-        bench(1000);
+    void bench_1_000() {
+        bench(1_000);
+    }
+
+    @Test
+    void bench_10_000() {
+        bench(10_000);
     }
 
     private void bench(int n) {
@@ -122,22 +103,32 @@ class BulkInsertReservationTest {
                 n, jpaMs, jdbcMs, ratio);
     }
 
-    // JPA 1000건 단위로 트랜잭션을 완전히 쪼개서 반영 후 캐시 초기화
+    // JPA: 1000건 단위 "청크 트랜잭션" + flush/clear.
+    //  → JDBC Batch(청크 단위)와 트랜잭션 횟수를 맞춰 "공정하게" 비교한다.
+    //    (이전엔 건별 트랜잭션이라 트랜잭션 오버헤드가 JPA에 불리하게 얹혔음)
+    //
+    //  ※ 그래도 JDBC Batch가 빠른 근본 이유:
+    //    Reservation PK가 IDENTITY(AUTO_INCREMENT)라 INSERT를 실행해야 생성 PK를 받을 수 있어
+    //    Hibernate가 batch로 못 묶고 "건별 INSERT"가 나간다. (hibernate.jdbc.batch_size 켜도 IDENTITY면 무효)
+    //    → JPA는 하나씩 왕복 = 대량 적재에 느림. SEQUENCE 전략이면 JPA도 batch 가능하나 MySQL은 IDENTITY.
     private void insertJpa(int n) {
-        for (int i = 0; i < n; i++) {
-            final int index = i;
-            // 건별 persist도 하나의 독립된 트랜잭션으로 보장
+        int chunk = 1000;
+        for (int s = 0; s < n; s += chunk) {
+            final int start = s;
+            final int end = Math.min(s + chunk, n);
             txTemplate.execute(status -> {
                 Member m = em.getReference(NormalMember.class, memberId);
                 EventSchedule sch = em.getReference(EventSchedule.class, scheduleId);
-                em.persist(Reservation.create(m, sch, "jpa-" + index, 10000));
+                for (int i = start; i < end; i++) {
+                    // ★ IDENTITY라 persist마다 "즉시" INSERT가 나간다.
+                    //    PK(AUTO_INCREMENT)를 받아야 영속성 컨텍스트가 식별·관리하므로
+                    //    쓰기지연 SQL 저장소에 담지 못함 → batch로 못 묶임 → 건별 왕복.
+                    em.persist(Reservation.create(m, sch, "jpa-" + i, 10000));
+                }
+                em.flush();   // 쓰기지연분 DB 동기화 (단 IDENTITY INSERT는 위 persist에서 이미 나감)
+                em.clear();   // 1차 캐시 비우기 (메모리 해제)
                 return null;
             });
-
-            // 1000건마다 영속성 컨텍스트 완전히 비우기 (메모리 해제)
-            if (i % 1000 == 999) {
-                em.clear();
-            }
         }
     }
 

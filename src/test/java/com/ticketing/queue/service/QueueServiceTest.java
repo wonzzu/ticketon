@@ -8,6 +8,7 @@ import org.redisson.config.Config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -17,6 +18,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
+@ActiveProfiles("test")
 class QueueServiceTest {
 
     @Autowired
@@ -52,22 +54,34 @@ class QueueServiceTest {
         QueueService instance1 = new QueueService(redis, c1);   // 같은 Redis, 다른 락 클라이언트
         QueueService instance2 = new QueueService(redis, c2);
 
-        //when
+        //when - 두 서버가 "동시에" admit 경쟁
         int rounds = 50;
-        ExecutorService es = Executors.newFixedThreadPool(20);
-        CountDownLatch latch = new CountDownLatch(rounds * 2);
+        ExecutorService es = Executors.newFixedThreadPool(rounds * 2);
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch endLatch = new CountDownLatch(rounds * 2);
         for (int i = 0; i < rounds; i++) {
-            es.submit(() -> { try { instance1.admit(); } finally { latch.countDown(); } });
-            es.submit(() -> { try { instance2.admit(); } finally { latch.countDown(); } });
+            es.submit(() -> {
+                try { startLatch.await(); instance1.admit(); }
+                catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+                finally { endLatch.countDown(); }
+            });
+            es.submit(() -> {
+                try { startLatch.await(); instance2.admit(); }
+                catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+                finally { endLatch.countDown(); }
+            });
         }
-        latch.await();
+        startLatch.countDown();   // 동시 출발 → 두 서버 진짜 경쟁
+        endLatch.await();
         es.shutdown();
         c1.shutdown();
         c2.shutdown();
 
         //then
         Long active = redis.opsForZSet().zCard("queue:active:" + scheduleId);
-        assertThat(active).isLessThanOrEqualTo((long) CAPACITY);   // 100 초과 X
+        Long wait = redis.opsForZSet().zCard("queue:wait:" + scheduleId);
+        assertThat(active).isEqualTo((long) CAPACITY);   // 정확히 100명 입장 (덜 도는 버그도 잡음)
+        assertThat(wait).isEqualTo(200L);                // 승급된 100명이 wait에서 정확히 빠짐 (정합성)
     }
 
 }
