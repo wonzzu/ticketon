@@ -3,10 +3,13 @@ package com.ticketing.reservation.repository;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.ticketing.event.domain.QEvent;
+import com.ticketing.event.domain.QEventSchedule;
 import com.ticketing.reservation.domain.QReservation;
 import com.ticketing.reservation.domain.Reservation;
 import com.ticketing.reservation.domain.ReservationStatus;
 import com.ticketing.reservation.dto.request.ReservationSearchCond;
+import com.ticketing.venue.domain.QVenue;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,7 +18,10 @@ import org.springframework.data.support.PageableExecutionUtils;
 import java.time.LocalDate;
 import java.util.List;
 
+import static com.ticketing.event.domain.QEvent.*;
+import static com.ticketing.event.domain.QEventSchedule.*;
 import static com.ticketing.reservation.domain.QReservation.*;
+import static com.ticketing.venue.domain.QVenue.*;
 
 @RequiredArgsConstructor
 public class ReservationRepositoryImpl implements ReservationRepositoryCustom {
@@ -27,6 +33,9 @@ public class ReservationRepositoryImpl implements ReservationRepositoryCustom {
 
         //content
         List<Reservation> result = queryFactory.selectFrom(reservation)
+                .leftJoin(reservation.eventSchedule, eventSchedule).fetchJoin()
+                .leftJoin(eventSchedule.event, event).fetchJoin()
+                .leftJoin(eventSchedule.venue, venue).fetchJoin()
                 .where(reservation.member.id.eq(memberId),
                         statusEq(cond.status()),
                         createdGoe(cond.from()),

@@ -10,11 +10,13 @@ import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.PersistenceContext;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cache.CacheManager;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -37,6 +39,7 @@ class EventCacheTest {
     @Autowired EventService eventService;
     @Autowired TransactionTemplate tx;
     @Autowired EntityManagerFactory emf;
+    @Autowired CacheManager cacheManager;
     @PersistenceContext EntityManager em;
 
     private Long eventId;
@@ -56,6 +59,14 @@ class EventCacheTest {
 
             em.flush();
             return null;
+        });
+    }
+
+    @AfterEach
+    void clearCache() {   // 캐시가 켜졌으니 테스트 간 캐시 격리 (Redis에 남은 캐시 제거)
+        cacheManager.getCacheNames().forEach(n -> {
+            var c = cacheManager.getCache(n);
+            if (c != null) c.clear();
         });
     }
 
