@@ -43,7 +43,7 @@ class QueueServiceTest {
 
     @Test
     void 두_서버에서_동시에_진입해도_active는_정원을_안넘는다() throws InterruptedException {
-        //given
+        // given : 대기열 300명 + 두 서버(같은 Redis, 다른 락 클라이언트)
         for (int i = 1; i <= 300; i++) {
             redis.opsForZSet().add("queue:wait:" + scheduleId, "u" + i, i);
         }
@@ -51,10 +51,10 @@ class QueueServiceTest {
 
         RedissonClient c1 = newClient();
         RedissonClient c2 = newClient();
-        QueueService instance1 = new QueueService(redis, c1);   // 같은 Redis, 다른 락 클라이언트
+        QueueService instance1 = new QueueService(redis, c1);
         QueueService instance2 = new QueueService(redis, c2);
 
-        //when - 두 서버가 "동시에" admit 경쟁
+        // when : 두 서버가 동시에 admit 경쟁
         int rounds = 50;
         ExecutorService es = Executors.newFixedThreadPool(rounds * 2);
         CountDownLatch startLatch = new CountDownLatch(1);
@@ -71,17 +71,25 @@ class QueueServiceTest {
                 finally { endLatch.countDown(); }
             });
         }
-        startLatch.countDown();   // 동시 출발 → 두 서버 진짜 경쟁
+        startLatch.countDown();   // 동시 출발
         endLatch.await();
         es.shutdown();
         c1.shutdown();
         c2.shutdown();
 
-        //then
+        // then : active는 정원(100)을 안 넘고, wait는 승급된 100명만큼 감소
         Long active = redis.opsForZSet().zCard("queue:active:" + scheduleId);
         Long wait = redis.opsForZSet().zCard("queue:wait:" + scheduleId);
-        assertThat(active).isEqualTo((long) CAPACITY);   // 정확히 100명 입장 (덜 도는 버그도 잡음)
-        assertThat(wait).isEqualTo(200L);                // 승급된 100명이 wait에서 정확히 빠짐 (정합성)
+
+        System.out.printf("%n========== [대기열 정원 제어] ==========%n" +
+                        "  초기 대기 : 300명 · 정원 : %d · 2서버 동시 admit%n" +
+                        "  기대값    : active %d / wait 200%n" +
+                        "  실제값    : active %d / wait %d%n" +
+                        "=======================================%n",
+                CAPACITY, CAPACITY, active, wait);
+
+        assertThat(active).isEqualTo((long) CAPACITY);
+        assertThat(wait).isEqualTo(200L);
     }
 
 }
