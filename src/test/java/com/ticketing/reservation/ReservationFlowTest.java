@@ -129,6 +129,9 @@ class ReservationFlowTest {
 
         ReservationResponseDto created = reservationService.create(memberId, createDto);
         Long reservationId = created.getId();
+        System.out.printf("%n========== [예약·결제·취소 흐름] ==========%n" +
+                        "  1) 예약생성 → 예약 %s (기대 PENDING) / 좌석 %d건 (기대 1)%n",
+                created.getStatus(), created.getSeats().size());
         assertThat(created.getStatus()).isEqualTo(ReservationStatus.PENDING);
         assertThat(created.getSeats()).hasSize(1);   // ReservationSeat 생성 (DTO seats라 LazyInit 안전)
 
@@ -138,40 +141,50 @@ class ReservationFlowTest {
         paymentService.pay(memberId, payDto);
 
         Reservation afterPay = reservationRepository.findById(reservationId).orElseThrow();
+        var seatAfterPay = eventSeatRepository.findById(eventSeatId).orElseThrow().getStatus();
+        boolean holdReleased = !redis.hasKey("seat:hold:" + scheduleId + ":" + eventSeatId);
+        var paidAmount = paymentRepository.findByReservationId(reservationId).orElseThrow().getAmount();
+        System.out.printf("  2) 결제완료 → 예약 %s (기대 CONFIRMED) / 좌석 %s (기대 RESERVED) / 선점해제 %s (기대 true) / 금액 %s (기대 10000)%n",
+                afterPay.getStatus(), seatAfterPay, holdReleased, paidAmount);
         assertThat(afterPay.getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
         assertThat(paymentRepository.existsByReservationId(reservationId)).isTrue();
-        // 좌석 점유 (AVAILABLE → RESERVED)
-        assertThat(eventSeatRepository.findById(eventSeatId).orElseThrow().getStatus())
-                .isEqualTo(EventSeatStatus.RESERVED);
-        // 결제 완료 시 Redis 선점 해제
-        assertThat(redis.hasKey("seat:hold:" + scheduleId + ":" + eventSeatId)).isFalse();
-        // 결제 금액 == 좌석 가격
-        assertThat(paymentRepository.findByReservationId(reservationId).orElseThrow().getAmount())
-                .isEqualTo(10000);
+        assertThat(seatAfterPay).isEqualTo(EventSeatStatus.RESERVED);
+        assertThat(holdReleased).isTrue();
+        assertThat(paidAmount).isEqualTo(10000);
 
         // 3) 취소 → 예약 CANCEL + 결제 CANCELED + 좌석 복구 (cancel 위임 검증)
         reservationService.cancel(reservationId, memberId, CancelReason.CHANGE_OF_MIND, null);
 
         Reservation afterCancel = reservationRepository.findById(reservationId).orElseThrow();
+        var payStatusAfterCancel = paymentRepository.findByReservationId(reservationId).orElseThrow().getStatus();
+        var seatAfterCancel = eventSeatRepository.findById(eventSeatId).orElseThrow().getStatus();
+        System.out.printf("  3) 취소     → 예약 %s (기대 CANCEL) / 결제 %s (기대 CANCELED) / 좌석 %s (기대 AVAILABLE)%n" +
+                        "=========================================%n",
+                afterCancel.getStatus(), payStatusAfterCancel, seatAfterCancel);
         assertThat(afterCancel.getStatus()).isEqualTo(ReservationStatus.CANCEL);
-        assertThat(paymentRepository.findByReservationId(reservationId).orElseThrow().getStatus())
-                .isEqualTo(PaymentStatus.CANCELED);
-        // 좌석 복구 (RESERVED → AVAILABLE)
-        assertThat(eventSeatRepository.findById(eventSeatId).orElseThrow().getStatus())
-                .isEqualTo(EventSeatStatus.AVAILABLE);
+        assertThat(payStatusAfterCancel).isEqualTo(PaymentStatus.CANCELED);
+        assertThat(seatAfterCancel).isEqualTo(EventSeatStatus.AVAILABLE);
     }
 
     @Test
     @DisplayName("같은 idempotencyKey로 두 번 예약 → 1건만 생성 (멱등성)")
     void 예약_멱등성() {
+        // given
         ReservationCreateDto dto = new ReservationCreateDto();
         ReflectionTestUtils.setField(dto, "scheduleId", scheduleId);
         ReflectionTestUtils.setField(dto, "eventSeatIds", List.of(eventSeatId));
         ReflectionTestUtils.setField(dto, "idempotencyKey", "idem-dup");
 
+        // when : 같은 idempotencyKey로 두 번 생성
         reservationService.create(memberId, dto);
-        reservationService.create(memberId, dto);   // 같은 키 재시도 → 멱등 분기로 기존 반환
+        reservationService.create(memberId, dto);
 
-        assertThat(reservationRepository.count()).isEqualTo(1);   // 1건만 생성됨
+        // then : 멱등 분기로 1건만 생성
+        long count = reservationRepository.count();
+        System.out.printf("%n========== [예약 멱등성] ==========%n" +
+                        "  같은 idempotencyKey로 2회 요청%n" +
+                        "  기대값 : 예약 1건 / 실제값 : 예약 %d건%n" +
+                        "==================================%n", count);
+        assertThat(count).isEqualTo(1);   // 1건만 생성됨
     }
 }
