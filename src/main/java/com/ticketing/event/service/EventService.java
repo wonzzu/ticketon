@@ -14,6 +14,9 @@ import com.ticketing.member.domain.Seller;
 import com.ticketing.member.repository.SellerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,15 +53,15 @@ public class EventService {
         log.info("공연 등록: eventId={}, sellerId={}, title={}", event.getId(), sellerId, dto.getTitle());
     }
 
-    //TODO event가 많이 쌓이면 N+1문제 생기니 나중에 레포지토리에 쿼리로 날아가게 하는 방향성 고려.
-
+    @Cacheable(cacheNames = "events", key = "'all'",
+            condition = "#category == null and #keyword == null")
     public List<EventListResponseDto> search(Category category,String keyword) {
         return eventRepository.search(category, keyword)
                 .stream().map(EventListResponseDto::from)
                 .toList();
     }
 
-    // @Cacheable(cacheNames = "event", key = "#id")   // 캐시 임시 비활성화
+    @Cacheable(cacheNames = "event", key = "#id")
     public EventResponseDto find(Long id) {
 
         Event event = eventRepository.findById(id).orElseThrow
@@ -70,10 +73,10 @@ public class EventService {
     }
 
     @Transactional
-    // 캐시 임시 비활성화
-    // @Caching(evict =
-    //         {@CacheEvict(cacheNames = "events", key = "'all'"), @CacheEvict(cacheNames = "event", key = "#id")}
-    //         )
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "events", key = "'all'"),
+            @CacheEvict(cacheNames = "event", key = "#id")
+    })
     public void update(Long id, EventUpdateDto dto, Long sellerId) {
         Event event = eventRepository.findById(id).orElseThrow
                 (() -> new BaseException(BaseResponseStatus.PERFORMANCE_NOT_FOUND));
@@ -108,10 +111,10 @@ public class EventService {
     }
 
     @Transactional
-    // 캐시 임시 비활성화
-    // @Caching(evict =
-    //         {@CacheEvict(cacheNames = "events", key = "'all'"), @CacheEvict(cacheNames = "event", key = "#id")}
-    // )
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "events", key = "'all'"),
+            @CacheEvict(cacheNames = "event", key = "#id")
+    })
     public void delete(Long id, Long sellerId) {
         Event event = eventRepository.findById(id).orElseThrow
                 (() -> new BaseException(BaseResponseStatus.PERFORMANCE_NOT_FOUND));
