@@ -48,9 +48,11 @@ public class StatisticsService {
         PaymentSalesAggregate agg = paymentRepository.aggregatePaid(start, end);
 
         dailySalesStatsRepository.deleteByStatDate(date);
+        dailySalesStatsRepository.flush();   // IDENTITY save는 persist 즉시 INSERT라, DELETE를 먼저 반영해야 statDate UNIQUE 충돌 방지(재집계 멱등)
         dailySalesStatsRepository.save(DailySalesStats.of(date, agg.orderCount(), agg.salesAmount()));
 
         dailyEventStatsRepository.deleteByStatDate(date);
+        dailyEventStatsRepository.flush();   // 동일 (statDate+eventId UNIQUE)
         paymentRepository.aggregatePaidByEvent(start, end)
                 .forEach(e -> dailyEventStatsRepository.save(
                         DailyEventStats.of(date, e.eventId(), e.orderCount())

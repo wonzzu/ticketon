@@ -75,7 +75,9 @@ class CouponConcurrencyTest {
 
     @Test
     void 재고5개를_6명이_동시에_발급하면_5명만_성공() throws InterruptedException {
-        // when
+        // given : setup에서 재고 5 쿠폰 + 회원 6명
+
+        // when : 6명이 동시에 발급 시도
         ExecutorService es = Executors.newFixedThreadPool(PEOPLE);
         CountDownLatch startLatch = new CountDownLatch(1);
         CountDownLatch endLatch = new CountDownLatch(PEOPLE);
@@ -100,23 +102,27 @@ class CouponConcurrencyTest {
         es.shutdown();
 
 
-        // 1) 성공/실패 수가 전체 요청과 일치
-        assertThat(success.get()).isEqualTo(STOCK);            // 재고만큼만 성공
-        assertThat(fail.get()).isEqualTo(PEOPLE - STOCK);      // 나머지는 실패
-
-        // 2) Redis 재고 소진
-        assertThat(redis.opsForValue().get("coupon:stock:" + couponId)).isEqualTo("0");
-
-        // 3) DB 발급 내역 == 재고 차감량
-        //    (보상 트랜잭션 정확성: Redis만 줄고 DB 저장이 누락되는 불일치를 잡는다)
-        assertThat(couponIssueRepository.count()).isEqualTo((long) STOCK);
-
-        // 4) 중복 발급 없음 (1인1매 — SADD 검증): 발급받은 회원이 모두 서로 다름
-        //    ※ 프록시 id는 초기화 없이 접근 가능해 LazyInit 안전
-        long distinctMembers = couponIssueRepository.findAll().stream()
+        // then (검증값을 먼저 모아 출력·assert에 공용)
+        String redisStock = redis.opsForValue().get("coupon:stock:" + couponId);
+        long dbIssued = couponIssueRepository.count();
+        long distinctMembers = couponIssueRepository.findAll().stream()   // 프록시 id는 LazyInit 안전
                 .map(issue -> issue.getMember().getId())
                 .distinct()
                 .count();
-        assertThat(distinctMembers).isEqualTo((long) STOCK);
+
+        System.out.printf("%n========== [쿠폰 발급 동시성] ==========%n" +
+                        "  재고    : %d · 동시 요청 : %d명%n" +
+                        "  기대값  : 성공 %d / 실패 %d / Redis재고 0 / DB발급 %d / distinct %d%n" +
+                        "  실제값  : 성공 %d / 실패 %d / Redis재고 %s / DB발급 %d / distinct %d%n" +
+                        "=======================================%n",
+                STOCK, PEOPLE,
+                STOCK, PEOPLE - STOCK, STOCK, STOCK,
+                success.get(), fail.get(), redisStock, dbIssued, distinctMembers);
+
+        assertThat(success.get()).isEqualTo(STOCK);
+        assertThat(fail.get()).isEqualTo(PEOPLE - STOCK);
+        assertThat(redisStock).isEqualTo("0");
+        assertThat(dbIssued).isEqualTo((long) STOCK);           // 보상 트랜잭션: Redis 차감분 = DB 발급분
+        assertThat(distinctMembers).isEqualTo((long) STOCK);    // 1인 1매 (SADD 중복 차단)
     }
 }
