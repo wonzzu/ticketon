@@ -64,10 +64,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.util.Random;
-import com.ticketing.statistics.domain.DailySalesStats;
-import com.ticketing.statistics.domain.DailyEventStats;
-import com.ticketing.statistics.repository.DailySalesStatsRepository;
-import com.ticketing.statistics.repository.DailyEventStatsRepository;
 import com.ticketing.member.domain.MemberHistory;
 import com.ticketing.member.domain.MemberStatus;
 import com.ticketing.member.repository.MemberHistoryRepository;
@@ -86,11 +82,12 @@ public class DataSeedRunner implements CommandLineRunner {
 
     private static final String DEFAULT_PW = "test1234";
 
-    // 측정엔 10만이면 충분(인덱스 EXPLAIN·N+1 차이 극명). 100만은 단일 트랜잭션이라 메모리 폭발 → 10만 유지
-    private static final int PERF_MEMBERS = 10000;
+    // 회원 30만(상태 선택도 시나리오용) — JDBC batch라 대량도 감당. reservation 300만 = 회원당 평균 10건
+    private static final int PERF_MEMBERS = 300000;
     private static final int PERF_RESERVATIONS = 3000000;
     private static final int PERF_HEAVY_RESERVATIONS = 500;
     private static final int REVIEWS_PER_EVENT = 150;
+    private static final int STATS_DAYS = 90;   // 통계 배치를 과거 며칠까지 payment로 집계할지
 
     private final PasswordEncoder passwordEncoder;
     private final MemberRepository memberRepository;
@@ -111,8 +108,6 @@ public class DataSeedRunner implements CommandLineRunner {
     private final CouponRepository couponRepository;
     private final CouponIssueRepository couponIssueRepository;
     private final StringRedisTemplate redisTemplate;
-    private final DailySalesStatsRepository dailySalesStatsRepository;
-    private final DailyEventStatsRepository dailyEventStatsRepository;
     private final MemberHistoryRepository memberHistoryRepository;
     private final JdbcTemplate jdbcTemplate;
     private final PlatformTransactionManager transactionManager;
@@ -129,19 +124,32 @@ public class DataSeedRunner implements CommandLineRunner {
 
         log.info("[Seed] 더미 데이터 생성 시작");
 
-        // JPA 시드(회원·공연·좌석·풀·리뷰·통계·이력)를 한 트랜잭션으로 묶어 커밋한다.
-        // → 예매 JDBC batch가 FK(회원·좌석)를 참조하려면 그 데이터가 먼저 커밋돼 있어야 하므로.
+        // 1) 기본 데이터(관리자·판매자·공연·좌석·소량예매·쿠폰·성능공연 좌석풀)를 한 트랜잭션으로 커밋.
+        //    → 뒤따르는 JDBC batch(회원·예매)가 FK로 참조하려면 먼저 커밋돼 있어야 하므로.
         TransactionTemplate tx = new TransactionTemplate(transactionManager);
-        PerfPool pool = tx.execute(status -> seedJpaPart());
+        Pool pool = tx.execute(status -> seedJpaPart());
 
-        // 예매·결제 대량 적재만 JDBC batch + 청크 커밋 → 단일 트랜잭션 미커밋 누적(메모리 폭발) 회피
-        seedPerfReservationsJdbc(tx, pool);
+        // 2) 성능용 회원 30만 = JDBC batch + 청크 커밋 (JOINED 상속이라 member+normal_member 2테이블)
+        List<Long> memberIds = seedPerfMembersJdbc(tx);
+
+        // 3) 리뷰(랭킹 테스트용) = 회원을 참조하므로 회원 적재 후 JPA로
+        tx.executeWithoutResult(status -> seedPerfReviews(memberIds));
+
+        // 4) 회원 변경 이력(정지 사례 몇 건) — 회원이 커밋된 뒤라야 조회 가능
+        tx.executeWithoutResult(status -> seedMemberHistory());
+
+        // 5) 예매·결제 300만 = JDBC batch + 청크 커밋 (created_at 90일 분산)
+        seedPerfReservationsJdbc(tx, pool, memberIds);
+
+        // 6) 통계 = 위 payment를 날짜별 GROUP BY로 한 번에 집계(랜덤 시드 아님 → 정합성)
+        seedStatistics();
 
         log.info("[Seed] 더미 데이터 생성 완료");
     }
 
-    // 회원·공연·좌석·소량 예매·리뷰·통계·이력 = JPA. TransactionTemplate 트랜잭션 안에서 실행되어 커밋된다.
-    private PerfPool seedJpaPart() {
+    // 관리자·판매자·공연·좌석·소량 예매·쿠폰·성능용 좌석풀 = JPA. TransactionTemplate 트랜잭션 안에서 커밋된다.
+    // (성능용 회원 30만·리뷰·통계·이력은 run()에서 JDBC 회원 적재 뒤에 실행)
+    private Pool seedJpaPart() {
         // 1) 회원
         AdminMember admin = seedAdmin();
         Seller seller1 = seedSeller("seller1@test.com", "엔터테인먼트A", "김셀러", "111-11-11111");
@@ -215,14 +223,8 @@ public class DataSeedRunner implements CommandLineRunner {
         seedReservationsAndReviews();
         seedCoupons();
 
-        // 8) 성능 측정용 회원 1만 + 공연/좌석 풀 + 리뷰 (예매는 run()에서 JDBC batch로)
-        PerfPool pool = seedPerfBaseData();
-
-        // 9) 통계(과거 30일) / 10) 회원 변경 이력(정지)
-        seedStatistics();
-        seedMemberHistory();
-
-        return pool;
+        // 8) 성능 측정용 대형 공연 1개 + 좌석 풀 수집 (회원·리뷰·예매는 run()에서)
+        return seedPerfVenueAndPool();
     }
 
     // ===== 회원 =====
@@ -411,26 +413,9 @@ public class DataSeedRunner implements CommandLineRunner {
         return coupon;
     }
 
-    // ===== 성능 측정용 대량 시드 =====
-    private PerfPool seedPerfBaseData() {
-        // 비밀번호는 한 번만 인코딩 (bcrypt 1만번이면 느려서 재사용)
-        String pw = passwordEncoder.encode(DEFAULT_PW);
-
-        // 1) 회원 1만 (memberIds.get(0) = 헤비유저)
-        List<Long> memberIds = new ArrayList<>();
-        for (int i = 0; i < PERF_MEMBERS; i++) {
-            NormalMember m = NormalMember.create(
-                    "perf" + i + "@test.com", pw, "유저" + i, "퍼프닉" + i,
-                    LocalDate.of(1995, 1, 1), Gender.MALE, "010-0000-0000",
-                    new Address("서울", "테스트로 " + i, "00000"));
-            normalMemberRepository.save(m);
-            memberIds.add(m.getId());
-            if (i % 1000 == 0) { em.flush(); em.clear(); }
-        }
-        em.flush();
-        em.clear();
-
-        // 2) 대형 공연 1개 + 좌석 1000 (event_seat) — reservation 10만이 공유 참조
+    // ===== 성능 측정용 대형 공연 1개 + 좌석 풀 수집 (회원·리뷰·예매는 run()에서) =====
+    private Pool seedPerfVenueAndPool() {
+        // 대형 공연 1개 + 좌석 1000 (event_seat) — reservation 300만이 공유 참조
         Seller seller = (Seller) memberRepository.findByEmail("seller1@test.com").orElseThrow();
         Venue venue = venueRepository.save(Venue.create(
                 "성능테스트홀", new Address("서울", "성능로 1", "00000"), 50, 20));
@@ -472,7 +457,67 @@ public class DataSeedRunner implements CommandLineRunner {
         em.flush();
         em.clear();
 
-        // 3) 리뷰 — 각 APPROVED 공연에 REVIEWS_PER_EVENT명 (평점순 랭킹용, 최소 10개+)
+        return new Pool(poolScheduleIds, poolSeatIds, poolPrices);
+    }
+
+    // ===== 성능용 회원 30만 = JDBC batch (JOINED 상속: member + normal_member 2테이블) =====
+    // - member_status를 분포대로 직접 박음(도메인 create()는 PENDING 고정이고 ACTIVE/DORMANT 전환 메서드가 없어서)
+    // - id를 명시(baseId+i) → normal_member(자식)와 reservation FK가 같은 값을 참조
+    private List<Long> seedPerfMembersJdbc(TransactionTemplate tx) {
+        String pw = passwordEncoder.encode(DEFAULT_PW);   // bcrypt 30만번은 느려서 한 번만 인코딩 후 재사용
+        long baseId = jdbcTemplate.queryForObject("SELECT COALESCE(MAX(id), 0) FROM member", Long.class);
+        LocalDateTime now = LocalDateTime.now();
+        Random rnd = new Random();
+        int chunkSize = 10000;
+
+        List<Long> memberIds = new ArrayList<>(PERF_MEMBERS);   // memberIds.get(0) = 헤비유저
+        for (int i = 0; i < PERF_MEMBERS; i++) memberIds.add(baseId + 1 + i);
+
+        for (int start = 0; start < PERF_MEMBERS; start += chunkSize) {
+            int end = Math.min(start + chunkSize, PERF_MEMBERS);
+            List<Object[]> memberArgs = new ArrayList<>();
+            List<Object[]> normalArgs = new ArrayList<>();
+
+            for (int i = start; i < end; i++) {
+                long id = baseId + 1 + i;
+                // 첫 회원은 예매 803건짜리 헤비유저 → ACTIVE 고정. 나머지는 실제 서비스 비율.
+                String status = (i == 0) ? "ACTIVE" : randomStatus(rnd);
+                LocalDateTime joinedAt = now.minusDays(rnd.nextInt(365)).minusMinutes(rnd.nextInt(1440));
+                String gender = rnd.nextBoolean() ? "MALE" : "FEMALE";
+                LocalDate birth = LocalDate.of(1970 + rnd.nextInt(36), 1 + rnd.nextInt(12), 1 + rnd.nextInt(28));
+
+                memberArgs.add(new Object[]{
+                        id, "perf" + i + "@test.com", pw, "유저" + i, "010-0000-0000",
+                        "NORMAL", status, "서울", "테스트로 " + i, "00000", joinedAt, joinedAt, "system"});
+                normalArgs.add(new Object[]{id, "퍼프닉" + i, birth, gender});
+            }
+
+            tx.executeWithoutResult(status -> {
+                jdbcTemplate.batchUpdate(
+                        "INSERT INTO member (id, email, password, name, phone, member_type, member_status, city, street, zipcode, created_at, updated_at, created_by) " +
+                                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", memberArgs);
+                jdbcTemplate.batchUpdate(
+                        "INSERT INTO normal_member (id, nickname, birth_date, gender) VALUES (?, ?, ?, ?)", normalArgs);
+            });
+
+            log.info("[Seed] 회원 적재 {}/{}", end, PERF_MEMBERS);
+        }
+        return memberIds;
+    }
+
+    // 실제 서비스 회원 상태 분포: ACTIVE 70 / DORMANT 13 / WITHDRAWN 8 / PENDING 6 / SUSPENDED 3 (%)
+    // SUSPENDED·WITHDRAWN 같은 소수 상태 = 인덱스(member_status, created_at) 선택도 시연 대상
+    private String randomStatus(Random rnd) {
+        int r = rnd.nextInt(100);
+        if (r < 3) return "SUSPENDED";    // 3%
+        if (r < 9) return "PENDING";      // 6%
+        if (r < 17) return "WITHDRAWN";   // 8%
+        if (r < 30) return "DORMANT";     // 13%
+        return "ACTIVE";                  // 70%
+    }
+
+    // ===== 리뷰 — 각 APPROVED 공연에 REVIEWS_PER_EVENT명 (평점순 랭킹용, 최소 10개+). 회원 커밋 후 JPA로 =====
+    private void seedPerfReviews(List<Long> memberIds) {
         List<Long> eventIds = eventRepository.findByStatus(EventStatus.APPROVED)
                 .stream().map(Event::getId).toList();
         for (Long eventId : eventIds) {
@@ -484,14 +529,12 @@ public class DataSeedRunner implements CommandLineRunner {
             em.flush();
             em.clear();
         }
-
-        return new PerfPool(memberIds.get(0), memberIds, poolScheduleIds, poolSeatIds, poolPrices);
     }
 
     // 예매·결제 대량 적재 = JDBC batch + 청크 커밋.
     // - IDENTITY라 JPA는 batch가 안 묶이고, 단일 트랜잭션은 미커밋 누적으로 메모리 폭발 → JDBC batch로 우회.
     // - reservation은 id를 명시(자식 reservation_seat·payment가 FK로 참조). 자식 id는 auto_increment에 맡김.
-    private void seedPerfReservationsJdbc(TransactionTemplate tx, PerfPool pool) {
+    private void seedPerfReservationsJdbc(TransactionTemplate tx, Pool pool, List<Long> memberIds) {
         long baseId = jdbcTemplate.queryForObject("SELECT COALESCE(MAX(id), 0) FROM reservation", Long.class);
         LocalDateTime now = LocalDateTime.now();
         Random rnd = new Random();
@@ -507,15 +550,19 @@ public class DataSeedRunner implements CommandLineRunner {
             for (int i = start; i < end; i++) {
                 long reservationId = baseId + 1 + i;
                 Long memberId = (i < PERF_HEAVY_RESERVATIONS)
-                        ? pool.heavyId() : pool.memberIds().get(rnd.nextInt(pool.memberIds().size()));
+                        ? memberIds.get(0) : memberIds.get(rnd.nextInt(memberIds.size()));
                 int s = rnd.nextInt(pool.seatIds().size());   // 풀에서 랜덤 → 공연/회차 고르게 분산
                 Long scheduleId = pool.scheduleIds().get(s);
                 Long eventSeatId = pool.seatIds().get(s);
                 int price = pool.prices().get(s);
 
-                reservationArgs.add(new Object[]{reservationId, memberId, scheduleId, "perf-res-" + i, price, "CONFIRMED", now, now, "system"});
-                seatArgs.add(new Object[]{reservationId, eventSeatId, price, now, now, "system"});
-                paymentArgs.add(new Object[]{reservationId, price, "PAID", "MOCK", now, now, "system"});
+                // created_at을 과거 STATS_DAYS일 랜덤 분산 → 통계 배치가 날짜별로 집계 가능 + 인덱스 range 유효.
+                // reservation·seat·payment 셋을 같은 시각으로 묶어 정합성 유지(예매 시점 = 결제 시점)
+                LocalDateTime createdAt = now.minusDays(rnd.nextInt(STATS_DAYS)).minusMinutes(rnd.nextInt(1440));
+
+                reservationArgs.add(new Object[]{reservationId, memberId, scheduleId, "perf-res-" + i, price, "CONFIRMED", createdAt, createdAt, "system"});
+                seatArgs.add(new Object[]{reservationId, eventSeatId, price, createdAt, createdAt, "system"});
+                paymentArgs.add(new Object[]{reservationId, price, "PAID", "MOCK", createdAt, createdAt, "system"});
             }
 
             // 청크마다 별도 트랜잭션으로 커밋 → undo log가 쌓이지 않아 메모리 안전
@@ -535,8 +582,7 @@ public class DataSeedRunner implements CommandLineRunner {
         }
     }
 
-    private record PerfPool(Long heavyId, List<Long> memberIds, List<Long> scheduleIds,
-                            List<Long> seatIds, List<Integer> prices) {
+    private record Pool(List<Long> scheduleIds, List<Long> seatIds, List<Integer> prices) {
     }
 
     // ===== 다양한 운영 공연 ~200개 (카테고리·제목·날짜·회차 다양) =====
@@ -586,30 +632,37 @@ public class DataSeedRunner implements CommandLineRunner {
                 Category.KIDS, new String[]{"겨울왕국 라이브", "뽀로로 뮤지컬", "핑크퐁 콘서트", "콩순이 쇼"});
     }
 
-    // ===== 통계 (과거 30일 일별 매출/예매수 — 오늘은 실시간 집계라 제외) =====
+    // ===== 통계 — 적재한 payment를 날짜별 GROUP BY로 한 번에 집계 (랜덤 시드 아님 → payment와 정합) =====
+    // 배치(aggregateDaily)처럼 하루씩 90회 풀스캔하지 않고 GROUP BY DATE로 풀스캔 1회에 90일치 집계.
+    // 오늘(CURDATE)은 findRange가 실시간 집계하므로 과거만 적재(운영 방식과 동일).
     private void seedStatistics() {
-        LocalDate today = LocalDate.now();
-        List<Long> eventIds = eventRepository.findByStatus(EventStatus.APPROVED)
-                .stream().map(Event::getId).toList();
-        Random rnd = new Random();
+        // 일별 매출/주문수
+        jdbcTemplate.update(
+                "INSERT INTO daily_sales_stats (stat_date, order_count, sales_amount, created_at, updated_at, created_by) " +
+                        "SELECT DATE(created_at), COUNT(*), COALESCE(SUM(amount), 0), NOW(), NOW(), 'system' " +
+                        "FROM payment WHERE status = 'PAID' AND created_at < CURDATE() " +
+                        "GROUP BY DATE(created_at)");
 
-        for (int d = 1; d <= 30; d++) {
-            LocalDate date = today.minusDays(d);
-            long totalOrders = 0;
-            for (Long eventId : eventIds) {
-                long cnt = 5 + rnd.nextInt(45);   // 공연별 5~49건
-                dailyEventStatsRepository.save(DailyEventStats.of(date, eventId, cnt));
-                totalOrders += cnt;
-            }
-            dailySalesStatsRepository.save(DailySalesStats.of(date, totalOrders, totalOrders * 100000L));
-        }
+        // 일별 × 공연별 주문수 (payment → reservation → event_schedule → event)
+        jdbcTemplate.update(
+                "INSERT INTO daily_event_stats (stat_date, event_id, order_count, created_at, updated_at, created_by) " +
+                        "SELECT DATE(p.created_at), es.event_id, COUNT(*), NOW(), NOW(), 'system' " +
+                        "FROM payment p " +
+                        "JOIN reservation r ON p.reservation_id = r.id " +
+                        "JOIN event_schedule es ON r.schedule_id = es.id " +
+                        "WHERE p.status = 'PAID' AND p.created_at < CURDATE() " +
+                        "GROUP BY DATE(p.created_at), es.event_id");
+
+        log.info("[Seed] 통계 집계 완료 (payment GROUP BY)");
     }
 
-    // ===== 회원 변경 이력 (perf 회원 5명 정지 — 헤비유저 perf0은 제외) =====
+    // ===== 회원 변경 이력 (perf 회원 몇 명 정지 사례 — 이력 도메인 데이터용, 헤비유저 perf0은 제외) =====
+    // 회원 상태가 분포로 다양해졌으므로, 이미 탈퇴/정지인 회원은 건너뛴다(suspend()가 도메인 규칙상 불가).
     private void seedMemberHistory() {
         for (int i = 1; i <= 5; i++) {
             Member m = memberRepository.findByEmail("perf" + i + "@test.com").orElseThrow();
             MemberStatus prev = m.getMemberStatus();
+            if (prev == MemberStatus.WITHDRAWN || prev == MemberStatus.SUSPENDED) continue;
             m.suspend();
             memberHistoryRepository.save(
                     MemberHistory.of(m.getId(), prev, m.getMemberStatus(), "결제 어뷰징 신고 누적 (시드)"));
