@@ -94,14 +94,14 @@ public class EventService {
     }
 
 
-    public List<EventListResponseDto> findBySeller(Long sellerId) {
+    public List<EventListResponseDto> findMyEvents(Long sellerId) {
         return eventRepository.findBySellerIdOrderByCreatedAtDesc(sellerId)
                 .stream().map(EventListResponseDto::from)
                 .toList();
     }
 
 
-    public EventResponseDto findBySeller(Long eventId, Long sellerId) {
+    public EventResponseDto findMyEventDetail(Long eventId, Long sellerId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new BaseException(BaseResponseStatus.PERFORMANCE_NOT_FOUND));
         if (!event.isOwnedBy(sellerId)) {
