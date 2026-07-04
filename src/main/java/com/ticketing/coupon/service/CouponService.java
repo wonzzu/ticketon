@@ -87,7 +87,6 @@ public class CouponService {
                 .toList();
     }
 
-    //TODO 발급 많아지면 N+1문제 발생 나중에 fetch join 생각.
     public List<MyCouponResponseDto> findMyCoupon(Long memberId) {
         return couponIssueRepository.findByMemberId(memberId).stream()
                 .map(MyCouponResponseDto::from)
