@@ -109,7 +109,6 @@ public class ReservationService {
         return ReservationResponseDto.from(reservation);
     }
 
-    // TODO: findMine은 예매 N건마다 schedule/event/venue/seat을 LAZY 조회 → N+1 나중에 fetch join 생각.
     public Page<ReservationResponseDto> findMine(Long memberId, ReservationSearchCond cond, Pageable pageable) {
 
         return reservationRepository.search(memberId, cond, pageable)
