@@ -13,6 +13,9 @@ import lombok.experimental.SuperBuilder;
 import static com.ticketing.global.baseresponse.BaseResponseStatus.INVALID_MEMBER_STATUS;
 
 @Entity
+@Table(indexes = {
+        @Index(name = "idx_member_status_created", columnList = "member_status, created_at")
+})
 @Getter
 @Inheritance(strategy = InheritanceType.JOINED)
 @DiscriminatorColumn(name = "member_type")
