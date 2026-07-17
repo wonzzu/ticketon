@@ -1,9 +1,7 @@
 package com.ticketing.member.domain;
 
 import com.ticketing.global.entity.Address;
-import jakarta.persistence.Column;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,6 +23,8 @@ public class Seller extends Member {
     @Column(nullable = false, unique = true)
     private String businessNumber;
 
+    @Enumerated(EnumType.STRING)
+    private  SellerGrade grade;
 
     public static Seller create(String email, String encodedPassword, String name,
                                 String phone, Address address,
@@ -32,13 +32,14 @@ public class Seller extends Member {
         return Seller.builder()
                 .email(email)
                 .password(encodedPassword)
-                .name(name)             // 가입자 본인 이름 (대표자명과 별개)
+                .name(name)
                 .phone(phone)
                 .address(address)
                 .companyName(companyName)
                 .representativeName(representativeName)
                 .businessNumber(businessNumber)
                 .memberStatus(MemberStatus.PENDING)
+                .grade(SellerGrade.BRONZE)
                 .build();
     }
 
@@ -50,5 +51,9 @@ public class Seller extends Member {
         this.companyName = companyName;
         this.representativeName = representativeName;
         this.businessNumber = businessNumber;
+    }
+
+    public void changeGarde(SellerGrade grade) {
+        this.grade = grade;
     }
 }
