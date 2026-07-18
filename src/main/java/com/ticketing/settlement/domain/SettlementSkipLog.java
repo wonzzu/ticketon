@@ -2,9 +2,11 @@ package com.ticketing.settlement.domain;
 
 import com.ticketing.global.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import org.hibernate.annotations.SQLUpdate;
 
 import java.time.LocalDate;
 
@@ -19,6 +21,8 @@ public class SettlementSkipLog extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private Long paymentId;
+
     private Long sellerId;
 
     private Long eventId;
@@ -30,10 +34,10 @@ public class SettlementSkipLog extends BaseEntity {
     @Column(length = 500, nullable = false)
     private String reason;
 
-
-    public static SettlementSkipLog of(Long sellerId, Long eventId, LocalDate settlementDate, Long grossAmount, String reason) {
-
+    public static SettlementSkipLog of(Long paymentId, Long sellerId, Long eventId,
+                                       LocalDate settlementDate, Long grossAmount, String reason) {
         return SettlementSkipLog.builder()
+                .paymentId(paymentId)
                 .sellerId(sellerId)
                 .eventId(eventId)
                 .settlementDate(settlementDate)
