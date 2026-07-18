@@ -1,7 +1,7 @@
 package com.ticketing.settlement.batch;
 
 import com.ticketing.member.domain.SellerGrade;
-import com.ticketing.settlement.dto.SettlementAggregateDto;
+import com.ticketing.settlement.dto.record.SettlementDetailRow;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.database.JdbcCursorItemReader;
@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import javax.sql.DataSource;
-import java.sql.Timestamp;
 import java.time.LocalDate;
 
 @Configuration
@@ -21,43 +20,43 @@ public class SettlementReaderConfig {
     private final DataSource dataSource;
 
 
-    private static final String AGGREGATE_SQL = """
-            SELECT e.seller_id   AS seller_id,
-                   es.event_id   AS event_id,
-                   s.grade       AS grade,
-                   SUM(p.amount) AS gross_amount
+    private static final String DETAIL_SQL = """
+            SELECT p.id            AS payment_id,
+                   r.id            AS reservation_id,
+                   e.seller_id     AS seller_id,
+                   e.id            AS event_id,
+                   s.grade         AS grade,
+                   p.amount        AS gross_amount
             FROM payment p
             JOIN reservation r     ON p.reservation_id = r.id
             JOIN event_schedule es ON r.schedule_id = es.id
             JOIN event e           ON es.event_id = e.id
             JOIN seller s          ON e.seller_id = s.id
             WHERE p.status = 'PAID'
-              AND p.created_at >= ?
-              AND p.created_at <  ?
-            GROUP BY e.seller_id, es.event_id, s.grade
+              AND e.end_date = ?
             """;
 
     @Bean
     @StepScope
-    public JdbcCursorItemReader<SettlementAggregateDto> settlementReader(
+    public JdbcCursorItemReader<SettlementDetailRow> settlementReader(
             @Value("#{jobParameters['targetDate']}") String targetDate) {
 
         LocalDate date = LocalDate.parse(targetDate);
 
-        return new JdbcCursorItemReaderBuilder<SettlementAggregateDto>()
+        return new JdbcCursorItemReaderBuilder<SettlementDetailRow>()
                 .name("settlementReader")
                 .dataSource(dataSource)
-                .sql(AGGREGATE_SQL)
-                .preparedStatementSetter(ps -> {
-                    ps.setTimestamp(1, Timestamp.valueOf(date.atStartOfDay()));
-                    ps.setTimestamp(2, Timestamp.valueOf(date.plusDays(1).atStartOfDay()));
-                })
-                .rowMapper((rs, rowNum) -> new SettlementAggregateDto(
+                .fetchSize(1000)                              // 커서가 1000건씩 받아옴
+                .sql(DETAIL_SQL)
+                .preparedStatementSetter(ps -> ps.setString(1, targetDate))
+                .rowMapper((rs, rowNum) -> new SettlementDetailRow(
+                        rs.getLong("payment_id"),
+                        rs.getLong("reservation_id"),
                         rs.getLong("seller_id"),
                         rs.getLong("event_id"),
-                        date,
+                        SellerGrade.valueOf(rs.getString("grade")),
                         rs.getLong("gross_amount"),
-                        SellerGrade.valueOf(rs.getString("grade"))
+                        date
                 ))
                 .build();
     }
