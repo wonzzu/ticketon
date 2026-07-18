@@ -1,7 +1,8 @@
 package com.ticketing.settlement.batch;
 
 import com.ticketing.settlement.domain.Settlement;
-import com.ticketing.settlement.dto.SettlementAggregateDto;
+import com.ticketing.settlement.domain.SettlementDetail;
+import com.ticketing.settlement.dto.record.SettlementDetailRow;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
@@ -27,23 +28,24 @@ import java.time.LocalDate;
 public class SettlementJobConfig {
 
     private final JdbcTemplate jdbcTemplate;
-
-    private static final int CHUNK_SIZE = 100;
+    private static final int CHUNK_SIZE = 1000;
 
     @Bean
-    public Job settlementJob(JobRepository jobRepository, Step settlementDeleteStep,Step settlementStep) {
-
-        return new JobBuilder("settlementJob",jobRepository)
-                .start(settlementDeleteStep)
-                .next(settlementStep)
+    public Job settlementJob(JobRepository jobRepository, Step settlementDeleteStep,
+                             Step settlementDetailStep, Step settlementAggregateStep) {
+        return new JobBuilder("settlementJob", jobRepository)
+                .start(settlementDeleteStep)      // 멱등: 기존 정산 삭제
+                .next(settlementDetailStep)       // 건별 명세 생성
+                .next(settlementAggregateStep)    // 집계
                 .build();
     }
 
+    // Step0 — 멱등 (해당 날짜 정산·명세 삭제)
     @Bean
-    public Step settlementDeleteStep(JobRepository jobRepository, PlatformTransactionManager tx, Tasklet settlementDeleteTasklet) {
-
-        return new StepBuilder("settlementDeleteStep",jobRepository)
-                .tasklet(settlementDeleteTasklet,tx)
+    public Step settlementDeleteStep(JobRepository jobRepository, PlatformTransactionManager tx,
+                                     Tasklet settlementDeleteTasklet) {
+        return new StepBuilder("settlementDeleteStep", jobRepository)
+                .tasklet(settlementDeleteTasklet, tx)
                 .build();
     }
 
@@ -51,28 +53,41 @@ public class SettlementJobConfig {
     @StepScope
     public Tasklet settlementDeleteTasklet(@Value("#{jobParameters['targetDate']}") String targetDate) {
         return (contribution, chunkContext) -> {
-            int deleted = jdbcTemplate.update(
-                    "DELETE FROM settlement WHERE settlement_date = ?", LocalDate.parse(targetDate));
-            contribution.incrementWriteCount(deleted);
+            LocalDate date = LocalDate.parse(targetDate);
+            jdbcTemplate.update("DELETE FROM settlement_detail WHERE settlement_date = ?", date);
+            jdbcTemplate.update("DELETE FROM settlement WHERE settlement_date = ?", date);
             return RepeatStatus.FINISHED;
         };
     }
 
+    // Step1 — 건별 명세
     @Bean
-    public Step settlementStep(JobRepository jobRepository, PlatformTransactionManager tx,
-                               JdbcCursorItemReader<SettlementAggregateDto> settlementReader,
-                               ItemProcessor<SettlementAggregateDto, Settlement> settlementProcessor,
-                               ItemWriter<Settlement> settlementWriter, SettlementSkipListener settlementSkipListener) {
-
-        return new StepBuilder("settlementStep",jobRepository)
-                .<SettlementAggregateDto,Settlement> chunk(CHUNK_SIZE,tx)
+    public Step settlementDetailStep(JobRepository jobRepository, PlatformTransactionManager tx,
+                                     JdbcCursorItemReader<SettlementDetailRow> settlementReader,
+                                     ItemProcessor<SettlementDetailRow, SettlementDetail> settlementProcessor,
+                                     ItemWriter<SettlementDetail> settlementWriter,
+                                     SettlementSkipListener settlementSkipListener) {
+        return new StepBuilder("settlementDetailStep", jobRepository)
+                .<SettlementDetailRow, SettlementDetail>chunk(CHUNK_SIZE, tx)
                 .reader(settlementReader)
                 .processor(settlementProcessor)
                 .writer(settlementWriter)
                 .faultTolerant()
                 .skip(SettlementValidationException.class)
-                .skipLimit(10)
+                .skipLimit(100)
                 .listener(settlementSkipListener)
+                .build();
+    }
+
+    // Step2 — 집계 (Processor 없음)
+    @Bean
+    public Step settlementAggregateStep(JobRepository jobRepository, PlatformTransactionManager tx,
+                                        JdbcCursorItemReader<Settlement> settlementAggregateReader,
+                                        ItemWriter<Settlement> settlementAggregateWriter) {
+        return new StepBuilder("settlementAggregateStep", jobRepository)
+                .<Settlement, Settlement>chunk(CHUNK_SIZE, tx)
+                .reader(settlementAggregateReader)
+                .writer(settlementAggregateWriter)
                 .build();
     }
 }
