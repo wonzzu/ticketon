@@ -34,9 +34,9 @@ public class SettlementJobConfig {
     public Job settlementJob(JobRepository jobRepository, Step settlementDeleteStep,
                              Step settlementDetailStep, Step settlementAggregateStep) {
         return new JobBuilder("settlementJob", jobRepository)
-                .start(settlementDeleteStep)      // 멱등: 기존 정산 삭제
-                .next(settlementDetailStep)       // 건별 명세 생성
-                .next(settlementAggregateStep)    // 집계
+                .start(settlementDeleteStep)
+                .next(settlementDetailStep)
+                .next(settlementAggregateStep)
                 .build();
     }
 

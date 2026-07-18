@@ -46,7 +46,7 @@ public class SettlementReaderConfig {
         return new JdbcCursorItemReaderBuilder<SettlementDetailRow>()
                 .name("settlementReader")
                 .dataSource(dataSource)
-                .fetchSize(1000)                              // 커서가 1000건씩 받아옴
+                .fetchSize(1000)
                 .sql(DETAIL_SQL)
                 .preparedStatementSetter(ps -> ps.setString(1, targetDate))
                 .rowMapper((rs, rowNum) -> new SettlementDetailRow(
