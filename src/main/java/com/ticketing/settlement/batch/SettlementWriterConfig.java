@@ -21,7 +21,7 @@ public class SettlementWriterConfig {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
             """;
 
-    // JDBC Batch Insert — 청크를 한 번의 통신으로 (save 반복 X)
+
     @Bean
     public ItemWriter<SettlementDetail> settlementWriter() {
         return chunk -> jdbcTemplate.batchUpdate(INSERT_SQL, chunk.getItems(), chunk.size(),
