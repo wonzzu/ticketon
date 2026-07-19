@@ -4,6 +4,7 @@ import com.ticketing.event.service.SeatHoldService;
 import com.ticketing.global.exception.BaseException;
 import com.ticketing.payment.domain.Payment;
 import com.ticketing.payment.domain.PaymentHistory;
+import com.ticketing.payment.dto.PaymentCanceledEvent;
 import com.ticketing.payment.dto.request.PaymentCreateDto;
 import com.ticketing.payment.dto.response.PaymentResponseDto;
 import com.ticketing.payment.repository.PaymentHistoryRepository;
@@ -13,12 +14,14 @@ import com.ticketing.reservation.domain.ReservationHistory;
 import com.ticketing.reservation.repository.ReservationHistoryRepository;
 import com.ticketing.reservation.repository.ReservationRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 import static com.ticketing.global.baseresponse.BaseResponseStatus.*;
+
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +33,7 @@ public class PaymentService {
     private final SeatHoldService seatHoldService;
     private final ReservationHistoryRepository reservationHistoryRepository;
     private final PaymentHistoryRepository paymentHistoryRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public PaymentResponseDto pay(Long memberId, PaymentCreateDto dto) {
@@ -72,7 +76,14 @@ public class PaymentService {
         paymentRepository.findByReservationId(reservationId).ifPresent(payment -> {
             payment.cancel();
             paymentHistoryRepository.save(PaymentHistory.of(payment, reason));
+
+            var event = payment.getReservation().getEventSchedule().getEvent();
+            eventPublisher.publishEvent(new PaymentCanceledEvent(
+                    event.getSeller().getId(), event.getId(), event.getEndDate()));
+
         });
+
+
     }
 
 }
