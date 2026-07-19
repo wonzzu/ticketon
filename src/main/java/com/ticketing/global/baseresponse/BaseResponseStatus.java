@@ -50,6 +50,9 @@ public enum BaseResponseStatus {
     PAYMENT_NOT_FOUND(false, 5002, "존재하지 않는 결제입니다", HttpStatus.NOT_FOUND),
     PAYMENT_ALREADY_COMPLETED(false, 5003, "이미 완료된 결제입니다", HttpStatus.CONFLICT),
     PAYMENT_CANCEL_NOT_ALLOWED(false, 5004, "취소할 수 없는 결제 상태입니다", HttpStatus.BAD_REQUEST),
+    SETTLEMENT_NOT_FOUND(false, 5005, "존재하지 않는 정산 내역입니다", HttpStatus.NOT_FOUND),
+    SETTLEMENT_NOT_OWNED(false, 5006, "본인 정산 내역만 조회할 수 있습니다", HttpStatus.FORBIDDEN),
+
 
     // 대기열 6000
     QUEUE_NOT_FOUND(false, 6001, "대기열 정보를 찾을 수 없습니다", HttpStatus.NOT_FOUND),
