@@ -53,7 +53,7 @@ public class Seller extends Member {
         this.businessNumber = businessNumber;
     }
 
-    public void changeGarde(SellerGrade grade) {
+    public void changeGrade(SellerGrade grade) {
         this.grade = grade;
     }
 }
