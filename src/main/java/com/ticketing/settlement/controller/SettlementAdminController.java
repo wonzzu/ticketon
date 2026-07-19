@@ -27,4 +27,12 @@ public class SettlementAdminController {
 
         return ResponseEntity.ok(BaseResponse.success());
     }
+
+    @PostMapping("/reaggregate")
+    public ResponseEntity<BaseResponse<Void>> reaggregate() {
+
+        settlementScheduler.reaggregateDirty();
+
+        return ResponseEntity.ok(BaseResponse.success());
+    }
 }
