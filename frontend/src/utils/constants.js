@@ -195,6 +195,19 @@ export const EVENT_STATUS_BADGE = Object.freeze({
   CLOSED:   'bg-secondary-subtle text-secondary-emphasis',
 })
 
+// === 판매자 등급 (백엔드 SellerGrade 미러링) — 정산 수수료율 차등 ===
+export const SELLER_GRADE_LABEL = Object.freeze({
+  BRONZE: '브론즈',
+  SILVER: '실버',
+  GOLD:   '골드',
+})
+
+export const SELLER_GRADE_BADGE = Object.freeze({
+  BRONZE: 'bg-dark-subtle text-dark-emphasis',
+  SILVER: 'bg-secondary-subtle text-secondary-emphasis',
+  GOLD:   'bg-warning-subtle text-warning-emphasis',
+})
+
 // =====================================================================
 // === Mock 데이터 — TODO: 백엔드 GET /events 연동 시 삭제 (Phase F5) ===
 // =====================================================================

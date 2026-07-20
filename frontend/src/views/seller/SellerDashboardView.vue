@@ -46,9 +46,14 @@ onMounted(load)
           {{ auth.user?.role === 'SELLER' ? '내가 등록한 공연을 관리합니다.' : '' }}
         </p>
       </div>
-      <RouterLink to="/seller/events/new" class="btn btn-primary">
-        <i class="bi bi-plus-lg me-1"></i>공연 등록
-      </RouterLink>
+      <div class="d-flex gap-2">
+        <RouterLink to="/seller/settlements" class="btn btn-outline-dark">
+          <i class="bi bi-cash-stack me-1"></i>정산 내역
+        </RouterLink>
+        <RouterLink to="/seller/events/new" class="btn btn-primary">
+          <i class="bi bi-plus-lg me-1"></i>공연 등록
+        </RouterLink>
+      </div>
     </header>
 
     <!-- 본문 -->

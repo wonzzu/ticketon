@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 @Entity
@@ -40,6 +41,9 @@ public class SettlementDetail extends BaseEntity {
     private LocalDate settlementDate;
 
     @Column(nullable = false)
+    private LocalDateTime paidAt;   // 고객 결제 시각 (payment.created_at 스냅샷)
+
+    @Column(nullable = false)
     private Long grossAmount;
 
     @Column(nullable = false)
@@ -56,7 +60,7 @@ public class SettlementDetail extends BaseEntity {
     private Integer commissionRate;
 
     public static SettlementDetail of(Long paymentId, Long reservationId, Long sellerId, Long eventId, LocalDate settlementDate,
-                                      Long grossAmount, Long commission, Long netAmount, SellerGrade grade, int commissionRate) {
+                                      LocalDateTime paidAt, Long grossAmount, Long commission, Long netAmount, SellerGrade grade, int commissionRate) {
 
         return SettlementDetail.builder()
                 .paymentId(paymentId)
@@ -64,6 +68,7 @@ public class SettlementDetail extends BaseEntity {
                 .sellerId(sellerId)
                 .eventId(eventId)
                 .settlementDate(settlementDate)
+                .paidAt(paidAt)
                 .grossAmount(grossAmount)
                 .commission(commission)
                 .netAmount(netAmount)

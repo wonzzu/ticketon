@@ -26,7 +26,8 @@ public class SettlementReaderConfig {
                    e.seller_id     AS seller_id,
                    e.id            AS event_id,
                    s.grade         AS grade,
-                   p.amount        AS gross_amount
+                   p.amount        AS gross_amount,
+                   p.created_at    AS paid_at
             FROM payment p
             JOIN reservation r     ON p.reservation_id = r.id
             JOIN event_schedule es ON r.schedule_id = es.id
@@ -56,7 +57,8 @@ public class SettlementReaderConfig {
                         rs.getLong("event_id"),
                         SellerGrade.valueOf(rs.getString("grade")),
                         rs.getLong("gross_amount"),
-                        date
+                        date,
+                        rs.getTimestamp("paid_at").toLocalDateTime()
                 ))
                 .build();
     }

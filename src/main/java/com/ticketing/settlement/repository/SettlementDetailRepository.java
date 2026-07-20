@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
 
-public interface SettlementDetailRepository extends JpaRepository<SettlementDetail, Long> {
+public interface SettlementDetailRepository extends JpaRepository<SettlementDetail, Long>, SettlementDetailRepositoryCustom {
 
     Page<SettlementDetail> findBySellerIdAndEventIdAndSettlementDate(
             Long sellerId, Long eventId, LocalDate settlementDate, Pageable pageable);
