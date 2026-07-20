@@ -40,7 +40,7 @@ public class SettlementProcessor implements ItemProcessor<SettlementDetailRow, S
 
         return SettlementDetail.of(
                 row.paymentId(), row.reservationId(), row.sellerId(), row.eventId(),
-                row.settlementDate(), row.grossAmount(), commission, netAmount,
+                row.settlementDate(), row.paidAt(), row.grossAmount(), commission, netAmount,
                 grade, grade.getCommissionPercent());
     }
 

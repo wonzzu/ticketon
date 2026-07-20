@@ -2,8 +2,9 @@ package com.ticketing.settlement.controller;
 
 import com.ticketing.auth.CustomUserDetails;
 import com.ticketing.global.baseresponse.BaseResponse;
-import com.ticketing.settlement.batch.SettlementScheduler;
+import com.ticketing.settlement.dto.request.SettlementDetailSearchCond;
 import com.ticketing.settlement.dto.response.SettlementDetailLineResponseDto;
+import com.ticketing.settlement.dto.response.SettlementDetailSearchResponseDto;
 import com.ticketing.settlement.dto.response.SettlementResponseDto;
 import com.ticketing.settlement.service.SettlementService;
 import lombok.RequiredArgsConstructor;
@@ -16,12 +17,12 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/sellers/me/settlements")
+@RequestMapping("/sellers/me")
 public class SettlementController {
 
     private final SettlementService settlementService;
 
-    @GetMapping
+    @GetMapping("/settlements")
     public ResponseEntity<BaseResponse<Page<SettlementResponseDto>>> findMySettlements(
             @AuthenticationPrincipal CustomUserDetails seller,
             @PageableDefault(size = 10) Pageable pageable) {
@@ -30,7 +31,7 @@ public class SettlementController {
                 settlementService.findMySettlements(seller.getMemberId(), pageable)));
     }
 
-    @GetMapping("/{settlementId}/details")
+    @GetMapping("/settlements/{settlementId}/details")
     public ResponseEntity<BaseResponse<Page<SettlementDetailLineResponseDto>>> findDetails(
             @PathVariable Long settlementId,
             @AuthenticationPrincipal CustomUserDetails seller,
@@ -38,5 +39,19 @@ public class SettlementController {
 
         return ResponseEntity.ok(BaseResponse.success(
                 settlementService.findMySettlementDetails(settlementId, seller.getMemberId(), pageable)));
+    }
+
+    @GetMapping("/settlement-details")
+    public ResponseEntity<BaseResponse<Page<SettlementDetailSearchResponseDto>>> searchDetails(
+            @RequestParam(required = false) Long paymentId,
+            @RequestParam(required = false) Long reservationId,
+            @RequestParam(required = false) Long eventId,
+            @AuthenticationPrincipal CustomUserDetails seller,
+            @PageableDefault(size = 20) Pageable pageable) {
+
+        SettlementDetailSearchCond cond = new SettlementDetailSearchCond(paymentId, reservationId, eventId);
+
+        return ResponseEntity.ok(BaseResponse.success(
+                settlementService.searchMyDetails(seller.getMemberId(), cond, pageable)));
     }
 }

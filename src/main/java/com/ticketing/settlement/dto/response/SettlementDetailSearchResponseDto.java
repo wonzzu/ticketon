@@ -4,16 +4,20 @@ import com.ticketing.member.domain.SellerGrade;
 import com.ticketing.settlement.domain.SettlementDetail;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class SettlementDetailLineResponseDto {
+public class SettlementDetailSearchResponseDto {
 
     private Long paymentId;
     private Long reservationId;
+    private Long eventId;
+    private String eventTitle;
+    private LocalDate settlementDate;
     private LocalDateTime paidAt;
     private Long grossAmount;
     private Long commission;
@@ -21,10 +25,13 @@ public class SettlementDetailLineResponseDto {
     private SellerGrade appliedGrade;
     private Integer commissionRate;
 
-    public static SettlementDetailLineResponseDto from(SettlementDetail d) {
-        return SettlementDetailLineResponseDto.builder()
+    public static SettlementDetailSearchResponseDto of(SettlementDetail d, String eventTitle) {
+        return SettlementDetailSearchResponseDto.builder()
                 .paymentId(d.getPaymentId())
                 .reservationId(d.getReservationId())
+                .eventId(d.getEventId())
+                .eventTitle(eventTitle)
+                .settlementDate(d.getSettlementDate())
                 .paidAt(d.getPaidAt())
                 .grossAmount(d.getGrossAmount())
                 .commission(d.getCommission())
