@@ -60,6 +60,12 @@ const routes = [
     meta: { requiresAuth: true, requiresRole: 'SELLER' },
     props: true,
   },
+  {
+    path: '/seller/settlements',
+    name: 'seller-settlements',
+    component: () => import('@/views/seller/SellerSettlementView.vue'),
+    meta: { requiresAuth: true, requiresRole: 'SELLER' },   // 정산 집계 목록 + 건별 명세
+  },
 
   // === 어드민 ===
   {
