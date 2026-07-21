@@ -65,6 +65,7 @@ public enum BaseResponseStatus {
     INVALID_REVIEW_RATING(false, 7002, "별점은 1~5 사이여야 합니다", HttpStatus.BAD_REQUEST),
     DUPLICATE_REVIEW(false, 7003, "이미 작성한 후기가 있습니다", HttpStatus.CONFLICT),
     REVIEW_NOT_OWNED(false, 7004, "본인이 작성한 후기만 삭제할 수 있습니다", HttpStatus.FORBIDDEN),
+    REVIEW_NOT_RESERVED(false, 7005, "예매한 공연에만 후기를 작성할 수 있습니다", HttpStatus.FORBIDDEN),
 
     // 쿠폰 8000
     COUPON_NOT_FOUND(false, 8001, "존재하지 않는 쿠폰입니다", HttpStatus.NOT_FOUND),
