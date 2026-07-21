@@ -2,9 +2,6 @@ package com.ticketing.event.dto.request;
 
 import com.ticketing.event.domain.AgeLimit;
 import com.ticketing.event.domain.Category;
-import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
