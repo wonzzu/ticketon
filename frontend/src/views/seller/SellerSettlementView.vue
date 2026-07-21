@@ -19,7 +19,7 @@ import AppEmpty from '@/components/common/AppEmpty.vue'
 import AppButton from '@/components/common/AppButton.vue'
 
 // ── 추적 검색 (결제/예매 번호) ──
-const searchForm = ref({ paymentId: '', reservationId: '' })
+const searchForm = ref({ paymentId: '', reservationId: '', paidFrom: '', paidTo: '' })
 const searchResults = ref([])
 const searchPage = ref({ number: 0, totalPages: 0, totalElements: 0 })
 const searchLoading = ref(false)
@@ -43,12 +43,19 @@ function buildSearchParams(page) {
   const params = { page, size: 20 }
   if (searchForm.value.paymentId) params.paymentId = searchForm.value.paymentId
   if (searchForm.value.reservationId) params.reservationId = searchForm.value.reservationId
+  if (searchForm.value.paidFrom) params.paidFrom = searchForm.value.paidFrom
+  if (searchForm.value.paidTo) params.paidTo = searchForm.value.paidTo
   return params
 }
 
+function hasSearchCondition() {
+  const f = searchForm.value
+  return !!(f.paymentId || f.reservationId || f.paidFrom || f.paidTo)
+}
+
 async function doSearch(page = 0) {
-  if (!searchForm.value.paymentId && !searchForm.value.reservationId) {
-    searchError.value = '결제번호 또는 예매번호를 입력해주세요.'
+  if (!hasSearchCondition()) {
+    searchError.value = '결제·예매 번호 또는 결제일 기간 중 하나 이상 입력해주세요.'
     return
   }
   searchError.value = ''
@@ -67,7 +74,7 @@ async function doSearch(page = 0) {
 }
 
 function resetSearch() {
-  searchForm.value = { paymentId: '', reservationId: '' }
+  searchForm.value = { paymentId: '', reservationId: '', paidFrom: '', paidTo: '' }
   searchResults.value = []
   searched.value = false
   searchError.value = ''
@@ -153,21 +160,30 @@ onMounted(loadList)
     <!-- ===== 추적 검색 ===== -->
     <section class="bg-white border rounded p-3 p-md-4 mb-4">
       <h2 class="h6 fw-bold mb-1">
-        <i class="bi bi-search me-1"></i>결제·예매 번호로 조회
+        <i class="bi bi-search me-1"></i>건별 명세 조회
       </h2>
       <p class="text-secondary small mb-3">
-        특정 거래가 정산에 어떻게 반영됐는지 추적합니다. 취소된 결제는 정산에서 빠져 조회되지 않습니다.
+        결제·예매 번호로 특정 거래를 추적하거나, 결제일 기간으로 좁혀볼 수 있습니다.
+        취소된 결제는 정산에서 빠져 조회되지 않습니다.
       </p>
       <form class="row g-2 align-items-end" @submit.prevent="doSearch(0)">
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md-2">
           <label class="form-label small mb-1">결제번호</label>
           <input v-model="searchForm.paymentId" type="number" min="1"
                  class="form-control form-control-sm" placeholder="예: 87" />
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md-2">
           <label class="form-label small mb-1">예매번호</label>
           <input v-model="searchForm.reservationId" type="number" min="1"
                  class="form-control form-control-sm" placeholder="예: 101" />
+        </div>
+        <div class="col-6 col-md-2">
+          <label class="form-label small mb-1">결제일 시작</label>
+          <input v-model="searchForm.paidFrom" type="date" class="form-control form-control-sm" />
+        </div>
+        <div class="col-6 col-md-2">
+          <label class="form-label small mb-1">결제일 종료</label>
+          <input v-model="searchForm.paidTo" type="date" class="form-control form-control-sm" />
         </div>
         <div class="col-12 col-md-auto d-flex gap-2">
           <AppButton type="submit" variant="primary" size="sm" :loading="searchLoading">
