@@ -1,6 +1,5 @@
 package com.ticketing.event.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.ticketing.event.domain.AgeLimit;
 import com.ticketing.event.domain.Category;
 import jakarta.validation.constraints.NotBlank;

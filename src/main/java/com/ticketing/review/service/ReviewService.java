@@ -5,6 +5,8 @@ import com.ticketing.event.repository.EventRepository;
 import com.ticketing.global.exception.BaseException;
 import com.ticketing.member.domain.Member;
 import com.ticketing.member.repository.MemberRepository;
+import com.ticketing.reservation.domain.ReservationStatus;
+import com.ticketing.reservation.repository.ReservationRepository;
 import com.ticketing.review.domain.Review;
 import com.ticketing.review.dto.request.ReviewCreateDto;
 import com.ticketing.review.dto.response.MyReviewResponseDto;
@@ -30,11 +32,17 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final EventRepository eventRepository;
     private final MemberRepository memberRepository;
+    private final ReservationRepository reservationRepository;
 
     @Transactional
     public void create(Long eventId, Long memberId, ReviewCreateDto dto) {
         if (reviewRepository.existsByEventIdAndMemberId(eventId, memberId)) {
             throw new BaseException(DUPLICATE_REVIEW);
+        }
+
+        if (!reservationRepository.existsByMemberIdAndEventScheduleEventIdAndStatus(
+                memberId, eventId, ReservationStatus.CONFIRMED)) {
+            throw new BaseException(REVIEW_NOT_RESERVED);
         }
 
         Event event = eventRepository.findById(eventId)

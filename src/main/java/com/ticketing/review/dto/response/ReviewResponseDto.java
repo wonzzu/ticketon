@@ -1,5 +1,6 @@
 package com.ticketing.review.dto.response;
 
+import com.ticketing.global.util.NameMasker;
 import com.ticketing.review.domain.Review;
 import lombok.*;
 
@@ -20,7 +21,7 @@ public class ReviewResponseDto {
     public static ReviewResponseDto from(Review review) {
         return ReviewResponseDto.builder()
                 .id(review.getId())
-                .name(review.getMember().getName())
+                .name(NameMasker.mask(review.getMember().getName()))
                 .rating(review.getRating())
                 .content(review.getContent())
                 .createdAt(review.getCreatedAt())
