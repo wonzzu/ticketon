@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static com.ticketing.settlement.domain.QSettlementDetail.settlementDetail;
@@ -28,7 +29,9 @@ public class SettlementDetailRepositoryImpl implements SettlementDetailRepositor
                         settlementDetail.sellerId.eq(sellerId),
                         paymentIdEq(cond.paymentId()),
                         reservationIdEq(cond.reservationId()),
-                        eventIdEq(cond.eventId())
+                        eventIdEq(cond.eventId()),
+                        paidGoe(cond.paidFrom()),
+                        paidLt(cond.paidTo())
                 )
                 .orderBy(settlementDetail.settlementDate.desc(), settlementDetail.paymentId.asc())
                 .offset(pageable.getOffset())
@@ -42,7 +45,9 @@ public class SettlementDetailRepositoryImpl implements SettlementDetailRepositor
                         settlementDetail.sellerId.eq(sellerId),
                         paymentIdEq(cond.paymentId()),
                         reservationIdEq(cond.reservationId()),
-                        eventIdEq(cond.eventId())
+                        eventIdEq(cond.eventId()),
+                        paidGoe(cond.paidFrom()),
+                        paidLt(cond.paidTo())
                 );
 
         return PageableExecutionUtils.getPage(result, pageable, countQuery::fetchOne);
@@ -58,5 +63,14 @@ public class SettlementDetailRepositoryImpl implements SettlementDetailRepositor
 
     private BooleanExpression eventIdEq(Long eventId) {
         return eventId != null ? settlementDetail.eventId.eq(eventId) : null;
+    }
+
+    // 결제일 기간 — 날짜로 받아 그날 00:00부터 / 종료일 다음날 00:00 직전까지(종료일 포함)
+    private BooleanExpression paidGoe(LocalDate from) {
+        return from != null ? settlementDetail.paidAt.goe(from.atStartOfDay()) : null;
+    }
+
+    private BooleanExpression paidLt(LocalDate to) {
+        return to != null ? settlementDetail.paidAt.lt(to.plusDays(1).atStartOfDay()) : null;
     }
 }
