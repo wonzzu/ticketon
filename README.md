@@ -33,6 +33,29 @@
 한정 수량을 **Redis DECR**로 초과 발급 없이 정확히 소진 (DB는 발급 이력의 SSOT)
 <!-- TODO(최종): → 상세 링크 -->
 
+### 💰 정산 배치 (Spring Batch)
+
+공연 종료 후 판매자 정산을 **건별 명세 → 집계** 구조로 처리한다.
+
+- **왜 건별인가**: 집계만 저장하면 "정산액 8억"이라는 숫자만 남고 **근거가 사라진다.**
+  판매자가 검증할 수 없고, 분쟁 시 근거를 댈 수 없으며, 수수료 정책이 바뀌면 과거 금액을 재현할 수 없다.
+  → 결제 1건 = 명세 1행으로 저장하고, **적용 등급·수수료율·결제시각을 스냅샷**으로 박제
+- **왜 Batch인가**: 양이 많아서가 아니라 **돈이라서**. 실행 이력 · 재시작 · Skip 추적 같은 운영 인프라가 필요했고,
+  건별로 저장하다 보니 자연히 대량이 되어 Chunk 기반 처리가 맞았다.
+  (반대로 **통계는 집계만 필요해 Batch 없이 SQL 한 번**으로 처리 — 요구 성격에 따라 도구를 나눴다)
+- **취소 소급 재집계**: 정산 이후 환불이 발생하면 결제 취소를 이벤트(`AFTER_COMMIT`)로 감지해 재집계 대기열에 적재,
+  스케줄러가 **멱등 재실행**(DELETE & INSERT)으로 금액을 보정한다. 실패하면 대기열을 유지해 다음 실행에 재시도
+
+| 구성 | 내용 |
+|------|------|
+| Reader | `JdbcCursorItemReader` — 대량을 메모리에 올리지 않고 스트리밍 |
+| Processor | 등급별 차등 수수료(enum이 정책 소유) + 정합성 검증 + filter/skip 분리 |
+| Writer | JDBC Batch Insert — 대량 쓰기의 표준 구조 |
+| 멱등 | Step0에서 대상 날짜 삭제 후 재적재 → 몇 번을 실행해도 결과 동일 |
+
+> 검증: 통합 테스트 5개(명세 생성 · 스냅샷 · 취소 감지 · 재집계 · 멱등) · 등급 차등(GOLD 5% / SILVER 8%) 실측
+<!-- TODO(최종): chunk 크기 / fetchSize / 실행계획 측정 결과표 + 상세 리포트 링크 -->
+
 ### ⚡ 성능 개선 (N+1 · 캐시)
 
 <!-- TODO(최종): 개선 후 after 수치 채우기 + 상세 리포트 링크 -->
@@ -46,11 +69,22 @@
 > 측정: Hibernate `Statistics.getPrepareStatementCount()` · 예매 10건 / 좌석 100개 기준
 <!-- TODO(최종): 응답시간(p95) 표 추가 (k6 부하 테스트), 콘솔/그라파나 스크린샷 -->
 
+### 🧭 검토했지만 적용하지 않은 개선
+
+**측정으로 병목이 재현되지 않으면 넣지 않는다**는 기준으로 판단했다.
+
+| 개선안 | 적용 안 한 이유 |
+|--------|----------------|
+| Cursor(No-offset) 페이징 | 내 예매 목록은 회원당 수백 건이라 offset 병목이 재현되지 않음. 실제 대용량 목록에서는 유효한 접근 |
+| `findMine` 복합 인덱스 | `member_id`는 FK라 이미 인덱스를 타고, 정렬 대상도 소량이라 이득 < 쓰기 비용. 예매는 쓰기가 잦은 테이블 |
+| 메시지 큐(Kafka 등) | 처리량 병목이 발생하지 않았고, 운영 복잡도만 늘어남 |
+| Read Replica · MySQL 파라미터 튜닝 | 단일 인스턴스 환경에서 검증할 수 없어 판단 근거를 만들 수 없음 |
+
 ---
 
 ## 🛠️ 기술 스택
 
-- **Backend**: Spring Boot 3.4 · JPA · QueryDSL · MySQL · Redis · JWT · Spring Security
+- **Backend**: Spring Boot 3.4 · JPA · QueryDSL · **Spring Batch** · MySQL · Redis · JWT · Spring Security
 - **Frontend**: Vue 3 · Vite · Pinia · Vue Router · Axios · Bootstrap 5.3
 - **Infra / 모니터링**: Docker · Prometheus · Grafana
 <!-- TODO(최종): 배포(EC2/S3), CI(Jenkins/GitHub Actions) 등 확정되면 추가 -->

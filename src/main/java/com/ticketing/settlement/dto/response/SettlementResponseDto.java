@@ -3,7 +3,6 @@ package com.ticketing.settlement.dto.response;
 
 import com.ticketing.settlement.domain.Settlement;
 import lombok.*;
-import org.springframework.context.annotation.Bean;
 
 import java.time.LocalDate;
 
