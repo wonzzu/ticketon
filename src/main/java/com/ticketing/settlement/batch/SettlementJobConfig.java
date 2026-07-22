@@ -28,7 +28,9 @@ import java.time.LocalDate;
 public class SettlementJobConfig {
 
     private final JdbcTemplate jdbcTemplate;
-    private static final int CHUNK_SIZE = 1000;
+
+    @Value("${settlement.chunk-size:1000}")
+    private int chunkSize;
 
     @Bean
     public Job settlementJob(JobRepository jobRepository, Step settlementDeleteStep,
@@ -68,7 +70,7 @@ public class SettlementJobConfig {
                                      ItemWriter<SettlementDetail> settlementWriter,
                                      SettlementSkipListener settlementSkipListener) {
         return new StepBuilder("settlementDetailStep", jobRepository)
-                .<SettlementDetailRow, SettlementDetail>chunk(CHUNK_SIZE, tx)
+                .<SettlementDetailRow, SettlementDetail>chunk(chunkSize, tx)
                 .reader(settlementReader)
                 .processor(settlementProcessor)
                 .writer(settlementWriter)
@@ -85,7 +87,7 @@ public class SettlementJobConfig {
                                         JdbcCursorItemReader<Settlement> settlementAggregateReader,
                                         ItemWriter<Settlement> settlementAggregateWriter) {
         return new StepBuilder("settlementAggregateStep", jobRepository)
-                .<Settlement, Settlement>chunk(CHUNK_SIZE, tx)
+                .<Settlement, Settlement>chunk(chunkSize, tx)
                 .reader(settlementAggregateReader)
                 .writer(settlementAggregateWriter)
                 .build();
