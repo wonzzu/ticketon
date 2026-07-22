@@ -56,6 +56,9 @@ _make_pdf.py
 spring-security-jwt-notes.pdf
 spring-security-jwt-notes.md
 
+### Docs (바탕화면 ticketing-docs로 분리 — 개인 학습노트/설명, 저장소 제외) ###
+docs/
+
 ### Claude Code ###
 .claude/
 
