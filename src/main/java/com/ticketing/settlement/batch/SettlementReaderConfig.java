@@ -19,6 +19,9 @@ public class SettlementReaderConfig {
 
     private final DataSource dataSource;
 
+    @Value("${settlement.fetch-size:1000}")
+    private int fetchSize;
+
 
     private static final String DETAIL_SQL = """
             SELECT p.id            AS payment_id,
@@ -47,7 +50,7 @@ public class SettlementReaderConfig {
         return new JdbcCursorItemReaderBuilder<SettlementDetailRow>()
                 .name("settlementReader")
                 .dataSource(dataSource)
-                .fetchSize(1000)
+                .fetchSize(fetchSize)
                 .sql(DETAIL_SQL)
                 .preparedStatementSetter(ps -> ps.setString(1, targetDate))
                 .rowMapper((rs, rowNum) -> new SettlementDetailRow(
