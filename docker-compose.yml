@@ -56,7 +56,10 @@ services:
     build: ./frontend
     restart: unless-stopped
     ports:
-      - "80:80"                     # 외부 노출은 여기뿐. [4]에서 443 추가
+      - "80:80"                     # HTTP → HTTPS 리다이렉트
+      - "443:443"                   # HTTPS 서비스
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro   # 호스트의 Let's Encrypt 인증서 (읽기전용)
     depends_on:
       - spring
 
