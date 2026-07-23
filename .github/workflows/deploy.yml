@@ -3,7 +3,7 @@ name: Deploy
 
 on:
   push:
-    branches: [dev]
+    branches: [main]   # dev = 개발 통합(배포 안 됨), main 머지 = 운영 배포
 
 jobs:
   # ── ① 테스트 (러너에 mysql/redis 컨테이너 제공) ──
