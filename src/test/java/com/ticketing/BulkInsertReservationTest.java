@@ -15,6 +15,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,9 +29,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Tag("local")
 @SpringBootTest
-@ActiveProfiles("test")   // 공통 테스트 설정(application-test.properties) — ticketing_test DB
-// ⚠️ 클래스 레벨의 @Transactional은 제거된 상태를 유지하여 OOM을 방지합니다.
+@ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class BulkInsertReservationTest {
 
@@ -41,7 +42,7 @@ class BulkInsertReservationTest {
     JdbcTemplate jdbc;
 
     @Autowired
-    TransactionTemplate txTemplate; // 👈 프로그래밍 방식의 트랜잭션 제어를 위해 주입
+    TransactionTemplate txTemplate;
 
     private Long memberId;
     private Long scheduleId;
@@ -77,7 +78,7 @@ class BulkInsertReservationTest {
         });
     }
 
-    // @AfterEach 정리 불필요 — @DirtiesContext(BEFORE_EACH)가 매 테스트 전 컨텍스트+스키마를 재생성한다.
+
 
     @Test
     void bench_100() {
@@ -103,14 +104,7 @@ class BulkInsertReservationTest {
                 n, jpaMs, jdbcMs, ratio);
     }
 
-    // JPA: 1000건 단위 "청크 트랜잭션" + flush/clear.
-    //  → JDBC Batch(청크 단위)와 트랜잭션 횟수를 맞춰 "공정하게" 비교한다.
-    //    (이전엔 건별 트랜잭션이라 트랜잭션 오버헤드가 JPA에 불리하게 얹혔음)
-    //
-    //  ※ 그래도 JDBC Batch가 빠른 근본 이유:
-    //    Reservation PK가 IDENTITY(AUTO_INCREMENT)라 INSERT를 실행해야 생성 PK를 받을 수 있어
-    //    Hibernate가 batch로 못 묶고 "건별 INSERT"가 나간다. (hibernate.jdbc.batch_size 켜도 IDENTITY면 무효)
-    //    → JPA는 하나씩 왕복 = 대량 적재에 느림. SEQUENCE 전략이면 JPA도 batch 가능하나 MySQL은 IDENTITY.
+
     private void insertJpa(int n) {
         int chunk = 1000;
         for (int s = 0; s < n; s += chunk) {
@@ -120,13 +114,11 @@ class BulkInsertReservationTest {
                 Member m = em.getReference(NormalMember.class, memberId);
                 EventSchedule sch = em.getReference(EventSchedule.class, scheduleId);
                 for (int i = start; i < end; i++) {
-                    // ★ IDENTITY라 persist마다 "즉시" INSERT가 나간다.
-                    //    PK(AUTO_INCREMENT)를 받아야 영속성 컨텍스트가 식별·관리하므로
-                    //    쓰기지연 SQL 저장소에 담지 못함 → batch로 못 묶임 → 건별 왕복.
+
                     em.persist(Reservation.create(m, sch, "jpa-" + i, 10000));
                 }
-                em.flush();   // 쓰기지연분 DB 동기화 (단 IDENTITY INSERT는 위 persist에서 이미 나감)
-                em.clear();   // 1차 캐시 비우기 (메모리 해제)
+                em.flush();
+                em.clear();
                 return null;
             });
         }

@@ -122,7 +122,7 @@ class CouponConcurrencyTest {
         assertThat(success.get()).isEqualTo(STOCK);
         assertThat(fail.get()).isEqualTo(PEOPLE - STOCK);
         assertThat(redisStock).isEqualTo("0");
-        assertThat(dbIssued).isEqualTo((long) STOCK);           // 보상 트랜잭션: Redis 차감분 = DB 발급분
-        assertThat(distinctMembers).isEqualTo((long) STOCK);    // 1인 1매 (SADD 중복 차단)
+        assertThat(dbIssued).isEqualTo((long) STOCK);
+        assertThat(distinctMembers).isEqualTo((long) STOCK);
     }
 }

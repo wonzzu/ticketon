@@ -51,8 +51,7 @@ class StatisticsBatchTest {
 
     @BeforeEach
     void setup() {
-        // 오늘자 결제(PAID) 1건만 적재. aggregatePaid는 payment.status=PAID + createdAt(오늘) 기준이라
-        // 결제 서비스/대기열 흐름 없이 엔티티 persist만으로 집계 소스가 갖춰진다.
+
         tx.execute(s -> {
             Seller seller = Seller.create("stat-seller@t.com", "pw", "셀러", "010-0000-0000",
                     new Address("서울", "로1", "00000"), "컴퍼니", "대표", "000-00-00001");
@@ -76,7 +75,7 @@ class StatisticsBatchTest {
             Reservation reservation = Reservation.create(member, schedule, "idem-stat-1", 10000);
             em.persist(reservation);
 
-            em.persist(Payment.paid(reservation, 10000));   // createdAt=now(오늘) 자동, status=PAID
+            em.persist(Payment.paid(reservation, 10000));
 
             em.flush();
             return null;
@@ -86,13 +85,13 @@ class StatisticsBatchTest {
     @Test
     @DisplayName("aggregateDaily 2회 실행 → 행 1개 유지 + 값 누적 안 됨")
     void 배치_멱등() {
-        // given : setup에서 오늘자 PAID 결제 1건
 
-        // when : 같은 날짜를 두 번 집계
+
+
         statisticsService.aggregateDaily(today);
         statisticsService.aggregateDaily(today);
 
-        // then : DELETE&INSERT라 행이 중복되지도, 값이 누적되지도(2배) 않는다
+
         assertThat(dailySalesStatsRepository.count()).isEqualTo(1);
         assertThat(dailyEventStatsRepository.count()).isEqualTo(1);
 

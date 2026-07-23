@@ -53,7 +53,7 @@ class EventCacheTest {
 
             Event event = Event.create("캐시공연", "설명", LocalDate.now(), LocalDate.now().plusDays(1),
                     120, "출연", AgeLimit.ALL, Category.CONCERT, "url", seller);
-            event.approve();   // find()는 APPROVED만 조회 가능
+            event.approve();
             em.persist(event);
             eventId = event.getId();
 
@@ -63,7 +63,7 @@ class EventCacheTest {
     }
 
     @AfterEach
-    void clearCache() {   // 캐시가 켜졌으니 테스트 간 캐시 격리 (Redis에 남은 캐시 제거)
+    void clearCache() {
         cacheManager.getCacheNames().forEach(n -> {
             var c = cacheManager.getCache(n);
             if (c != null) c.clear();
@@ -88,6 +88,6 @@ class EventCacheTest {
                         "====================================%n",
                 secondCount);
 
-        assertThat(secondCount).isEqualTo(0);   // 캐시 적용 후 Green. 현재는 캐시 비활성이라 Red
+        assertThat(secondCount).isEqualTo(0);
     }
 }

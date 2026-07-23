@@ -92,9 +92,13 @@ clean {
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+	useJUnitPlatform {
+		if (project.hasProperty('ci')) {
+			excludeTags 'local'
+		}
+	}
 	testLogging {
-		events "passed", "skipped", "failed"   // 통과/스킵/실패 다 콘솔에 표시
-		showStandardStreams = true              // System.out.println 출력도 보이게
+		events "passed", "skipped", "failed"
+		showStandardStreams = true
 	}
 }
