@@ -107,13 +107,13 @@ class ReservationFlowTest {
             return null;
         });
 
-        // 대기열 통과: active ZSet에 직접 등록(만료 10분 뒤) → queueService.isAdmitted = true
+
         redis.opsForZSet().add("queue:active:" + scheduleId, memberId.toString(),
                 System.currentTimeMillis() + 600_000);
     }
 
     @AfterEach
-    void cleanupRedis() {   // DB는 @Sql(truncate.sql)이 정리, Redis만 여기서
+    void cleanupRedis() {
         redis.delete("queue:active:" + scheduleId);
         redis.delete("seat:hold:" + scheduleId + ":" + eventSeatId);
     }
@@ -121,7 +121,7 @@ class ReservationFlowTest {
     @Test
     @DisplayName("예약(PENDING) → 결제(CONFIRMED) → 취소(CANCEL + 결제취소)")
     void 예약_결제_취소() {
-        // 1) 예약 생성 → PENDING
+
         ReservationCreateDto createDto = new ReservationCreateDto();
         ReflectionTestUtils.setField(createDto, "scheduleId", scheduleId);
         ReflectionTestUtils.setField(createDto, "eventSeatIds", List.of(eventSeatId));
@@ -135,7 +135,7 @@ class ReservationFlowTest {
         assertThat(created.getStatus()).isEqualTo(ReservationStatus.PENDING);
         assertThat(created.getSeats()).hasSize(1);   // ReservationSeat 생성 (DTO seats라 LazyInit 안전)
 
-        // 2) 결제 → 예약 CONFIRMED + 좌석 RESERVED + 선점 해제 + 금액
+
         PaymentCreateDto payDto = new PaymentCreateDto();
         ReflectionTestUtils.setField(payDto, "reservationId", reservationId);
         paymentService.pay(memberId, payDto);
@@ -152,7 +152,7 @@ class ReservationFlowTest {
         assertThat(holdReleased).isTrue();
         assertThat(paidAmount).isEqualTo(10000);
 
-        // 3) 취소 → 예약 CANCEL + 결제 CANCELED + 좌석 복구 (cancel 위임 검증)
+
         reservationService.cancel(reservationId, memberId, CancelReason.CHANGE_OF_MIND, null);
 
         Reservation afterCancel = reservationRepository.findById(reservationId).orElseThrow();
