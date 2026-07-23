@@ -61,12 +61,14 @@ jobs:
           context: .
           push: true
           tags: ghcr.io/wonzzu/ticketon-spring:latest
+          provenance: false   # GHCR unknown blob 오류 방지 (attestation 매니페스트 비호환)
       - name: Build & push frontend(nginx)
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
           push: true
           tags: ghcr.io/wonzzu/ticketon-nginx:latest
+          provenance: false
 
   # ── ③ EC2 배포 (SSH → pull & 재기동) ──
   deploy:
