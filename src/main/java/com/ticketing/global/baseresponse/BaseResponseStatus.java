@@ -76,7 +76,13 @@ public enum BaseResponseStatus {
     INTERNAL_SERVER_ERROR(false, 9001, "서버 오류가 발생했습니다", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_INPUT(false, 9002, "입력값이 올바르지 않습니다", HttpStatus.BAD_REQUEST),
     TOO_MANY_REQUESTS(false, 9003, "요청이 너무 많습니다. 잠시 후 다시 시도해주세요", HttpStatus.TOO_MANY_REQUESTS),
+    FILE_EMPTY(false, 9004, "파일이 비어있습니다", HttpStatus.BAD_REQUEST),
+    FILE_NOT_IMAGE(false, 9005, "이미지 파일만 업로드 가능합니다", HttpStatus.BAD_REQUEST),
+    FILE_TOO_LARGE(false, 9006, "파일 크기는 5MB 이하만 가능합니다", HttpStatus.BAD_REQUEST),
+    FILE_UPLOAD_FAILED(false, 9007, "파일 업로드에 실패했습니다", HttpStatus.INTERNAL_SERVER_ERROR),
     ;
+
+    //
 
     private final boolean success;
     private final int code;
