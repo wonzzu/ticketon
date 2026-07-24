@@ -21,10 +21,10 @@ public class S3UploadService {
 
     private final S3Client s3Client;
 
-    @Value("${aws.s3.bucket}")
+    @Value("${aws.s3.bucket:ticketon-posters}")
     private String bucket;
 
-    @Value("${aws.s3.region}")
+    @Value("${aws.s3.region:ap-northeast-2}")
     private String region;
 
     @Value("${aws.s3.enabled:false}")
