@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="600" viewBox="0 0 400 600">
+  <rect width="400" height="600" fill="#e9ecef"/>
+  <rect x="20" y="20" width="360" height="560" fill="none" stroke="#ced4da" stroke-width="2" stroke-dasharray="8 6" rx="8"/>
+  <g fill="#adb5bd" text-anchor="middle" font-family="system-ui, sans-serif">
+    <text x="200" y="285" font-size="72">🎭</text>
+    <text x="200" y="345" font-size="24" font-weight="600" fill="#868e96">포스터 준비 중</text>
+    <text x="200" y="378" font-size="15">Poster Placeholder</text>
+  </g>
+</svg>
