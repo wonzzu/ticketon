@@ -74,6 +74,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/events/**").hasRole("SELLER")       // 공연 수정
                         .requestMatchers(HttpMethod.DELETE, "/events/**").hasRole("SELLER")       // 공연 삭제
                         .requestMatchers(HttpMethod.POST, "/events/*/schedules").hasRole("SELLER")  // 회차 등록
+                        .requestMatchers(HttpMethod.POST, "/uploads/poster").hasRole("SELLER")    // 포스터 업로드
                         .requestMatchers("/sellers/me/**").hasRole("SELLER")                     // 셀러 대시보드
 
                         // ── 그 외 전부 로그인 필요 (예매·결제·대기열·마이페이지·쿠폰발급·리뷰작성) ──

@@ -10,6 +10,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { eventApi } from '@/api/event.api'
+import { uploadApi } from '@/api/upload.api'
 import {
   CATEGORY, CATEGORY_LABEL,
   AGE_LIMIT, AGE_LIMIT_LABEL,
@@ -21,6 +22,25 @@ import PosterImage from '@/components/common/PosterImage.vue'
 const router = useRouter()
 const loading = ref(false)
 const errorMsg = ref('')
+const uploading = ref(false)
+
+// 포스터 파일 선택 → S3 업로드 → 반환된 URL을 form.posterUrl에 저장
+async function onPosterSelected(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+
+  uploading.value = true
+  errorMsg.value = ''
+  try {
+    const url = await uploadApi.poster(file)   // 인터셉터가 data(URL)만 반환
+    form.value.posterUrl = url
+  } catch (e) {
+    errorMsg.value = e?.message || '포스터 업로드에 실패했습니다.'
+  } finally {
+    uploading.value = false
+    event.target.value = ''   // 같은 파일 재선택 가능하도록 초기화
+  }
+}
 
 const form = ref({
   title: '',
@@ -157,12 +177,13 @@ function onCancel() {
       <section class="bg-white border rounded p-4 mb-3">
         <h2 class="h6 fw-bold pb-2 mb-3 border-bottom">포스터</h2>
 
-        <AppInput v-model="form.posterUrl"
-                  label="포스터 이미지 URL"
-                  placeholder="https://picsum.photos/seed/concert1/400/600" />
-        <p class="small text-secondary mt-n2">
+        <label class="form-label small fw-semibold">포스터 이미지</label>
+        <input type="file" class="form-control" accept="image/*"
+               :disabled="uploading" @change="onPosterSelected" />
+        <p class="small text-secondary mt-1">
           <i class="bi bi-lightbulb me-1"></i>
-          S3 업로드 도입 전까지 외부 URL을 입력해주세요. 비워두면 기본 이미지가 표시됩니다.
+          <span v-if="uploading">업로드 중...</span>
+          <span v-else>이미지 파일(5MB 이하)을 선택하면 자동 업로드됩니다. 비워두면 기본 이미지가 표시됩니다.</span>
         </p>
 
         <PosterImage v-if="form.posterUrl" :src="form.posterUrl" alt="포스터 미리보기"
