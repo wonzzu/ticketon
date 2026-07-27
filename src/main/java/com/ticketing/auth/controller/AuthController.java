@@ -3,6 +3,7 @@ package com.ticketing.auth.controller;
 
 import com.ticketing.auth.dto.request.LoginRequestDto;
 import com.ticketing.auth.dto.response.TokenResponse;
+import com.ticketing.auth.jwt.RefreshCookieProvider;
 import com.ticketing.auth.service.AuthService;
 import com.ticketing.global.baseresponse.BaseResponse;
 import com.ticketing.global.ratelimit.RateLimit;
@@ -22,17 +23,17 @@ import static com.ticketing.auth.service.AuthService.*;
 @RequestMapping("/auth")
 public class AuthController {
 
-    private static final String REFRESH_COOKIE_NAME = "refreshToken";
-    private static final String REFRESH_COOKIE_PATH = "/auth";
     private static final Duration REFRESH_COOKIE_MAX_AGE = Duration.ofDays(14);
+
     private final AuthService authService;
+    private final RefreshCookieProvider refreshCookieProvider;
 
     @RateLimit(key = RateLimit.KeyType.IP, limit = 20, windowSeconds = 60)
     @PostMapping("/login")
     public ResponseEntity<BaseResponse<TokenResponse>> login(@Validated @RequestBody LoginRequestDto dto) {
         TokenPair pair = authService.login(dto);
 
-        ResponseCookie responseCookie = buildRefreshCookie(pair.refreshToken(), REFRESH_COOKIE_MAX_AGE);
+        ResponseCookie responseCookie = refreshCookieProvider.create(pair.refreshToken(), REFRESH_COOKIE_MAX_AGE);
 
         TokenResponse data = TokenResponse.builder().accessToken(pair.accessToken()).build();
 
@@ -43,7 +44,7 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<BaseResponse<TokenResponse>> refresh(
-            @CookieValue(value = REFRESH_COOKIE_NAME, required = false) String refreshToken) {
+            @CookieValue(value = RefreshCookieProvider.COOKIE_NAME, required = false) String refreshToken) {
         String newAccessToken = authService.reissue(refreshToken);
 
         TokenResponse data = TokenResponse.builder().accessToken(newAccessToken).build();
@@ -53,24 +54,12 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<BaseResponse<Void>> logout(
-            @CookieValue(value = REFRESH_COOKIE_NAME, required = false) String refreshToken) {
+            @CookieValue(value = RefreshCookieProvider.COOKIE_NAME, required = false) String refreshToken) {
 
         authService.logout(refreshToken);
 
-        ResponseCookie expired = buildRefreshCookie("", Duration.ZERO);
+        ResponseCookie expired = refreshCookieProvider.expired();
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, expired.toString())
                 .body(BaseResponse.success());
     }
-
-    private ResponseCookie buildRefreshCookie(String value, Duration maxAge) {
-        return ResponseCookie.from(REFRESH_COOKIE_NAME, value)
-                .httpOnly(true)
-                .secure(true)
-                .sameSite("Strict")
-                .path(REFRESH_COOKIE_PATH)
-                .maxAge(maxAge)
-                .build();
-    }
-
-
 }
