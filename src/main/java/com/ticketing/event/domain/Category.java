@@ -8,8 +8,8 @@ import lombok.RequiredArgsConstructor;
 public enum Category {
     CONCERT("콘서트"),
     MUSICAL("뮤지컬"),
-    SPORTS("스포츠"),
-    EXHIBITION("전시"),
+    PLAY("연극"),
+    DANCE("무용"),
     KIDS("아동공연");
 
     private final String description;
