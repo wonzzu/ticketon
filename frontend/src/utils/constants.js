@@ -9,24 +9,24 @@
 export const CATEGORY = Object.freeze({
   CONCERT:    'CONCERT',
   MUSICAL:    'MUSICAL',
-  SPORTS:     'SPORTS',
-  EXHIBITION: 'EXHIBITION',
+  PLAY:       'PLAY',
+  DANCE:      'DANCE',
   KIDS:       'KIDS',
 })
 
 export const CATEGORY_LABEL = Object.freeze({
   CONCERT:    '콘서트',
   MUSICAL:    '뮤지컬',
-  SPORTS:     '스포츠',
-  EXHIBITION: '전시',
+  PLAY:       '연극',
+  DANCE:      '무용',
   KIDS:       '아동공연',
 })
 
 export const CATEGORY_ICON = Object.freeze({
   CONCERT:    'music-note-beamed',
   MUSICAL:    'mask',
-  SPORTS:     'trophy',
-  EXHIBITION: 'palette',
+  PLAY:       'chat-square-quote',
+  DANCE:      'person-arms-up',
   KIDS:       'balloon',
 })
 
@@ -34,8 +34,8 @@ export const CATEGORY_ICON = Object.freeze({
 export const CATEGORY_HERO = Object.freeze({
   CONCERT:    'https://picsum.photos/seed/cat-concert/1600/440',
   MUSICAL:    'https://picsum.photos/seed/cat-musical/1600/440',
-  SPORTS:     'https://picsum.photos/seed/cat-sports/1600/440',
-  EXHIBITION: 'https://picsum.photos/seed/cat-exhibition/1600/440',
+  PLAY:       'https://picsum.photos/seed/cat-play/1600/440',
+  DANCE:      'https://picsum.photos/seed/cat-dance/1600/440',
   KIDS:       'https://picsum.photos/seed/cat-kids/1600/440',
 })
 
@@ -234,22 +234,22 @@ export const MOCK_EVENTS = [
   },
   {
     id: 3,
-    title: '한일전 축구 국가대표',
-    category: 'SPORTS',
+    title: '연극 하녀들',
+    category: 'PLAY',
     startDate: '2026-06-10',
-    endDate: '2026-06-10',
-    venue: '서울월드컵경기장',
-    poster: 'https://picsum.photos/seed/sports1/400/600',
+    endDate: '2026-08-31',
+    venue: '예술의전당 자유소극장',
+    poster: 'https://picsum.photos/seed/play1/400/600',
     badge: 'HOT',
   },
   {
     id: 4,
-    title: '반 고흐 인사이드 展',
-    category: 'EXHIBITION',
+    title: '발레 심청',
+    category: 'DANCE',
     startDate: '2026-04-01',
     endDate: '2026-09-30',
-    venue: '예술의전당 한가람미술관',
-    poster: 'https://picsum.photos/seed/exhibition1/400/600',
+    venue: '예술의전당 오페라극장',
+    poster: 'https://picsum.photos/seed/dance1/400/600',
   },
   {
     id: 5,
@@ -281,12 +281,12 @@ export const MOCK_EVENTS = [
   },
   {
     id: 8,
-    title: 'K리그 클래식 — 서울 vs 전북',
-    category: 'SPORTS',
+    title: '현대무용 다이어리',
+    category: 'DANCE',
     startDate: '2026-05-25',
-    endDate: '2026-05-25',
-    venue: '서울월드컵경기장',
-    poster: 'https://picsum.photos/seed/sports2/400/600',
+    endDate: '2026-07-31',
+    venue: 'LG아트센터',
+    poster: 'https://picsum.photos/seed/dance2/400/600',
   },
 ]
 

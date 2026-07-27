@@ -189,13 +189,13 @@ public class DataSeedRunner implements CommandLineRunner {
                 LocalDate.of(2026, 9, 5), LocalDate.of(2026, 11, 30),
                 LocalDateTime.of(2026, 9, 5, 19, 30), price2);
 
-        seedApprovedEvent(seller1, admin, venue3, "반 고흐 인사이드 展", "exhibition1",
-                Category.EXHIBITION, AgeLimit.ALL,
+        seedApprovedEvent(seller1, admin, venue3, "발레 심청", "dance1",
+                Category.DANCE, AgeLimit.ALL,
                 LocalDate.of(2026, 5, 20), LocalDate.of(2026, 9, 30),
                 LocalDateTime.of(2026, 5, 20, 11, 0), price3);
 
-        seedApprovedEvent(seller2, admin, venue3, "한일전 축구 국가대표", "sports1",
-                Category.SPORTS, AgeLimit.ALL,
+        seedApprovedEvent(seller2, admin, venue3, "연극 하녀들", "play1",
+                Category.PLAY, AgeLimit.ALL,
                 LocalDate.of(2026, 6, 22), LocalDate.of(2026, 6, 22),
                 LocalDateTime.of(2026, 6, 22, 20, 0), price3);
 
@@ -204,8 +204,8 @@ public class DataSeedRunner implements CommandLineRunner {
                 Category.KIDS, AgeLimit.ALL,
                 LocalDate.of(2026, 12, 15), LocalDate.of(2026, 12, 31));
 
-        seedPendingEvent(seller2, "야구 KBO 리그 - 두산 vs LG", "sports2",
-                Category.SPORTS, AgeLimit.ALL,
+        seedPendingEvent(seller2, "현대무용 다이어리", "dance2",
+                Category.DANCE, AgeLimit.ALL,
                 LocalDate.of(2026, 7, 10), LocalDate.of(2026, 7, 10));
 
         // 5) REJECTED 공연 (반려 사유 함께)
@@ -627,8 +627,8 @@ public class DataSeedRunner implements CommandLineRunner {
         return Map.of(
                 Category.CONCERT, new String[]{"아이유 콘서트", "세븐틴 팬미팅", "뉴진스 쇼케이스", "아이브 단독공연", "에스파 라이브"},
                 Category.MUSICAL, new String[]{"레미제라블", "위키드", "오페라의 유령", "노트르담 드 파리", "지킬앤하이드"},
-                Category.SPORTS, new String[]{"프로야구 올스타전", "프로농구 챔피언전", "K리그 결승", "프로배구 V리그"},
-                Category.EXHIBITION, new String[]{"반 고흐 인사이드", "모네 특별전", "팀랩 보더리스", "클림트 전시"},
+                Category.PLAY, new String[]{"하녀들", "미스 줄리", "고도를 기다리며", "리처드 3세", "관객모독"},
+                Category.DANCE, new String[]{"발레 심청", "호두까기 인형", "백조의 호수", "현대무용 다이어리", "지젤"},
                 Category.KIDS, new String[]{"겨울왕국 라이브", "뽀로로 뮤지컬", "핑크퐁 콘서트", "콩순이 쇼"});
     }
 
