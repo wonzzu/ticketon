@@ -27,7 +27,7 @@ public class ReviewController {
     @GetMapping("/events/{eventId}/reviews")
     public ResponseEntity<BaseResponse<ReviewListResponseDto>> findAll(
             @PathVariable Long eventId,
-            @RequestParam(defaultValue = "latest") String sort,
+            @RequestParam(name = "sortType", defaultValue = "latest") String sort,
             @PageableDefault(size = 10) Pageable pageable
     ) {
 
