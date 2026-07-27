@@ -4,13 +4,23 @@ import { RouterLink } from 'vue-router'
 import {eventApi} from '@/api/event.api'
 import EventCard from '@/components/common/EventCard.vue'
 import {
-  HERO_SLIDES,
   CATEGORY, CATEGORY_LABEL, CATEGORY_ICON,
 } from '@/utils/constants'
 
 const events = ref([])
-const slides = ref(HERO_SLIDES)
 const popular = ref([])   // 인기 랭킹 미리보기 (최근 7일 예매수 TOP 5)
+
+// 히어로 캐러셀 — 인기 공연 상위 3개 (랭킹 없으면 목록 앞에서 채움)
+const slides = computed(() => {
+  const source = (popular.value.length ? popular.value : events.value).slice(0, 3)
+  return source.map((e) => ({
+    id: e.id,
+    eventId: e.id,
+    title: e.title,
+    subtitle: `${CATEGORY_LABEL[e.category] ?? ''} · ${e.startDate} ~ ${e.endDate}`,
+    image: e.posterUrl,
+  }))
+})
 
 async function loadEvents(){
    try{
@@ -32,7 +42,7 @@ async function loadPopular(){
 const featured    = computed(() => events.value.slice(0, 6))
 const concertList = computed(() => events.value.filter(e => e.category === CATEGORY.CONCERT))
 const musicalList = computed(() => events.value.filter(e => e.category === CATEGORY.MUSICAL))
-const sportsList  = computed(() => events.value.filter(e => e.category === CATEGORY.SPORTS))
+const playList    = computed(() => events.value.filter(e => e.category === CATEGORY.PLAY))
 
 onMounted(loadEvents)
 onMounted(loadPopular)
@@ -55,15 +65,25 @@ onMounted(loadPopular)
         <div v-for="(slide, i) in slides" :key="slide.id"
              class="carousel-item" :class="{ active: i === 0 }">
           <div class="hero-slide">
-            <img :src="slide.image" :alt="slide.title" />
-            <div class="hero-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-end">
-              <div class="container">
-                <div class="hero-text">
-                  <h2 class="display-5 fw-bold text-white mb-2">{{ slide.title }}</h2>
-                  <p class="text-white-50 lead mb-3">{{ slide.subtitle }}</p>
-                  <RouterLink :to="`/events/${slide.eventId}`" class="btn btn-primary btn-lg px-4">
-                    예매하기 <i class="bi bi-arrow-right ms-1"></i>
-                  </RouterLink>
+            <!-- 배경: 같은 포스터를 크게 blur (저해상도도 자연스럽게 묻힘) -->
+            <img class="hero-bg" :src="slide.image" alt="" aria-hidden="true" />
+
+            <div class="hero-overlay position-absolute top-0 start-0 w-100 h-100">
+              <div class="container h-100">
+                <div class="row align-items-center h-100 g-4">
+                  <!-- 포스터 원본 비율 그대로 (안 잘림) -->
+                  <div class="col-auto d-none d-md-block">
+                    <img class="hero-poster" :src="slide.image" :alt="slide.title" />
+                  </div>
+                  <div class="col">
+                    <div class="hero-text">
+                      <h2 class="display-6 fw-bold text-white mb-2">{{ slide.title }}</h2>
+                      <p class="text-white-50 lead mb-3">{{ slide.subtitle }}</p>
+                      <RouterLink :to="`/events/${slide.eventId}`" class="btn btn-primary btn-lg px-4">
+                        예매하기 <i class="bi bi-arrow-right ms-1"></i>
+                      </RouterLink>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -181,16 +201,16 @@ onMounted(loadPopular)
     </div>
   </section>
 
-  <!-- ===== 스포츠 ===== -->
-  <section v-if="sportsList.length" class="container py-4">
+  <!-- ===== 연극 ===== -->
+  <section v-if="playList.length" class="container py-4">
     <div class="d-flex justify-content-between align-items-end mb-4">
-      <h2 class="section-title mb-0">⚽ 스포츠</h2>
-      <RouterLink to="/events?category=SPORTS" class="more-link">
+      <h2 class="section-title mb-0">🎭 연극</h2>
+      <RouterLink to="/events?category=PLAY" class="more-link">
         더보기 <i class="bi bi-chevron-right"></i>
       </RouterLink>
     </div>
     <div class="row g-3">
-      <div v-for="event in sportsList" :key="event.id"
+      <div v-for="event in playList" :key="event.id"
            class="col-6 col-md-4 col-lg-2">
         <EventCard :event="event" />
       </div>
@@ -208,21 +228,28 @@ onMounted(loadPopular)
     position: relative;
     height: 480px;
     overflow: hidden;
-
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      filter: brightness(0.55);
-    }
+    background: #111;
   }
 
-  .hero-overlay {
-    padding-bottom: 5rem;
+  // 배경 — 포스터를 꽉 채우고 blur + 어둡게 (원본 화질이 낮아도 티 안 남)
+  .hero-bg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.4) blur(28px);
+    transform: scale(1.15);   // blur 가장자리 비침 방지
+  }
+
+  // 포스터 — 원본 비율 유지 (잘리지 않음)
+  .hero-poster {
+    height: 340px;
+    width: auto;
+    border-radius: 8px;
+    box-shadow: 0 12px 32px rgb(0 0 0 / 55%);
   }
 
   .hero-text {
-    max-width: 720px;
+    max-width: 640px;
   }
 
   .carousel-indicators {
