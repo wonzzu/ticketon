@@ -13,7 +13,7 @@ import http from './http'
 export const reviewApi = {
   // params: { page, size } — 응답의 reviews는 Spring Page (reviewCount/avgRating은 전체 통계)
   findByEvent: (eventId, sort = 'latest', params = {}) =>
-    http.get(`/events/${eventId}/reviews`, { params: { sort, ...params } }),
+    http.get(`/events/${eventId}/reviews`, { params: { sortType: sort, ...params } }),
 
   create: (eventId, payload) =>
     http.post(`/events/${eventId}/reviews`, payload),
