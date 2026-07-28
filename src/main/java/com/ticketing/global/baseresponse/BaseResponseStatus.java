@@ -80,6 +80,7 @@ public enum BaseResponseStatus {
     FILE_NOT_IMAGE(false, 9005, "이미지 파일만 업로드 가능합니다", HttpStatus.BAD_REQUEST),
     FILE_TOO_LARGE(false, 9006, "파일 크기는 5MB 이하만 가능합니다", HttpStatus.BAD_REQUEST),
     FILE_UPLOAD_FAILED(false, 9007, "파일 업로드에 실패했습니다", HttpStatus.INTERNAL_SERVER_ERROR),
+    DUPLICATE_REQUEST(false, 9008, "이미 처리된 요청입니다", HttpStatus.CONFLICT),
     ;
 
     //
