@@ -63,7 +63,7 @@ public class ReservationService {
             throw new BaseException(QUEUE_NOT_ADMITTED);
         }
 
-        List<Long> seatIds = dto.getEventSeatIds();
+        List<Long> seatIds = dto.getEventSeatIds().stream().sorted().toList();
 
         if (seatIds.isEmpty()) {
             throw new BaseException(EMPTY_SEAT_SELECTION);
