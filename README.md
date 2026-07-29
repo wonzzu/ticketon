@@ -1,8 +1,21 @@
-# 🎫 Ticketing
+# 🎫 Ticketon
 
 > 티켓 오픈 순간의 트래픽 폭주를 견디는 콘서트 · 공연 예매 플랫폼
 
-<!-- TODO(최종): 한 줄 소개 다듬기 + 배지(빌드/커버리지 등) + 데모 GIF -->
+### 🔗 **[https://ticketon.kro.kr](https://ticketon.kro.kr)** — 배포 중 (AWS EC2)
+
+**데모 계정** (비밀번호 공통 `test1234`)
+
+| 역할 | 계정 | 볼 수 있는 것 |
+|------|------|--------------|
+| 관리자 | `admin@test.com` | 공연 검수 · 회원 관리 · 매출 통계 · 정산 배치 실행 |
+| 판매자 | `seller1@test.com` | 공연 등록 · 정산 내역 (BRONZE 8%) |
+| 판매자 | `seller2@test.com` | 정산 내역 (GOLD 5% — 등급별 수수료 차등 비교용) |
+| 일반 | `normal@test.com` | 예매 · 결제 · 후기 작성 |
+
+> 공연 데이터는 [KOPIS 공연예술통합전산망](https://www.kopis.or.kr) 오픈 API에서 받은 **실제 공연 정보**입니다 (비영리 학습 목적).
+
+<!-- TODO(최종): 배지(빌드/커버리지 등) + 데모 GIF -->
 
 ---
 
@@ -54,20 +67,112 @@
 | 멱등 | Step0에서 대상 날짜 삭제 후 재적재 → 몇 번을 실행해도 결과 동일 |
 
 > 검증: 통합 테스트 5개(명세 생성 · 스냅샷 · 취소 감지 · 재집계 · 멱등) · 등급 차등(GOLD 5% / SILVER 8%) 실측
-<!-- TODO(최종): chunk 크기 / fetchSize / 실행계획 측정 결과표 + 상세 리포트 링크 -->
+> 성능: chunk · fetchSize 측정 결과는 아래 [성능 개선](#-성능-개선--측정--개선--재측정--다음-병목) 참고
 
-### ⚡ 성능 개선 (N+1 · 캐시)
+### ⚡ 성능 개선 — 측정 → 개선 → 재측정 → 다음 병목
 
-<!-- TODO(최종): 개선 후 after 수치 채우기 + 상세 리포트 링크 -->
+> 데이터: 회원 30만 / 예매·결제 각 300만 · 부하: k6 3분 · 모니터링: Prometheus + Grafana
+> ⚠️ 단일 8GB 머신에 앱·MySQL·Redis·k6가 동거하는 환경이라 **절대값이 아닌 상대 비교**로 읽어야 한다.
+
+#### 쿼리 수 (Hibernate `Statistics` — 테스트로 박제)
 
 | 대상 | 개선 전 | 개선 후 | 방법 |
 |------|--------|--------|------|
-| 내 예매 목록 (findMine) | 62 쿼리 | _TBD_ | fetch join + batch_size |
-| 좌석 목록 (findByScheduleId) | 101 쿼리 | _TBD_ | fetch join |
-| 공연 상세 (find) | 매 요청 DB | _TBD_ | @Cacheable (Redis) |
+| 내 예매 목록 (findMine) | 62 쿼리 | **5 쿼리** | fetch join + `batch_size` |
+| 좌석 목록 (findByScheduleId) | 101 쿼리 | **≤3 쿼리** | fetch join |
+| 공연 상세 (find) | 매 요청 DB | **DB 접근 0** | `@Cacheable` (Redis) |
 
-> 측정: Hibernate `Statistics.getPrepareStatementCount()` · 예매 10건 / 좌석 100개 기준
-<!-- TODO(최종): 응답시간(p95) 표 추가 (k6 부하 테스트), 콘솔/그라파나 스크린샷 -->
+#### 부하 하 응답시간 (k6)
+
+| 대상 | 조건 | 개선 전 | 개선 후 |
+|------|------|--------|--------|
+| findMine | 100 VU p95 | 2.02s | **797ms** (TPS 83→167) |
+| 공연 상세 캐시 | 100 VU p95 | 268ms | **101ms** (TPS 616→**1,660**) |
+| 관리자 회원검색 | 100 VU p95 | 31.8s | **7s** (TPS 3.6→15.2) |
+| 관리자 회원검색 | **300 VU 실패율** | **71.2%** (서비스 붕괴) | **0%** |
+
+`member_status` 검색은 인덱스가 없어 300만 행 풀스캔 + filesort를 하고 있었고,
+300 VU에서 **71%가 타임아웃으로 실패**했다. `(member_status, created_at)` 복합 인덱스로 실패율 0%까지 회복했다.
+
+```
+EXPLAIN        type=ALL  rows≈296,246  Using filesort
+        ↓ 인덱스
+EXPLAIN        type=ref  rows=16,648   Backward index scan   (filesort 제거)
+EXPLAIN ANALYZE  877ms → 33ms  (약 26배)
+```
+
+#### 병목은 이동한다 — 쿼리를 고치니 커넥션이 드러났다
+
+fetch join으로 TPS가 2배가 되자, 그전엔 **0이던 HikariCP Pending이 90까지** 올라왔다.
+"대기 때문일 것"이라는 추측을 검증하려고 acquire time을 측정했다.
+
+```
+SQL 실행 시간 (EXPLAIN ANALYZE)     33ms
+커넥션 획득 대기 (Grafana 실측)      ~3,000ms      ← 응답시간의 주요 축
+GC pause (1시간 누적)               150ms (최대 21ms)  → 요인에서 배제
+k6 p95 (100 VU)                     7,000ms
+```
+
+**커넥션 풀을 10→30으로 늘려봤지만 두 API 모두 p95가 오히려 악화**(2.3s→3.5s, 7s→9.7s)했고
+Active는 평균 4·최대 13에 그치고 Idle이 25개 남았다. → **풀 확장은 답이 아니라고 판단하고 원복**했다.
+
+> acquire 3초 + SQL 33ms로도 p95 7초가 다 설명되지 않는다. 나머지는 톰캣 스레드풀 큐잉 등으로 **추정**되지만
+> 분리 측정을 하지 못해 단정하지 않는다. 측정하지 않은 것은 측정하지 않았다고 적는다.
+
+#### 캐시의 목적은 응답속도가 아니라 DB 부하 흡수
+
+공연 상세는 PK 단건 조회라 10 VU에선 캐시 없이도 17ms로 빠르다. 캐시 가치는 부하에서 드러났다.
+
+| 100 VU | 캐시 OFF | 캐시 ON |
+|---|---|---|
+| p95 | 268ms | **101ms** |
+| TPS | 616/s | **1,660/s** |
+| DB 커넥션 Active | 0~3 (가끔 DB 감) | **0** (DB에 아예 안 감) |
+
+k6가 "얼마나 좋아졌나"(결과)를, 커넥션 그래프가 "왜 좋아졌나"(DB 도달 제거)를 보여준다.
+
+#### 정산 배치 — 값이 자명하지 않은 노브만 측정
+
+대량 INSERT에 JDBC Batch Insert를 쓰는 건 자명한 표준이라 **측정 대상으로 삼지 않았고**,
+최적값을 판단해야 하는 `chunk`·`fetchSize`만 실측했다. (표본 89,424건 · 설정당 3회 · 1회차 폐기)
+
+| chunk | 커밋 횟수 | 처리 시간 | rows/sec |
+|---:|---:|---:|---:|
+| 100 | 895 | 19.66s | 4,548 |
+| 500 | 179 | 13.29s | 6,728 |
+| **1000** | 90 | **13.55s** | 6,600 |
+| 2000 | 45 | 12.18s | 7,342 |
+| 5000 | 18 | 14.26s | 6,271 |
+
+**chunk 100은 확실히 손해(+45%), 500 이상은 평탄**하다. 2000이 가장 좋게 나왔지만 회차 편차가 1~3초라
+"2000이 최적"이라 단정할 근거가 없어 **1000을 유지**했다. 즉 chunk는 *임계값만 넘기면 되는* 노브다.
+
+`fetchSize`는 100~5000을 바꿔도 전부 12.8~13.6s로 회차 편차와 같았다. 원인을 추적하니
+**MySQL Connector/J는 `useCursorFetch=true` 없이는 `setFetchSize()`를 무시**한다는 걸 확인했고,
+옵션을 켜니 오히려 20% 느려졌다. → **시간 지표로는 판단할 수 없는 항목**으로 기록하고 설정은 유지했다.
+
+### 🛡️ 예외 처리 — 클라이언트 실수와 서버 장애를 분리
+
+배포 후 실측에서 `GET /events/abc`(경로 변수 타입 불일치), 깨진 JSON, 로그인 실패가 **전부 500**으로 나갔다.
+`@ExceptionHandler(Exception.class)` catch-all이 경쟁자 없이 모든 예외를 받아, Spring 기본 예외 변환기가 400·405로 만들 기회 자체가 없었기 때문이다.
+
+`ResponseEntityExceptionHandler`를 상속해 **Spring MVC 표준 예외 21종**의 매핑을 확보하고,
+`handleExceptionInternal` 하나를 오버라이드해 공통 응답 래퍼(`BaseResponse`)로 변환했다.
+
+| 요청 | 전 | 후 |
+|------|----|----|
+| `/events/abc` · 깨진 JSON · `@Valid` 실패 | 500 | **400** / 9002 |
+| 미지원 메서드 · Content-Type 불일치 | 500 | **405 · 415** |
+| 로그인 비밀번호 오류 | 500 | **401** / 2004 |
+| 5MB 초과 업로드 | 500 | **400** / 9006 |
+| NPE · Redis 장애 | 500 | 500 / 9001 *(유지)* |
+
+**분류 기준**: 클라이언트가 고칠 수 있는 것만 4xx로 내리고, 서버·인프라 문제는 500으로 남긴다.
+NPE를 400으로 바꾸면 서버 버그가 클라이언트 잘못으로 위장되어 로그·알람이 헛발질한다.
+
+- **인증 실패**는 `BadCredentials`·`Disabled`·`Locked`를 상위 `AuthenticationException`에서 한 응답으로 묶었다 — **계정 존재 여부 비노출** (없는 계정과 비밀번호 오류가 동일하게 401/2004)
+- **`DataIntegrityViolationException`**을 409로 처리 — `existsBy` 사전 체크는 check-then-act라 동시 요청에서 뚫리므로, DB UNIQUE 제약이 최종 방어선
+- **업로드 한도**를 5MB로 맞춤 — Spring 기본 1MB라 서비스단 5MB 검증에 도달하지 못하던 문제
 
 ### 🧭 검토했지만 적용하지 않은 개선
 
@@ -75,6 +180,9 @@
 
 | 개선안 | 적용 안 한 이유 |
 |--------|----------------|
+| **커넥션 풀 확장 (10→30)** | **실측 결과 두 API 모두 p95 악화**(2.3s→3.5s, 7s→9.7s). Pending은 0이 됐지만 Active는 평균 4에 그치고 Idle이 25개 남음 → 풀이 병목이 아니었음. **적용했다가 측정 후 원복** |
+| 정산 Reader `end_date` 인덱스 | EXPLAIN상 비효율은 있었으나 읽는 대상이 **520행**이라 13초 배치에서 비중이 없음. 공연 수가 수만 건이 되면 재검토 |
+| `useCursorFetch=true` | 서버사이드 커서를 켜니 오히려 **20% 느려짐**. 현재 규모에선 메모리보다 처리 시간이 중요 |
 | Cursor(No-offset) 페이징 | 내 예매 목록은 회원당 수백 건이라 offset 병목이 재현되지 않음. 실제 대용량 목록에서는 유효한 접근 |
 | `findMine` 복합 인덱스 | `member_id`는 FK라 이미 인덱스를 타고, 정렬 대상도 소량이라 이득 < 쓰기 비용. 예매는 쓰기가 잦은 테이블 |
 | 메시지 큐(Kafka 등) | 처리량 병목이 발생하지 않았고, 운영 복잡도만 늘어남 |
@@ -84,23 +192,71 @@
 
 ## 🛠️ 기술 스택
 
-- **Backend**: Spring Boot 3.4 · JPA · QueryDSL · **Spring Batch** · MySQL · Redis · JWT · Spring Security
+- **Backend**: Spring Boot 3.4 · JPA · QueryDSL · **Spring Batch** · MySQL 8 · Redis 7 · JWT · Spring Security
 - **Frontend**: Vue 3 · Vite · Pinia · Vue Router · Axios · Bootstrap 5.3
-- **Infra / 모니터링**: Docker · Prometheus · Grafana
-<!-- TODO(최종): 배포(EC2/S3), CI(Jenkins/GitHub Actions) 등 확정되면 추가 -->
+- **Infra**: AWS EC2 · Docker Compose · Nginx · S3 · Let's Encrypt
+- **CI/CD**: GitHub Actions · GHCR
+- **모니터링**: Spring Actuator · Prometheus · Grafana
 
 ---
 
 ## 🏗️ 시스템 아키텍처
 
-<!-- TODO(최종): 아키텍처 다이어그램 이미지 삽입 -->
-<!-- ![architecture](docs/images/architecture.png) -->
+```
+                     ┌──────────────────────────────────┐
+   브라우저  ──HTTPS─▶│  Nginx  (443 · Let's Encrypt)    │
+                     │   ├─ /       → Vue 정적 파일       │
+                     │   └─ /api/*  → Spring (8080)      │
+                     └──────────────┬───────────────────┘
+                                    │
+              ┌─────────────────────┼─────────────────────┐
+              ▼                     ▼                     ▼
+      ┌───────────────┐     ┌──────────────┐     ┌───────────────┐
+      │ Spring Boot   │────▶│  MySQL 8     │     │   Redis 7     │
+      │ (컨테이너)     │     │ (컨테이너)    │     │  (컨테이너)    │
+      └───────┬───────┘     └──────────────┘     └───────────────┘
+              │                  영속 데이터        대기열 · 좌석 선점
+              │                                    쿠폰 · 캐시 · 리프레시 토큰
+              ▼
+      ┌───────────────┐
+      │   AWS S3      │  포스터 이미지 (IAM 역할 인증 — 액세스 키 0줄)
+      └───────────────┘
+
+              ── AWS EC2 t3.micro (ap-northeast-2) 단일 VM ──
+```
+
+**단일 VM 4컨테이너 구성.** 프리티어 제약도 있지만, 트래픽이 요구하기 전에 관리형 서비스(RDS·ElastiCache·ALB)로 가면
+비용만 늘고 배울 게 없다고 판단했다. 컨테이너 경계는 그대로라 필요 시점에 교체 가능하다.
+
+### 🔄 CI/CD (GitHub Actions)
+
+```
+feature 브랜치 ──PR──▶ dev ──PR──▶ main
+                       │             │
+                       │             └─▶ [배포] 이미지 pull → compose up -d
+                       └─▶ [CI] Gradle 테스트 (MySQL·Redis service 컨테이너)
+                               → Docker 빌드 → GHCR push → SSH 배포
+```
+
+- **테스트 격리**: CI 러너에 로컬 MySQL/Redis가 없으므로 GitHub Actions `services`로 띄우고, 로컬 시드 의존 테스트는 `@Tag("local")`로 제외
+- **시크릿**: DB 비밀번호 · JWT 키 · SSH 키는 GitHub Secrets에서 주입. **저장소에 자격증명 0줄**
+- **S3 인증**: 액세스 키를 만들지 않고 **EC2 IAM 역할**로 처리. 로컬은 `aws.s3.enabled=false`로 분기해 placeholder 반환
 
 ---
 
 ## ✨ 주요 기능
 
-<!-- TODO(최종): 도메인별 기능 정리 (회원 / 공연 / 예매 / 결제 / 대기열 / 쿠폰 / 통계) -->
+| 도메인 | 기능 |
+|--------|------|
+| 회원 | 일반/판매자 회원가입 · JWT 로그인 · Refresh 토큰 재발급(Redis) · 정지/탈퇴 즉시 차단 |
+| 공연 | 등록 · 관리자 검수(승인/반려) · 목록/상세(캐시) · 카테고리·검색 · 인기순·별점순 랭킹 |
+| 예매 | 대기열 통과 → 좌석 선점(7분 TTL) → 예매 → 결제 · 취소 · 멱등키 중복 방지 |
+| 결제 | 모의 결제 · 결제 이력 스냅샷 · 취소 시 정산 재집계 이벤트 발행 |
+| 대기열 | Redis ZSet 순번 관리 · 정원 제어 · 폴링 기반 입장 |
+| 쿠폰 | 선착순 발급(Redis DECR) · 중복 발급 방지 · 정액/정률 할인 |
+| 정산 | Spring Batch 건별 명세 → 집계 · 등급별 수수료 차등 · 취소 소급 재집계 |
+| 통계 | 일별 매출·주문 집계(배치) · 오늘분은 실시간 하이브리드 조회 |
+| 후기 | 예매 확정자만 작성 · 별점 · 실명 마스킹(서버 처리) |
 
 ---
 
@@ -139,5 +295,13 @@ npm run dev
 | `DB_USERNAME` | MySQL 사용자 (기본: root) |
 | `DB_PASSWORD` | MySQL 비밀번호 |
 | `JWT_SECRET` | JWT 서명 키 (32바이트 이상) |
+
+> 운영(prod)에서는 폴백 기본값을 두지 않아 **미주입 시 기동이 실패**한다 — 개발용 값이 운영에 새는 것을 막기 위함.
+
+### 전체 스택 실행 (Docker Compose)
+```bash
+docker compose -f docker-compose.prod.yml up -d
+```
+Nginx · Spring · MySQL · Redis 4컨테이너가 함께 뜬다. `.env`에 위 키들을 채워야 한다.
 
 <!-- TODO(최종): Swagger URL, 모니터링(Grafana) 접속 정보 추가 -->
