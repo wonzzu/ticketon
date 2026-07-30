@@ -66,7 +66,7 @@ public class PaymentService {
 
         reservationHistoryRepository.save(ReservationHistory.of(reservation));
 
-        seatHoldService.releaseAll(scheduleId, seatIds);
+        seatHoldService.releaseAll(scheduleId, seatIds,memberId);
 
         return PaymentResponseDto.from(payment);
     }

@@ -6,7 +6,11 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.ticketing.event.dto.response.EventListResponseDto;
 import com.ticketing.event.dto.response.EventResponseDto;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.annotation.CachingConfigurer;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.interceptor.CacheErrorHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -19,19 +23,18 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import java.time.Duration;
 import java.util.List;
 
+@Slf4j
 @Configuration
 @EnableCaching
-public class CacheConfig {
+public class CacheConfig implements CachingConfigurer {
 
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
 
         ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());                    // LocalDate/LocalDateTime 직렬화
-        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);  // 숫자 대신 ISO 문자열
+        mapper.registerModule(new JavaTimeModule());
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
-        // 캐시별 "타입 고정" 직렬화 — defaultTyping(@class) 없이 순수 JSON.
-        //  값 타입을 캐시마다 못 박으므로 컬렉션(List) 역직렬화가 깨지지 않는다.
         RedisCacheConfiguration eventConfig = cacheConfig(
                 new Jackson2JsonRedisSerializer<>(mapper, EventResponseDto.class));
 
@@ -41,8 +44,8 @@ public class CacheConfig {
                 new Jackson2JsonRedisSerializer<>(mapper, listType));
 
         return RedisCacheManager.builder(connectionFactory)
-                .withCacheConfiguration("event", eventConfig)     // 단건: EventResponseDto
-                .withCacheConfiguration("events", eventsConfig)   // 목록: List<EventListResponseDto>
+                .withCacheConfiguration("event", eventConfig)
+                .withCacheConfiguration("events", eventsConfig)
                 .build();
     }
 
@@ -54,5 +57,31 @@ public class CacheConfig {
                         .fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair
                         .fromSerializer(serializer));
+    }
+
+    @Override
+    public CacheErrorHandler errorHandler() {
+        return new CacheErrorHandler() {
+
+            @Override
+            public void handleCacheGetError(RuntimeException e, Cache cache, Object key) {
+                log.warn("캐시 조회 실패 - DB로 우회: cache={}, key={}", cache.getName(), key, e);
+            }
+
+            @Override
+            public void handleCachePutError(RuntimeException e, Cache cache, Object key, Object value) {
+                log.warn("캐시 저장 실패 - 무시: cache={}, key={}", cache.getName(), key, e);
+            }
+
+            @Override
+            public void handleCacheEvictError(RuntimeException e, Cache cache, Object key) {
+                log.warn("캐시 삭제 실패: cache={}, key={}", cache.getName(), key, e);
+            }
+
+            @Override
+            public void handleCacheClearError(RuntimeException e, Cache cache) {
+                log.warn("캐시 전체 삭제 실패: cache={}", cache.getName(), e);
+            }
+        };
     }
 }
