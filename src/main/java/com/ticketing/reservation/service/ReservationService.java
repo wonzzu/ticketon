@@ -147,7 +147,7 @@ public class ReservationService {
         List<Long> seatIds = reservation.getReservationSeats().stream()
                 .map(rs -> rs.getEventSeat().getId()).toList();
 
-        seatHoldService.releaseAll(scheduleId, seatIds);
+        seatHoldService.releaseAll(scheduleId, seatIds, memberId);
 
         paymentService.cancelByReservation(reservationId, cancelReason.getDescription());
 

@@ -13,6 +13,7 @@ import com.ticketing.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +31,7 @@ public class CouponService {
     private final CouponRepository couponRepository;
     private final CouponIssueRepository couponIssueRepository;
     private final MemberRepository memberRepository;
+    private final RedisScript<Long> couponIssueScript;
 
     @Transactional
     public Long createCoupon(CouponCreateDto dto) {
@@ -56,29 +58,29 @@ public class CouponService {
         String stockKey = stockKey(couponId);
         String me = memberId.toString();
 
-        Long added = redisTemplate.opsForSet().add(issuedKey, me);
-        if (added == null || added == 0) {
+        Long result = redisTemplate.execute(
+                couponIssueScript,
+                List.of(issuedKey, stockKey),
+                me
+        );
+
+        if (result == -1L) {
             throw new BaseException(COUPON_ALREADY_ISSUED);
         }
-
-        Long remaining = redisTemplate.opsForValue().decrement(stockKey);
-        if (remaining == null || remaining < 0) {
-            redisTemplate.opsForValue().increment(stockKey);
-            redisTemplate.opsForSet().remove(issuedKey, me);
+        if (result == -2L) {
             log.warn("쿠폰 소진: couponId={}, memberId={}", couponId, memberId);
             throw new BaseException(COUPON_SOLD_OUT);
         }
 
         try {
             couponIssueRepository.save(CouponIssue.create(coupon, member));
-            log.info("쿠폰 발급 완료: couponId={}, memberId={}, 남은재고={}", couponId, memberId, remaining);
+            log.info("쿠폰 발급 완료: couponId={}, memberId={}, 남은재고={}", couponId, memberId, result);
         } catch (RuntimeException e) {
             log.error("쿠폰 발급 DB 저장 실패 → Redis 재고·발급 롤백(보상): couponId={}, memberId={}", couponId, memberId, e);
             redisTemplate.opsForValue().increment(stockKey);
             redisTemplate.opsForSet().remove(issuedKey, me);
             throw e;
         }
-
     }
 
     public List<CouponResponseDto> findAll() {
