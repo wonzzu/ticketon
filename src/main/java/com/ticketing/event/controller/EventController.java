@@ -18,6 +18,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "공연")
@@ -30,6 +31,7 @@ public class EventController {
     private final StatisticsService statisticsService;
 
 
+    @Operation(summary = "공연 등록")
     @PostMapping
     public ResponseEntity<BaseResponse<Void>> create(@Validated @RequestBody EventCreateDto dto,
                                                      @AuthenticationPrincipal CustomUserDetails seller) {
@@ -37,6 +39,7 @@ public class EventController {
         return ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse.success());
     }
 
+    @Operation(summary = "공연 목록")
     @GetMapping
     public ResponseEntity<BaseResponse<List<EventListResponseDto>>> findAll(
             @RequestParam(required = false) Category category,
@@ -46,12 +49,14 @@ public class EventController {
         return ResponseEntity.ok(BaseResponse.success(eventList));
     }
 
+    @Operation(summary = "공연 상세")
     @GetMapping("/{id}")
     public ResponseEntity<BaseResponse<EventResponseDto>> findById(@PathVariable Long id) {
         EventResponseDto event = eventService.find(id);
         return ResponseEntity.ok(BaseResponse.success(event));
     }
 
+    @Operation(summary = "공연 수정")
     @PatchMapping("/{id}")
     public ResponseEntity<BaseResponse<Void>> update(@PathVariable Long id,
                                                      @Validated @RequestBody EventUpdateDto dto,
@@ -60,6 +65,7 @@ public class EventController {
         return ResponseEntity.ok(BaseResponse.success());
     }
 
+    @Operation(summary = "공연 삭제")
     @DeleteMapping("/{id}")
     public ResponseEntity<BaseResponse<Void>> delete(@PathVariable Long id,
                                                      @AuthenticationPrincipal CustomUserDetails seller) {
@@ -68,6 +74,7 @@ public class EventController {
         return ResponseEntity.ok(BaseResponse.success());
     }
 
+    @Operation(summary = "공연 랭킹 (인기순·별점순)")
     @GetMapping("/ranking")
     public ResponseEntity<BaseResponse<List<EventListResponseDto>>> ranking(
             @RequestParam(defaultValue = "popular") String sort,

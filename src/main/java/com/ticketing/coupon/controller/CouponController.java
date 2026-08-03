@@ -14,6 +14,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "쿠폰")
@@ -24,6 +25,7 @@ public class CouponController {
 
     private final CouponService couponService;
 
+    @Operation(summary = "쿠폰 생성")
     @PostMapping
     public ResponseEntity<BaseResponse<Long>> create(@Validated @RequestBody CouponCreateDto dto) {
 
@@ -33,6 +35,7 @@ public class CouponController {
     }
 
 
+    @Operation(summary = "쿠폰 발급 (선착순)")
     @PostMapping("/{id}/issue")
     public ResponseEntity<BaseResponse<Void>> issue(
             @PathVariable Long id, @AuthenticationPrincipal CustomUserDetails user) {
@@ -41,12 +44,14 @@ public class CouponController {
         return ResponseEntity.ok(BaseResponse.success());
     }
 
+    @Operation(summary = "쿠폰 목록")
     @GetMapping
     public ResponseEntity<BaseResponse<List<CouponResponseDto>>> findAll() {
         List<CouponResponseDto> all = couponService.findAll();
         return ResponseEntity.ok(BaseResponse.success(all));
     }
 
+    @Operation(summary = "내 쿠폰 목록")
     @GetMapping("/me")
     public ResponseEntity<BaseResponse<List<MyCouponResponseDto>>> findMyCoupon(@AuthenticationPrincipal CustomUserDetails user) {
 

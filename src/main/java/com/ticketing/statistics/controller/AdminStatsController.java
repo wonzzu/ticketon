@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "관리자 - 통계")
@@ -20,6 +21,7 @@ public class AdminStatsController {
 
     private final StatisticsService statisticService;
 
+    @Operation(summary = "일별 매출 통계")
     @GetMapping("/daily")
     public ResponseEntity<BaseResponse<List<DailySalesStatsResponseDto>>> daily(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)LocalDate from,
@@ -30,6 +32,7 @@ public class AdminStatsController {
         return ResponseEntity.ok(BaseResponse.success(range));
     }
 
+    @Operation(summary = "통계 수동 집계")
     @PostMapping("/aggregate")
     public ResponseEntity<BaseResponse<Void>> aggregate(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
