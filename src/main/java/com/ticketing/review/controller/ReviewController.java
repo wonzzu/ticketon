@@ -17,6 +17,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "리뷰")
@@ -26,6 +27,7 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
+    @Operation(summary = "공연 리뷰 목록")
     @GetMapping("/events/{eventId}/reviews")
     public ResponseEntity<BaseResponse<ReviewListResponseDto>> findAll(
             @PathVariable Long eventId,
@@ -38,6 +40,7 @@ public class ReviewController {
         return ResponseEntity.ok(BaseResponse.success(reviewDto));
     }
 
+    @Operation(summary = "리뷰 작성")
     @PostMapping("/events/{eventId}/reviews")
     public ResponseEntity<BaseResponse<Void>> create(
             @PathVariable Long eventId,
@@ -49,6 +52,7 @@ public class ReviewController {
         return ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse.success());
     }
 
+    @Operation(summary = "리뷰 삭제")
     @DeleteMapping("/reviews/{reviewId}")
     public ResponseEntity<BaseResponse<Void>> delete(
             @PathVariable Long reviewId, @AuthenticationPrincipal CustomUserDetails user
@@ -57,6 +61,7 @@ public class ReviewController {
         return ResponseEntity.ok(BaseResponse.success());
     }
 
+    @Operation(summary = "내 리뷰 목록")
     @GetMapping("/me/reviews")
     public ResponseEntity<BaseResponse<List<MyReviewResponseDto>>> findMyReviews(@AuthenticationPrincipal CustomUserDetails user) {
         List<MyReviewResponseDto> myReviews = reviewService.findMyReviews(user.getMemberId());

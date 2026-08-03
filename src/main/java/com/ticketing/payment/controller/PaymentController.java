@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import static org.springframework.http.HttpStatus.*;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "결제")
@@ -26,6 +27,7 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
+    @Operation(summary = "결제")
     @PostMapping
     public ResponseEntity<BaseResponse<PaymentResponseDto>> pay(
             @Validated @RequestBody PaymentCreateDto dto, @AuthenticationPrincipal CustomUserDetails user) {

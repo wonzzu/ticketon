@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "예매")
@@ -32,6 +33,7 @@ public class ReservationController {
 
     private final ReservationService reservationService;
 
+    @Operation(summary = "예매 생성 (좌석 선점)")
     @PostMapping
     public ResponseEntity<BaseResponse<ReservationResponseDto>> create(
             @Validated @RequestBody ReservationCreateDto dto, @AuthenticationPrincipal CustomUserDetails user) {
@@ -40,6 +42,7 @@ public class ReservationController {
         return ResponseEntity.status(HttpStatus.CREATED).body(BaseResponse.success(data));
     }
 
+    @Operation(summary = "내 예매 목록")
     @GetMapping("/me")
     public ResponseEntity<BaseResponse<Page<ReservationResponseDto>>> findMine(
             @AuthenticationPrincipal CustomUserDetails user,
@@ -56,6 +59,7 @@ public class ReservationController {
 
     }
 
+    @Operation(summary = "예매 상세")
     @GetMapping("/{id}")
     public ResponseEntity<BaseResponse<ReservationResponseDto>> findOne(
             @PathVariable Long id, @AuthenticationPrincipal CustomUserDetails user) {
@@ -65,6 +69,7 @@ public class ReservationController {
         return ResponseEntity.ok(BaseResponse.success(one));
     }
 
+    @Operation(summary = "예매 취소")
     @PostMapping("/{id}/cancel")
     public ResponseEntity<BaseResponse<Void>> cancel(
             @PathVariable Long id, @AuthenticationPrincipal CustomUserDetails user, @Validated @RequestBody ReservationCancelDto dto) {
