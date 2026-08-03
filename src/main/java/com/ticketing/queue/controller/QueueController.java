@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "대기열")
@@ -18,6 +19,7 @@ public class QueueController {
 
     private final QueueService queueService;
 
+    @Operation(summary = "대기열 입장")
     @PostMapping("/{scheduleId}/enter")
     public ResponseEntity<BaseResponse<QueueStatusResponse>> enter(
             @PathVariable Long scheduleId, @AuthenticationPrincipal CustomUserDetails user) {
@@ -25,6 +27,7 @@ public class QueueController {
         return ResponseEntity.ok(BaseResponse.success(queueService.enter(scheduleId, user.getMemberId())));
     }
 
+    @Operation(summary = "대기열 상태 조회")
     @GetMapping("/{scheduleId}/status")
     public ResponseEntity<BaseResponse<QueueStatusResponse>> status(
             @PathVariable Long scheduleId, @AuthenticationPrincipal CustomUserDetails user) {

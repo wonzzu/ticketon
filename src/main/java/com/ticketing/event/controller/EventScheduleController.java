@@ -13,6 +13,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "공연 회차")
@@ -23,6 +24,7 @@ public class EventScheduleController {
 
     private final EventScheduleService eventScheduleService;
 
+    @Operation(summary = "공연 회차 등록")
     @PostMapping
     public ResponseEntity<BaseResponse<Void>> create(@PathVariable Long eventId,
                                                      @Validated @RequestBody EventScheduleCreateDto dto,
@@ -32,6 +34,7 @@ public class EventScheduleController {
     }
 
 
+    @Operation(summary = "공연 회차 목록")
     @GetMapping
     public ResponseEntity<BaseResponse<List<EventScheduleResponseDto>>> findAll(@PathVariable Long eventId) {
         List<EventScheduleResponseDto> events = eventScheduleService.findByEvent(eventId);

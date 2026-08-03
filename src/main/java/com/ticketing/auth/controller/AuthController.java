@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.Duration;
 
 import static com.ticketing.auth.service.AuthService.*;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "인증")
@@ -31,6 +32,7 @@ public class AuthController {
     private final RefreshCookieProvider refreshCookieProvider;
 
     @RateLimit(key = RateLimit.KeyType.IP, limit = 20, windowSeconds = 60)
+    @Operation(summary = "로그인")
     @PostMapping("/login")
     public ResponseEntity<BaseResponse<TokenResponse>> login(@Validated @RequestBody LoginRequestDto dto) {
         TokenPair pair = authService.login(dto);
@@ -44,6 +46,7 @@ public class AuthController {
 
     }
 
+    @Operation(summary = "액세스 토큰 재발급")
     @PostMapping("/refresh")
     public ResponseEntity<BaseResponse<TokenResponse>> refresh(
             @CookieValue(value = RefreshCookieProvider.COOKIE_NAME, required = false) String refreshToken) {
@@ -54,6 +57,7 @@ public class AuthController {
         return ResponseEntity.ok(BaseResponse.success(data));
     }
 
+    @Operation(summary = "로그아웃")
     @PostMapping("/logout")
     public ResponseEntity<BaseResponse<Void>> logout(
             @CookieValue(value = RefreshCookieProvider.COOKIE_NAME, required = false) String refreshToken) {
