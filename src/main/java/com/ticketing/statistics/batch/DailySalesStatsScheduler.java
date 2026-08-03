@@ -1,5 +1,7 @@
 package com.ticketing.statistics.batch;
 
+import com.ticketing.statistics.domain.StatsDirtyDate;
+import com.ticketing.statistics.repository.StatsDirtyDateRepository;
 import com.ticketing.statistics.service.StatisticsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +11,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -16,6 +19,7 @@ import java.time.LocalDate;
 public class DailySalesStatsScheduler {
 
     private final StatisticsService statisticService;
+    private final StatsDirtyDateRepository dirtyRepository;
     private final RedissonClient redissonClient;
 
     @Scheduled(cron = "0 0 4 * * *")
@@ -41,5 +45,32 @@ public class DailySalesStatsScheduler {
         }
 
 
+    }
+
+    @Scheduled(cron = "0 30 4 * * *")
+    public void reaggregateDirty() {
+
+        RLock lock = redissonClient.getLock("batch:statistics:reaggregate:lock");
+
+        if (!lock.tryLock()) {
+            log.debug("통계 재집계 락 획득 실패 - 다른 인스턴스가 처리 중");
+            return;
+        }
+        try {
+            List<StatsDirtyDate> dirties = dirtyRepository.findAll();
+            if (dirties.isEmpty()) {
+                return;
+            }
+
+            dirties.forEach(dirty -> {
+                statisticService.aggregateDaily(dirty.getStatDate());
+                dirtyRepository.delete(dirty);
+            });
+
+            log.info("통계 재집계 실행: dates={}",
+                    dirties.stream().map(StatsDirtyDate::getStatDate).toList());
+        } finally {
+            if (lock.isHeldByCurrentThread()) lock.unlock();
+        }
     }
 }

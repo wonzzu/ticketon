@@ -17,7 +17,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "정산")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/sellers/me")

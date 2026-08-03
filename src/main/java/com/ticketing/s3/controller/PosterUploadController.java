@@ -8,7 +8,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "포스터 업로드")
 @RestController
 @RequiredArgsConstructor
 public class PosterUploadController {

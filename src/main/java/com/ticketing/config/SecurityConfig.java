@@ -56,6 +56,8 @@ public class SecurityConfig {
                         // ── 공개 (로그인 불필요) ──
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/swagger-ui", "/swagger-ui/**", "/swagger-ui.html",
+                                "/v3/api-docs", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/members/signup", "/sellers/signup").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/events", "/events/**",       // 공연 목록·상세·회차·리뷰 조회

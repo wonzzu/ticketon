@@ -12,7 +12,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "관리자 - 공연 심사")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/admin/events")
