@@ -40,6 +40,12 @@ public class EventSeat extends BaseEntity {
     @JoinColumn(name = "seat_id", nullable = false)
     private Seat seat;
 
+    // Redis 선점이 1차 방어선, 이 낙관적 락이 최후 방어선.
+    // 선점 TTL이 만료되는 순간 두 트랜잭션이 같이 AVAILABLE을 읽으면 reserve()의 상태 검사를 둘 다 통과하는데,
+    // 커밋 시점에 버전이 어긋나 한쪽만 성공한다.
+    @Version
+    private Long version;
+
     void setSchedule(EventSchedule schedule) {
         this.eventSchedule = schedule;
     }
