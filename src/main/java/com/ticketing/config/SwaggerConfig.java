@@ -5,13 +5,22 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.List;
 
 @Configuration
 public class SwaggerConfig {
 
     private static final String SCHEME_NAME = "bearerAuth";
+
+    // 배포는 Nginx가 /api prefix를 벗겨 전달하므로 문서의 서버 주소에 /api를 붙여야 한다.
+    // 비어 있으면(로컬) springdoc이 요청 기준으로 자동 설정한다.
+    @Value("${springdoc.server-url:}")
+    private String serverUrl;
 
     @Bean
     public OpenAPI openAPI() {
@@ -22,10 +31,16 @@ public class SwaggerConfig {
                 .in(SecurityScheme.In.HEADER)
                 .name("Authorization");
 
-        return new OpenAPI()
+        OpenAPI openAPI = new OpenAPI()
                 .info(info())
                 .components(new Components().addSecuritySchemes(SCHEME_NAME, bearerAuth))
                 .addSecurityItem(new SecurityRequirement().addList(SCHEME_NAME));
+
+        if (!serverUrl.isBlank()) {
+            openAPI.servers(List.of(new Server().url(serverUrl)));
+        }
+
+        return openAPI;
     }
 
     private Info info() {
