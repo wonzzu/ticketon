@@ -13,7 +13,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "공연 회차")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/events/{eventId}/schedules")
