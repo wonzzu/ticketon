@@ -44,6 +44,8 @@ public enum BaseResponseStatus {
     CANCEL_DETAIL_REQUIRED(false, 4008, "기타 사유는 상세 입력이 필요합니다", HttpStatus.BAD_REQUEST),
     SEAT_NOT_FOUND(false, 4009, "존재하지 않는 좌석입니다", HttpStatus.NOT_FOUND),
     SEAT_ALREADY_RESERVED(false, 4010, "이미 예매된 좌석입니다", HttpStatus.CONFLICT),
+    SEAT_SCHEDULE_MISMATCH(false, 4011, "선택한 회차의 좌석이 아닙니다", HttpStatus.BAD_REQUEST),
+    SCHEDULE_ALREADY_STARTED(false, 4012, "이미 시작된 회차는 예매할 수 없습니다", HttpStatus.BAD_REQUEST),
 
     // 결제 5000
     PAYMENT_FAILED(false, 5001, "결제에 실패했습니다", HttpStatus.BAD_REQUEST),
