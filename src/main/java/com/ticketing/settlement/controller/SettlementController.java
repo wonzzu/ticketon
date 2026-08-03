@@ -17,6 +17,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "정산")
@@ -27,6 +28,7 @@ public class SettlementController {
 
     private final SettlementService settlementService;
 
+    @Operation(summary = "내 정산 목록")
     @GetMapping("/settlements")
     public ResponseEntity<BaseResponse<Page<SettlementResponseDto>>> findMySettlements(
             @AuthenticationPrincipal CustomUserDetails seller,
@@ -36,6 +38,7 @@ public class SettlementController {
                 settlementService.findMySettlements(seller.getMemberId(), pageable)));
     }
 
+    @Operation(summary = "정산 건별 명세")
     @GetMapping("/settlements/{settlementId}/details")
     public ResponseEntity<BaseResponse<Page<SettlementDetailLineResponseDto>>> findDetails(
             @PathVariable Long settlementId,
@@ -46,6 +49,7 @@ public class SettlementController {
                 settlementService.findMySettlementDetails(settlementId, seller.getMemberId(), pageable)));
     }
 
+    @Operation(summary = "정산 명세 검색")
     @GetMapping("/settlement-details")
     public ResponseEntity<BaseResponse<Page<SettlementDetailSearchResponseDto>>> searchDetails(
             @RequestParam(required = false) Long paymentId,

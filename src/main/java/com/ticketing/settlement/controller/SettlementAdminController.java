@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "관리자 - 정산")
@@ -21,6 +22,7 @@ public class SettlementAdminController {
 
     private final SettlementScheduler settlementScheduler;
 
+    @Operation(summary = "정산 배치 수동 실행")
     @PostMapping("/run")
     public ResponseEntity<BaseResponse<Void>> run(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
                                                   LocalDate targetDate) {
@@ -30,6 +32,7 @@ public class SettlementAdminController {
         return ResponseEntity.ok(BaseResponse.success());
     }
 
+    @Operation(summary = "정산 재집계 수동 실행")
     @PostMapping("/reaggregate")
     public ResponseEntity<BaseResponse<Void>> reaggregate() {
 
