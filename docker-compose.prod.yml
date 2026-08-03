@@ -22,7 +22,14 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    command: --maxmemory 100mb --maxmemory-policy allkeys-lru
+    # noeviction: 대기열·좌석 선점·쿠폰 재고는 Redis가 원본이라 LRU로 지워지면 조용히 유실된다.
+    # 메모리가 차면 쓰기를 실패시켜 즉시 드러나게 한다. (ADR 12)
+    command: --maxmemory 100mb --maxmemory-policy noeviction
+    volumes:
+      # 이름 붙인 저장 공간을 /data에 연결. 안 적으면 Docker가 이름 없는 임시 공간을 만드는데,
+      # 컨테이너를 새로 만들 때마다 새 공간이 붙어 dump.rdb(재시작 대비 저장 파일)와 끊긴다.
+      # 쿠폰 재고는 Redis가 원본이라 그때 발급이 전부 막힌다.
+      - redis-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -64,3 +71,4 @@ services:
 
 volumes:
   mysql-data:
+  redis-data:                        # 쿠폰 재고 등 Redis가 원본인 데이터 보존

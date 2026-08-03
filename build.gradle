@@ -32,7 +32,6 @@ dependencies {
 	// === JPA / DB ===
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	runtimeOnly 'com.mysql:mysql-connector-j'
-	runtimeOnly 'com.h2database:h2'
 
 	// === Redis (대기열, 캐시, 분산락) ===
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
