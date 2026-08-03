@@ -16,7 +16,9 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "관리자 - 회원")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/admin/members")

@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "관리자 - 정산")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/admin/settlements")
