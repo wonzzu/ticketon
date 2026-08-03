@@ -4,6 +4,7 @@ import com.ticketing.global.baseresponse.BaseResponse;
 import com.ticketing.global.baseresponse.BaseResponseStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.security.core.AuthenticationException;
@@ -44,6 +45,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity
                 .status(BaseResponseStatus.DUPLICATE_REQUEST.getHttpStatus())
                 .body(BaseResponse.error(BaseResponseStatus.DUPLICATE_REQUEST));
+    }
+
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<BaseResponse<Void>> handleOptimisticLock(ObjectOptimisticLockingFailureException e) {
+        log.warn("좌석 선점 경합(낙관적 락): {}", e.getMessage());
+        return ResponseEntity
+                .status(BaseResponseStatus.SEAT_ALREADY_RESERVED.getHttpStatus())
+                .body(BaseResponse.error(BaseResponseStatus.SEAT_ALREADY_RESERVED));
     }
 
 
