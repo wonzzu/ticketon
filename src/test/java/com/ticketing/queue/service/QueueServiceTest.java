@@ -8,6 +8,7 @@ import org.redisson.config.Config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.concurrent.CountDownLatch;
@@ -23,6 +24,9 @@ class QueueServiceTest {
 
     @Autowired
     StringRedisTemplate redis;
+
+    @Autowired
+    RedisScript<Long> queueFastPathScript;
 
     private final Long scheduleId = 7777L;
     private static final int CAPACITY = 100;
@@ -51,8 +55,8 @@ class QueueServiceTest {
 
         RedissonClient c1 = newClient();
         RedissonClient c2 = newClient();
-        QueueService instance1 = new QueueService(redis, c1);
-        QueueService instance2 = new QueueService(redis, c2);
+        QueueService instance1 = new QueueService(redis, c1, queueFastPathScript);
+        QueueService instance2 = new QueueService(redis, c2, queueFastPathScript);
 
         // when : 두 서버가 동시에 admit 경쟁
         int rounds = 50;

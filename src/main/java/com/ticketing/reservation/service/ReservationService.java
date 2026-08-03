@@ -63,7 +63,7 @@ public class ReservationService {
             throw new BaseException(QUEUE_NOT_ADMITTED);
         }
 
-        List<Long> seatIds = dto.getEventSeatIds();
+        List<Long> seatIds = dto.getEventSeatIds().stream().sorted().toList();
 
         if (seatIds.isEmpty()) {
             throw new BaseException(EMPTY_SEAT_SELECTION);
@@ -147,7 +147,7 @@ public class ReservationService {
         List<Long> seatIds = reservation.getReservationSeats().stream()
                 .map(rs -> rs.getEventSeat().getId()).toList();
 
-        seatHoldService.releaseAll(scheduleId, seatIds);
+        seatHoldService.releaseAll(scheduleId, seatIds, memberId);
 
         paymentService.cancelByReservation(reservationId, cancelReason.getDescription());
 

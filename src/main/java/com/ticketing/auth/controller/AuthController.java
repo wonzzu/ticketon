@@ -17,7 +17,9 @@ import org.springframework.web.bind.annotation.*;
 import java.time.Duration;
 
 import static com.ticketing.auth.service.AuthService.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "인증")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth")

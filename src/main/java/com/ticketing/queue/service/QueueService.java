@@ -6,9 +6,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Set;
 
 @Slf4j
@@ -23,16 +25,27 @@ public class QueueService {
     private static final String SCHEDULES_KEY = "queue:schedules";
     private static final String ADMIT_LOCK = "queue:admit:lock";
     private final RedissonClient redissonClient;
+    private final RedisScript<Long> queueFastPathScript;
 
 
     public QueueStatusResponse enter(Long scheduleId, Long memberId) {
         String member = memberId.toString();
+        long now = System.currentTimeMillis();
 
-        if (isActive(scheduleId, member)) {
+        Long admitted = redisTemplate.execute(
+                queueFastPathScript,
+                List.of(activeKey(scheduleId), waitKey(scheduleId)),
+                member,
+                String.valueOf(now + ACTIVE_TTL_MS),
+                String.valueOf(CAPACITY),
+                String.valueOf(now)
+        );
+
+        if (Long.valueOf(1L).equals(admitted)) {
+            redisTemplate.opsForSet().add(SCHEDULES_KEY,scheduleId.toString());
             return QueueStatusResponse.admitted();
         }
 
-        // 이미 대기열에 진입 한지 체크.
         boolean already = redisTemplate.opsForZSet().score(waitKey(scheduleId), member) != null;
 
         if (!already) {

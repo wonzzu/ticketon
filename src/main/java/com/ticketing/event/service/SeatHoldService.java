@@ -3,6 +3,7 @@ package com.ticketing.event.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -13,6 +14,7 @@ import java.util.*;
 public class SeatHoldService {
 
     private final StringRedisTemplate redisTemplate;
+    private final RedisScript<Long> seatReleaseScript;
     private static final Duration HOLD_TTL = Duration.ofMinutes(7);
 
     private String key(Long scheduleId, Long eventSeatId) {
@@ -30,18 +32,19 @@ public class SeatHoldService {
             if (Boolean.TRUE.equals(ok)) {
                 heldByMe.add(seatId);
             } else {
-                releaseAll(scheduleId, heldByMe);
+                releaseAll(scheduleId, heldByMe,memberId);
                 return false;
             }
         }
         return true;
     }
 
-    public void releaseAll(Long scheduleId, List<Long> eventSeatIds) {
+    public void releaseAll(Long scheduleId, List<Long> eventSeatIds,Long memberId) {
         if (eventSeatIds.isEmpty()) return;
 
         List<String> keys = eventSeatIds.stream().map(id -> key(scheduleId, id)).toList();
-        redisTemplate.delete(keys);
+
+        redisTemplate.execute(seatReleaseScript, keys, memberId.toString());
     }
 
 

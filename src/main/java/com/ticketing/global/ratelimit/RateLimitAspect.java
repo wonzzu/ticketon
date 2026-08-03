@@ -8,6 +8,7 @@ import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -15,7 +16,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.time.Duration;
+import java.util.List;
 
 import static com.ticketing.global.baseresponse.BaseResponseStatus.TOO_MANY_REQUESTS;
 
@@ -25,17 +26,20 @@ import static com.ticketing.global.baseresponse.BaseResponseStatus.TOO_MANY_REQU
 public class RateLimitAspect {
 
     private final StringRedisTemplate redisTemplate;
+    private final RedisScript<Long> rateLimitScript;
 
     @Before("@annotation(rateLimit)")
     public void limit(JoinPoint joinPoint, RateLimit rateLimit) {
         String identifier = resolveIdentifier(rateLimit.key());
         String key = "ratelimit:" + joinPoint.getSignature().toShortString() + ":" + identifier;
 
-        Long count = redisTemplate.opsForValue().increment(key);
-        if (count != null && count == 1L) {
-            redisTemplate.expire(key, Duration.ofSeconds(rateLimit.windowSeconds()));
-        }
-        if (count != null && count > rateLimit.limit()) {
+        Long count = redisTemplate.execute(
+                rateLimitScript,
+                List.of(key),
+                String.valueOf(rateLimit.windowSeconds())
+        );
+
+        if (count > rateLimit.limit()) {
             throw new BaseException(TOO_MANY_REQUESTS);
         }
     }

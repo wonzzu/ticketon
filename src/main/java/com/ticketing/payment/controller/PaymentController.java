@@ -16,7 +16,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import static org.springframework.http.HttpStatus.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "결제")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/payments")

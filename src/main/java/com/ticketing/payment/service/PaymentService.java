@@ -10,9 +10,8 @@ import com.ticketing.payment.dto.response.PaymentResponseDto;
 import com.ticketing.payment.repository.PaymentHistoryRepository;
 import com.ticketing.payment.repository.PaymentRepository;
 import com.ticketing.reservation.domain.Reservation;
-import com.ticketing.reservation.domain.ReservationHistory;
-import com.ticketing.reservation.repository.ReservationHistoryRepository;
 import com.ticketing.reservation.repository.ReservationRepository;
+import com.ticketing.reservation.service.ReservationConfirmService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -31,7 +30,7 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final ReservationRepository reservationRepository;
     private final SeatHoldService seatHoldService;
-    private final ReservationHistoryRepository reservationHistoryRepository;
+    private final ReservationConfirmService reservationConfirmService;
     private final PaymentHistoryRepository paymentHistoryRepository;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -62,11 +61,9 @@ public class PaymentService {
         paymentRepository.save(payment);
         paymentHistoryRepository.save(PaymentHistory.of(payment, null));
 
-        reservation.confirm();
-
-        reservationHistoryRepository.save(ReservationHistory.of(reservation));
-
-        seatHoldService.releaseAll(scheduleId, seatIds);
+        reservationConfirmService.confirm(reservation.getId());
+        
+        seatHoldService.releaseAll(scheduleId, seatIds,memberId);
 
         return PaymentResponseDto.from(payment);
     }
@@ -79,7 +76,8 @@ public class PaymentService {
 
             var event = payment.getReservation().getEventSchedule().getEvent();
             eventPublisher.publishEvent(new PaymentCanceledEvent(
-                    event.getSeller().getId(), event.getId(), event.getEndDate()));
+                    event.getSeller().getId(), event.getId(), event.getEndDate(),
+                    payment.getCreatedAt().toLocalDate()));
 
         });
 

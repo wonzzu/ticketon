@@ -4,6 +4,8 @@ import com.ticketing.settlement.domain.SettlementDirtyDate;
 import com.ticketing.settlement.repository.SettlementDirtyDateRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
@@ -26,33 +28,51 @@ public class SettlementScheduler {
     private final JobLauncher jobLauncher;
     private final Job settlementJob;
     private final SettlementDirtyDateRepository dirtyRepository;
+    private final RedissonClient redissonClient;
 
     @Scheduled(cron = "0 0 2 * * *")
     public void runDaily() {
-        run(LocalDate.now().minusDays(1));
+        RLock lock = redissonClient.getLock("batch:settlement:daily:lock");
+        if (!lock.tryLock()) {
+            log.debug("정산 배치 락 획득 실패 - 다른 인스턴스가 처리 중");
+            return;
+        }
+        try {
+            run(LocalDate.now().minusDays(1));
+        } finally {
+            if (lock.isHeldByCurrentThread()) lock.unlock();
+        }
     }
 
-    // 일일 정산(2:00) 이후 재집계 — 취소로 더러워진 날짜만 멱등 재실행
     @Scheduled(cron = "0 30 2 * * *")
     public void reaggregateDirty() {
-        List<SettlementDirtyDate> dirties = dirtyRepository.findAll();
-        if (dirties.isEmpty()) {
+
+        RLock lock = redissonClient.getLock("batch:settlement:reaggregate:lock");
+        if (!lock.tryLock()) {
+            log.debug("정산 재집계 락 획득 실패 - 다른 인스턴스가 처리 중");
             return;
         }
 
-        // 정산 Job은 '날짜' 단위 멱등 재실행이므로 날짜로 묶는다
-        Map<LocalDate, List<SettlementDirtyDate>> byDate = dirties.stream()
-                .collect(Collectors.groupingBy(SettlementDirtyDate::getSettlementDate));
-
-        byDate.forEach((date, group) -> {
-            if (run(date)) {                       // 멱등 DELETE&INSERT → CANCELED 자연 제외
-                dirtyRepository.deleteAll(group);  // 성공한 날짜만 큐에서 제거 (실패 시 다음 실행에 재시도)
+        try {
+            List<SettlementDirtyDate> dirties = dirtyRepository.findAll();
+            if (dirties.isEmpty()) {
+                return;
             }
-        });
-        log.info("정산 재집계 실행: dates={}", byDate.keySet());
+
+            Map<LocalDate, List<SettlementDirtyDate>> byDate = dirties.stream()
+                    .collect(Collectors.groupingBy(SettlementDirtyDate::getSettlementDate));
+
+            byDate.forEach((date, group) -> {
+                if (run(date)) {dirtyRepository.deleteAll(group);}
+            });
+
+            log.info("정산 재집계 실행: dates={}", byDate.keySet());
+        } finally {
+            if (lock.isHeldByCurrentThread()) lock.unlock();
+        }
     }
 
-    // 수동/재집계 공용. 성공여부 반환 → 재집계에서 dirty 삭제 판단에 사용
+
     public boolean run(LocalDate targetDate) {
         try {
             JobParameters params = new JobParametersBuilder()

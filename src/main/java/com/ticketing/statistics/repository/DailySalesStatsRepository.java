@@ -10,5 +10,7 @@ public interface DailySalesStatsRepository extends JpaRepository<DailySalesStats
 
     void deleteByStatDate(LocalDate statDate);
 
+    boolean existsByStatDate(LocalDate statDate);
+
     List<DailySalesStats> findByStatDateBetweenOrderByStatDate(LocalDate from, LocalDate to);
 }
