@@ -10,6 +10,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "회원 공통")
@@ -20,6 +21,7 @@ public class MemberController {
 
     private final MemberService memberService;
 
+    @Operation(summary = "내 정보 조회")
     @GetMapping
     public ResponseEntity<BaseResponse<MyInfoResponseDto>> myInfo(@AuthenticationPrincipal CustomUserDetails user) {
         MyInfoResponseDto myInfo = memberService.getMyInfo(user.getMemberId());

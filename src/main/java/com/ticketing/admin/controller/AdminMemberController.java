@@ -16,6 +16,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "관리자 - 회원")
@@ -26,6 +27,7 @@ public class AdminMemberController {
 
     private final AdminMemberService adminMemberService;
 
+    @Operation(summary = "회원 검색")
     @GetMapping
     public ResponseEntity<BaseResponse<Page<AdminMemberListResponseDto>>> search(
             @RequestParam(required = false) String email,
@@ -41,6 +43,7 @@ public class AdminMemberController {
         return ResponseEntity.ok(BaseResponse.success(search));
     }
 
+    @Operation(summary = "회원 상세 조회")
     @GetMapping("/{id}")
     public ResponseEntity<BaseResponse<AdminMemberDetailResponseDto>> detail(@PathVariable Long id) {
         AdminMemberDetailResponseDto detail = adminMemberService.findDetail(id);
@@ -48,6 +51,7 @@ public class AdminMemberController {
         return ResponseEntity.ok(BaseResponse.success(detail));
     }
 
+    @Operation(summary = "회원 정지")
     @PostMapping("/{id}/suspend")
     public ResponseEntity<BaseResponse<Void>> suspend(
             @PathVariable Long id, @Validated @RequestBody MemberSuspendDto dto) {
@@ -57,6 +61,7 @@ public class AdminMemberController {
         return ResponseEntity.ok(BaseResponse.success());
     }
 
+    @Operation(summary = "회원 정지 해제")
     @PostMapping("/{id}/release")
     public ResponseEntity<BaseResponse<Void>> release(@PathVariable Long id) {
 

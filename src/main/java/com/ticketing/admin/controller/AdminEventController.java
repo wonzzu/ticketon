@@ -12,6 +12,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "관리자 - 공연 심사")
@@ -22,6 +23,7 @@ public class AdminEventController {
 
     private final AdminEventService adminEventService;
 
+    @Operation(summary = "심사 대기 공연 목록")
     @GetMapping("/pending")
     public ResponseEntity<BaseResponse<List<EventListResponseDto>>> findPending() {
         List<EventListResponseDto> pending = adminEventService.findPending();
@@ -29,6 +31,7 @@ public class AdminEventController {
         return ResponseEntity.ok(BaseResponse.success(pending));
     }
 
+    @Operation(summary = "공연 승인")
     @PostMapping("/{id}/approve")
     public ResponseEntity<BaseResponse<Void>> approve(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails admin) {
         adminEventService.approve(id, admin.getMemberId());
@@ -36,6 +39,7 @@ public class AdminEventController {
         return ResponseEntity.ok(BaseResponse.success());
     }
 
+    @Operation(summary = "공연 반려")
     @PostMapping("/{id}/reject")
     public ResponseEntity<BaseResponse<Void>> reject(@PathVariable Long id,
                                                      @Validated @RequestBody EventRejectDto dto,
