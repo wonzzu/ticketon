@@ -155,7 +155,9 @@ public class DataSeedRunner implements CommandLineRunner {
         AdminMember admin = seedAdmin();
         Seller seller1 = seedSeller("seller1@test.com", "엔터테인먼트A", "김셀러", "111-11-11111");
         Seller seller2 = seedSeller("seller2@test.com", "프로덕션B", "박셀러", "222-22-22222");
-        // 정산 데모에서 등급별 수수료 차등(BRONZE 10% vs GOLD 5%)이 실제로 보이도록 한쪽만 승급.
+        // 정산 데모에서 등급별 수수료 차등(SILVER 8% vs GOLD 5%)이 보이도록 등급을 나눈다.
+        // 배포 DB도 같은 조합이라 로컬 시드와 배포 데모가 일치한다.
+        seller1.changeGrade(SellerGrade.SILVER);
         seller2.changeGrade(SellerGrade.GOLD);
         seedNormalMember();
 
