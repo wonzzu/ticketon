@@ -17,6 +17,7 @@ import com.ticketing.member.domain.AdminMember;
 import com.ticketing.member.domain.Gender;
 import com.ticketing.member.domain.NormalMember;
 import com.ticketing.member.domain.Seller;
+import com.ticketing.member.domain.SellerGrade;
 import com.ticketing.member.repository.AdminMemberRepository;
 import com.ticketing.member.repository.MemberRepository;
 import com.ticketing.member.repository.NormalMemberRepository;
@@ -154,6 +155,8 @@ public class DataSeedRunner implements CommandLineRunner {
         AdminMember admin = seedAdmin();
         Seller seller1 = seedSeller("seller1@test.com", "엔터테인먼트A", "김셀러", "111-11-11111");
         Seller seller2 = seedSeller("seller2@test.com", "프로덕션B", "박셀러", "222-22-22222");
+        // 정산 데모에서 등급별 수수료 차등(BRONZE 10% vs GOLD 5%)이 실제로 보이도록 한쪽만 승급.
+        seller2.changeGrade(SellerGrade.GOLD);
         seedNormalMember();
 
         // 2) 공연장 + 좌석 (등급: VIP / R / S / A 4등급, 행 8이면 2행씩)

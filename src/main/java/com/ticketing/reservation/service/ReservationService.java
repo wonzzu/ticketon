@@ -27,6 +27,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -78,10 +79,20 @@ public class ReservationService {
         EventSchedule schedule = eventScheduleRepository.findById(dto.getScheduleId())
                 .orElseThrow(() -> new BaseException(PERFORMANCE_NOT_FOUND));
 
+        if (schedule.getShowDateTime().isBefore(LocalDateTime.now())) {
+            throw new BaseException(SCHEDULE_ALREADY_STARTED);
+        }
+
         List<EventSeat> seats = eventSeatRepository.findAllById(seatIds);
 
         if (seats.size() != seatIds.size()) {
             throw new BaseException(SEAT_NOT_FOUND);
+        }
+
+        boolean mismatched = seats.stream()
+                .anyMatch(s -> !s.getEventSchedule().getId().equals(schedule.getId()));
+        if (mismatched) {
+            throw new BaseException(SEAT_SCHEDULE_MISMATCH);
         }
 
         boolean anySold = seats.stream().anyMatch(s -> s.getStatus() == EventSeatStatus.RESERVED);

@@ -23,7 +23,9 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    command: --maxmemory 100mb --maxmemory-policy allkeys-lru
+    # noeviction: 대기열·좌석 선점·쿠폰 재고는 Redis가 원본이라 LRU로 지워지면 조용히 유실된다.
+    # 메모리가 차면 쓰기를 실패시켜 즉시 드러나게 한다. (ADR 12)
+    command: --maxmemory 100mb --maxmemory-policy noeviction
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
