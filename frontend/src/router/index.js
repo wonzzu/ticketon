@@ -106,6 +106,13 @@ const routes = [
     component: () => import('@/views/event/EventListView.vue'),
   },
   {
+    // 지난 공연 모아보기. 목록 뷰를 그대로 쓰고 route.name 으로 조회 API만 바꾼다.
+    // 반드시 '/events/:id' 보다 위에 있어야 한다 — 아래에 두면 past가 id로 잡힌다.
+    path: '/events/past',
+    name: 'event-list-past',
+    component: () => import('@/views/event/EventListView.vue'),
+  },
+  {
     path: '/events/:id',
     name: 'event-detail',
     component: () => import('@/views/event/EventDetailView.vue'),
