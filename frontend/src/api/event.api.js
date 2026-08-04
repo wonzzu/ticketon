@@ -12,13 +12,38 @@
  */
 import http from './http'
 
+/**
+ * 공연이 아직 예매 가능한지 판단한다.
+ *
+ * 백엔드는 목록에 종료 여부를 따로 안 내려준다. EventStatus에 CLOSED가 있지만
+ * 전환하는 코드가 없어서 기간이 지나도 APPROVED로 남는다.
+ * 그래서 응답의 endDate(공연 마지막 날)로 프론트에서 가른다.
+ *
+ * TODO: 백엔드가 CLOSED 전환을 넣으면 이 함수를 지우고 status === 'APPROVED' 로 대체.
+ */
+export function isBookable(event) {
+  if (!event?.endDate) return true          // 판단할 수 없으면 노출 쪽으로
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return new Date(event.endDate) >= today
+}
+
 export const eventApi = {
   create: (payload) =>
     http.post('/events', payload),
 
   // params: { category, q } — 생략 시 전체 (메인은 파라미터 없이 호출)
-  findAll: (params) =>
-    http.get('/events', { params }),
+  // 종료된 공연은 여기서 걸러낸다. 지난 공연이 필요하면 findEnded()를 쓴다.
+  findAll: async (params) => {
+    const list = await http.get('/events', { params })
+    return list.filter(isBookable)
+  },
+
+  // 종료된 공연만 (지난 공연 페이지 전용)
+  findEnded: async (params) => {
+    const list = await http.get('/events', { params })
+    return list.filter((e) => !isBookable(e))
+  },
 
   // params: { days, limit } — 생략 시 백엔드 기본값(7일/10개)
   ranking: (params) =>

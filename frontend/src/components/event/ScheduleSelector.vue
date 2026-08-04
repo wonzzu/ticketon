@@ -31,15 +31,26 @@ function toTimeStr(iso) {
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-// 회차 있는 날짜 (달력 활성화용)
+// 이미 시작된 회차는 백엔드가 예매를 거부한다(4012). 아예 고를 수 없게 막는다.
+const upcoming = computed(() =>
+  props.schedules.filter((s) => new Date(s.showDateTime) >= new Date())
+)
+
+// 회차는 있는데 전부 지난 경우 = 종료된 공연
+const allEnded = computed(() =>
+  props.schedules.length > 0 && upcoming.value.length === 0
+)
+
+// 회차 있는 날짜 (달력 활성화용) — 지난 회차는 제외
 const enabledDates = computed(() =>
-  [...new Set(props.schedules.map((s) => toDateStr(s.showDateTime)))]
+  [...new Set(upcoming.value.map((s) => toDateStr(s.showDateTime)))]
 )
 
 // 선택 날짜의 회차들 (시간순)
+// upcoming 기준이라 "오늘이지만 이미 시작한 회차"도 걸러진다
 const schedulesOfDate = computed(() => {
   if (!selectedDate.value) return []
-  return props.schedules
+  return upcoming.value
     .filter((s) => toDateStr(s.showDateTime) === selectedDate.value)
     .sort((a, b) => a.showDateTime.localeCompare(b.showDateTime))
 })
@@ -69,8 +80,15 @@ function onReserve() {
 
 <template>
   <div>
+    <!-- 모든 회차가 지난 공연 — 선택 UI 대신 안내만 -->
+    <div v-if="allEnded" class="ended-box text-center rounded border p-5">
+      <i class="bi bi-calendar-x fs-1 text-secondary d-block mb-3"></i>
+      <p class="fw-bold mb-1">예매가 종료된 공연입니다</p>
+      <p class="text-secondary small mb-0">모든 회차가 종료되어 예매할 수 없습니다.</p>
+    </div>
+
     <!-- 박스: STEP1 · STEP2 · 예매가능 좌석 -->
-    <div class="bg-white border rounded overflow-hidden">
+    <div v-else class="bg-white border rounded overflow-hidden">
       <div class="row g-0">
         <!-- STEP1 날짜 (라벨 옆 캘린더) -->
         <div class="col-12 col-md-5 border-end p-3">
@@ -132,8 +150,8 @@ function onReserve() {
       </div>
     </div>
 
-    <!-- 예매하기 — 박스 밖, 우측 -->
-    <div class="d-flex justify-content-end mt-3">
+    <!-- 예매하기 — 박스 밖, 우측 (종료된 공연이면 숨김) -->
+    <div v-if="!allEnded" class="d-flex justify-content-end mt-3">
       <AppButton variant="primary" size="lg"
                  :disabled="!selectedSchedule || availableSeats === 0"
                  @click="onReserve">
@@ -145,6 +163,10 @@ function onReserve() {
 
 <style lang="scss" scoped>
 @use '@/styles/tokens' as *;
+
+.ended-box {
+  background: $color-bg-soft;
+}
 
 .step-num {
   font-size: 0.95rem;
