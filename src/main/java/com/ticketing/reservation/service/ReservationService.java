@@ -53,10 +53,15 @@ public class ReservationService {
 
     @Transactional
     public ReservationResponseDto create(Long memberId, ReservationCreateDto dto) {
-        Optional<Reservation> exist = reservationRepository.findByMemberIdAndIdempotencyKey(memberId, dto.getIdempotencyKey());
+        Member member = memberRepository.findByIdForUpdate(memberId)
+                .orElseThrow(() -> new BaseException(MEMBER_NOT_FOUND));
+
+        Optional<Reservation> exist = reservationRepository
+                .findByMemberIdAndIdempotencyKey(memberId, dto.getIdempotencyKey());
 
         if (exist.isPresent()) {
-            log.debug("멱등 재요청 - 기존 예매 정보 반환: idempotencyKey ={}", dto.getIdempotencyKey());
+            log.debug("멱등 재요청 - 기존 예매 반환: memberId={}, idempotencyKey={}",
+                    memberId, dto.getIdempotencyKey());
             return ReservationResponseDto.from(exist.get());
         }
 
@@ -72,9 +77,6 @@ public class ReservationService {
         if (seatIds.size() > MAX_SEATS) {
             throw new BaseException(EXCEED_SEAT_LIMIT);
         }
-
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new BaseException(MEMBER_NOT_FOUND));
 
         EventSchedule schedule = eventScheduleRepository.findById(dto.getScheduleId())
                 .orElseThrow(() -> new BaseException(PERFORMANCE_NOT_FOUND));
