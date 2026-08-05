@@ -53,7 +53,7 @@ public class ReservationService {
 
     @Transactional
     public ReservationResponseDto create(Long memberId, ReservationCreateDto dto) {
-        Optional<Reservation> exist = reservationRepository.findByIdempotencyKey(dto.getIdempotencyKey());
+        Optional<Reservation> exist = reservationRepository.findByMemberIdAndIdempotencyKey(memberId, dto.getIdempotencyKey());
 
         if (exist.isPresent()) {
             log.debug("멱등 재요청 - 기존 예매 정보 반환: idempotencyKey ={}", dto.getIdempotencyKey());

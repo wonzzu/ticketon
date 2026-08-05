@@ -46,8 +46,12 @@ export const eventApi = {
   },
 
   // params: { days, limit } — 생략 시 백엔드 기본값(7일/10개)
-  ranking: (params) =>
-    http.get('/events/ranking', { params }),
+  // 랭킹은 "최근 예매수" 기준이라 이미 끝난 공연도 올라온다.
+  // 메인 히어로가 이 결과로 채워지므로 여기서도 걸러야 종료 공연에 예매 버튼이 안 붙는다.
+  ranking: async (params) => {
+    const list = await http.get('/events/ranking', { params })
+    return list.filter(isBookable)
+  },
 
   findById: (id) =>
     http.get(`/events/${id}`),
