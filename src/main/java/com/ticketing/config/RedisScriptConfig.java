@@ -10,13 +10,12 @@ import org.springframework.data.redis.core.script.RedisScript;
 public class RedisScriptConfig {
 
     @Bean
-    public RedisScript<Long> queueFastPathScript() {
+    public RedisScript<Long> queueEnterScript() {
         DefaultRedisScript<Long> script = new DefaultRedisScript<>();
-        script.setLocation(new ClassPathResource("scripts/queue-fast-path.lua"));
+        script.setLocation(new ClassPathResource("scripts/queue-enter.lua"));
         script.setResultType(Long.class);
         return script;
     }
-
 
     @Bean
     public RedisScript<Long> seatReleaseScript(){
@@ -38,6 +37,14 @@ public class RedisScriptConfig {
     public RedisScript<Long> rateLimitScript() {
         DefaultRedisScript<Long> script = new DefaultRedisScript<>();
         script.setLocation(new ClassPathResource("scripts/rate-limit.lua"));
+        script.setResultType(Long.class);
+        return script;
+    }
+
+    @Bean
+    public RedisScript<Long> queueAdmitScript() {
+        DefaultRedisScript<Long> script = new DefaultRedisScript<>();
+        script.setLocation(new ClassPathResource("scripts/queue-admit.lua"));
         script.setResultType(Long.class);
         return script;
     }
