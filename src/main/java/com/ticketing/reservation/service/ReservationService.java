@@ -26,6 +26,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -106,6 +108,8 @@ public class ReservationService {
             throw new BaseException(SEAT_NOT_AVAILABLE);
         }
 
+        registerSeatHoldRollbackCompensation(dto.getScheduleId(), seatIds, memberId);
+
         int totalPrice = seats.stream().mapToInt(EventSeat::getPrice).sum();
 
         Reservation reservation = Reservation.create(member, schedule, dto.getIdempotencyKey(), totalPrice);
@@ -167,5 +171,25 @@ public class ReservationService {
         reservationHistoryRepository.save(ReservationHistory.ofCancel(reservation, cancelReason, detail));
 
         log.info("예매 취소: reservationId={},memberId={},reason={}", reservationId, memberId, cancelReason);
+    }
+
+    private void registerSeatHoldRollbackCompensation(Long scheduleId, List<Long> seatIds, Long memberId) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(int status) {
+                if (status != TransactionSynchronization.STATUS_ROLLED_BACK) {
+                    return;
+                }
+
+                try {
+                    seatHoldService.releaseAll(scheduleId, seatIds, memberId);
+                    log.warn("예매 트랜잭션 롤백으로 좌석 선점 해제: scheduleId={}, memberId={}, seatIds={}",
+                            scheduleId, memberId, seatIds);
+                } catch (RuntimeException e) {
+                    log.error("예매 롤백 후 좌석 선점 해제 실패: scheduleId={}, memberId={}, seatIds={}",
+                            scheduleId, memberId, seatIds, e);
+                }
+            }
+        });
     }
 }
