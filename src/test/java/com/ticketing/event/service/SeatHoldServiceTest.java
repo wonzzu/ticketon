@@ -76,4 +76,23 @@ class SeatHoldServiceTest {
         Assertions.assertThat(failCount.get()).isEqualTo(threadCount - 1);
         Assertions.assertThat(holdKeyExists).isTrue();
     }
+
+    @Test
+    void 다른_회원이_소유한_좌석은_해제하지_않는다() {
+        // given
+        Long ownerId = 2L;
+        Long otherMemberId = 1L;
+
+        boolean held = seatHoldService.holdAll(scheduleId, List.of(seatId), ownerId);
+        Assertions.assertThat(held).isTrue();
+
+        // when
+        seatHoldService.releaseAll(scheduleId, List.of(seatId), otherMemberId);
+
+        // then
+        String holder = redisTemplate.opsForValue()
+                .get("seat:hold:" + scheduleId + ":" + seatId);
+
+        Assertions.assertThat(holder).isEqualTo(ownerId.toString());
+    }
 }
