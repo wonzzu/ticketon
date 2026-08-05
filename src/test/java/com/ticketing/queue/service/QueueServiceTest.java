@@ -11,9 +11,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -26,7 +24,10 @@ class QueueServiceTest {
     StringRedisTemplate redis;
 
     @Autowired
-    RedisScript<Long> queueFastPathScript;
+    RedisScript<Long> queueEnterScript;
+
+    @Autowired
+    RedisScript<Long> queueAdmitScript;
 
     private final Long scheduleId = 7777L;
     private static final int CAPACITY = 100;
@@ -55,8 +56,8 @@ class QueueServiceTest {
 
         RedissonClient c1 = newClient();
         RedissonClient c2 = newClient();
-        QueueService instance1 = new QueueService(redis, c1, queueFastPathScript);
-        QueueService instance2 = new QueueService(redis, c2, queueFastPathScript);
+        QueueService instance1 = new QueueService(redis, c1, queueEnterScript,queueAdmitScript);
+        QueueService instance2 = new QueueService(redis, c2, queueEnterScript,queueAdmitScript);
 
         // when : 두 서버가 동시에 admit 경쟁
         int rounds = 50;
@@ -96,4 +97,141 @@ class QueueServiceTest {
         assertThat(wait).isEqualTo(200L);
     }
 
+    @Test
+    void 동일_회원이_동시에_진입해도_대기순번은_한번만_발급된다() throws InterruptedException {
+        // given: active 정원을 가득 채워 신규 요청이 반드시 waiting으로 가게 한다.
+        long expireAt = System.currentTimeMillis() + 600_000;
+
+        for (int i = 1; i <= CAPACITY; i++) {
+            redis.opsForZSet().add("queue:active:" + scheduleId, "active-" + i, expireAt);
+        }
+
+        RedissonClient client = newClient();
+        QueueService queueService = new QueueService(redis, client, queueEnterScript,queueAdmitScript);
+
+        int requestCount = 100;
+        Long memberId = 999L;
+
+        ExecutorService executor = Executors.newFixedThreadPool(requestCount);
+        CountDownLatch readyLatch = new CountDownLatch(requestCount);
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch endLatch = new CountDownLatch(requestCount);
+        ConcurrentLinkedQueue<Throwable> errors = new ConcurrentLinkedQueue<>();
+
+        // when: 같은 회원의 enter 요청을 동시에 실행한다.
+        for (int i = 0; i < requestCount; i++) {
+            executor.submit(() -> {
+                readyLatch.countDown();
+
+                try {
+                    startLatch.await();
+                    queueService.enter(scheduleId, memberId);
+                } catch (Throwable e) {
+                    errors.add(e);
+                } finally {
+                    endLatch.countDown();
+                }
+            });
+        }
+
+        readyLatch.await();
+        startLatch.countDown();
+        endLatch.await();
+
+        executor.shutdown();
+        client.shutdown();
+
+        // then: 회원 등록과 대기 순번 발급 모두 한 번만 발생해야 한다.
+        Long waitingCount = redis.opsForZSet().zCard("queue:wait:" + scheduleId);
+        String sequence = redis.opsForValue().get("queue:seq:" + scheduleId);
+
+        assertThat(errors.isEmpty()).isTrue();
+        assertThat(waitingCount).isEqualTo(1L);
+        assertThat(sequence).isEqualTo("1");
+    }
+
+    @Test
+    void 진입과_승급이_경쟁해도_active는_정원을_넘지_않는다() throws Exception {
+        // given
+        RedissonClient client = newClient();
+        QueueService queueService = new QueueService(redis, client, queueEnterScript,queueAdmitScript);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+
+        int rounds = 1_000;
+        boolean capacityExceeded = false;
+        Long actualActiveCount = null;
+
+        try {
+            for (int round = 0; round < rounds; round++) {
+                redis.delete("queue:wait:" + scheduleId);
+                redis.delete("queue:active:" + scheduleId);
+                redis.delete("queue:seq:" + scheduleId);
+
+                long expireAt = System.currentTimeMillis() + 600_000;
+
+                // active 99명
+                for (int i = 1; i < CAPACITY; i++) {
+                    redis.opsForZSet().add(
+                            "queue:active:" + scheduleId,
+                            "active-" + i,
+                            expireAt
+                    );
+                }
+
+                // waiting 1명
+                redis.opsForZSet().add(
+                        "queue:wait:" + scheduleId,
+                        "waiting-member",
+                        1
+                );
+
+                redis.opsForSet().add(
+                        "queue:schedules",
+                        scheduleId.toString()
+                );
+
+                Long enteringMemberId = 100_000L + round;
+                CountDownLatch startLatch = new CountDownLatch(1);
+
+                // when: 승급과 신규 진입을 동시에 실행
+                Future<?> admitFuture = executor.submit(() -> {
+                    try {
+                        startLatch.await();
+                        queueService.doAdmit();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                });
+
+                Future<?> enterFuture = executor.submit(() -> {
+                    try {
+                        startLatch.await();
+                        queueService.enter(scheduleId, enteringMemberId);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                });
+
+                startLatch.countDown();
+                admitFuture.get();
+                enterFuture.get();
+
+                actualActiveCount = redis.opsForZSet()
+                        .zCard("queue:active:" + scheduleId);
+
+                if (actualActiveCount != null && actualActiveCount > CAPACITY) {
+                    capacityExceeded = true;
+                    break;
+                }
+            }
+        } finally {
+            executor.shutdown();
+            client.shutdown();
+        }
+
+        // then
+        assertThat(capacityExceeded)
+                .as("진입과 승급이 경쟁해도 active는 정원 " + CAPACITY + "명을 넘으면 안 된다. 실제 active=" + actualActiveCount)
+                .isFalse();
+    }
 }

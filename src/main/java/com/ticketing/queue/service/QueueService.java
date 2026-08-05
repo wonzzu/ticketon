@@ -25,33 +25,31 @@ public class QueueService {
     private static final String SCHEDULES_KEY = "queue:schedules";
     private static final String ADMIT_LOCK = "queue:admit:lock";
     private final RedissonClient redissonClient;
-    private final RedisScript<Long> queueFastPathScript;
+    private final RedisScript<Long> queueEnterScript;
+    private final RedisScript<Long> queueAdmitScript;
 
 
     public QueueStatusResponse enter(Long scheduleId, Long memberId) {
         String member = memberId.toString();
         long now = System.currentTimeMillis();
 
-        Long admitted = redisTemplate.execute(
-                queueFastPathScript,
-                List.of(activeKey(scheduleId), waitKey(scheduleId)),
+        Long result = redisTemplate.execute(
+                queueEnterScript,
+                List.of(
+                        activeKey(scheduleId),
+                        waitKey(scheduleId),
+                        seqKey(scheduleId),
+                        SCHEDULES_KEY
+                ),
                 member,
                 String.valueOf(now + ACTIVE_TTL_MS),
                 String.valueOf(CAPACITY),
-                String.valueOf(now)
+                String.valueOf(now),
+                scheduleId.toString()
         );
 
-        if (Long.valueOf(1L).equals(admitted)) {
-            redisTemplate.opsForSet().add(SCHEDULES_KEY,scheduleId.toString());
+        if (Long.valueOf(1L).equals(result)) {
             return QueueStatusResponse.admitted();
-        }
-
-        boolean already = redisTemplate.opsForZSet().score(waitKey(scheduleId), member) != null;
-
-        if (!already) {
-            Long seq = redisTemplate.opsForValue().increment(seqKey(scheduleId));
-            redisTemplate.opsForZSet().add(waitKey(scheduleId), member, seq);
-            redisTemplate.opsForSet().add(SCHEDULES_KEY, scheduleId.toString());
         }
 
         return status(scheduleId, memberId);
@@ -94,31 +92,26 @@ public class QueueService {
 
     public void doAdmit() {
         Set<String> scheduleIds = redisTemplate.opsForSet().members(SCHEDULES_KEY);
-        if (scheduleIds == null) return;
+        if (scheduleIds == null || scheduleIds.isEmpty()) return;
+
         long now = System.currentTimeMillis();
+        long expireAt = now + ACTIVE_TTL_MS;
 
         for (String sid : scheduleIds) {
             Long scheduleId = Long.valueOf(sid);
 
-            redisTemplate.opsForZSet().removeRangeByScore(activeKey(scheduleId), 0, now);
+            Long admittedCount = redisTemplate.execute(
+                    queueAdmitScript,
+                    List.of(activeKey(scheduleId), waitKey(scheduleId)),
+                    String.valueOf(now),
+                    String.valueOf(expireAt),
+                    String.valueOf(CAPACITY)
+            );
 
-            Long activeCount = redisTemplate.opsForZSet().zCard(activeKey(scheduleId));
-            long slots = CAPACITY - (activeCount == null ? 0 : activeCount);
-            if (slots <= 0) continue;
-
-            Set<String> front = redisTemplate.opsForZSet().range(waitKey(scheduleId), 0, slots - 1);
-
-            if (front == null || front.isEmpty()) continue;
-
-            long expireAt = now + ACTIVE_TTL_MS;
-
-            for (String member : front) {
-                redisTemplate.opsForZSet().remove(waitKey(scheduleId), member);
-                redisTemplate.opsForZSet().add(activeKey(scheduleId), member, expireAt);
+            if (admittedCount != null && admittedCount > 0) {
+                log.info("대기열 승급: scheduleId={}, {}명 입장", scheduleId, admittedCount);
             }
-            log.info("대기열 승급: scheduleId={}, {}명 입장", scheduleId, front.size());
         }
-
     }
 
 
