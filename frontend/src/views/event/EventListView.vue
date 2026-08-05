@@ -77,7 +77,10 @@ async function load() {
 // 카테고리·검색어 바뀌면 백엔드 재조회 (정렬은 프론트라 재조회 불필요)
 // route.name도 본다 — /events ↔ /events/past 는 같은 컴포넌트를 재사용해서
 // 이동해도 onMounted가 다시 안 불리기 때문.
-watch(() => [route.name, route.query.category, route.query.q], load)
+// getter를 배열로 감싸 값별로 비교한다.
+// () => [a, b, c] 처럼 배열을 "반환"하면 매번 새 배열이라 항상 변경으로 판정돼,
+// 정렬만 바꿔도 목록을 다시 받아온다.
+watch([() => route.name, () => route.query.category, () => route.query.q], load)
 
 onMounted(load)
 </script>

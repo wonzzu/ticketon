@@ -14,6 +14,10 @@ import java.util.List;
 import static com.ticketing.global.baseresponse.BaseResponseStatus.*;
 
 @Entity
+@Table(
+        name = "reservation",
+        uniqueConstraints = @UniqueConstraint(name = "uk_reservation_member_idempotency", columnNames = {"member_id", "idempotency_key"})
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -32,7 +36,7 @@ public class Reservation extends BaseEntity {
     @JoinColumn(name = "schedule_id", nullable = false)
     private EventSchedule eventSchedule;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String idempotencyKey;
 
     @Column(nullable = false)
