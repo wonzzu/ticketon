@@ -29,6 +29,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -127,6 +128,49 @@ class ReservationIdempotencyOwnershipTest {
         // then
         assertThat(reservationB.getId()).isNotEqualTo(reservationA.getId());
         assertThat(reservationRepository.count()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("동일 회원이 같은 멱등성 키로 동시에 요청해도 예매는 한 건만 생성된다")
+    void 동일_회원의_동일_멱등성키_동시요청은_한건만_생성한다() throws Exception {
+        // given
+        String idempotencyKey = "same-member-concurrent-key";
+        ReservationCreateDto requestA = createRequest(eventSeatAId, idempotencyKey);
+        ReservationCreateDto requestB = createRequest(eventSeatAId, idempotencyKey);
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        CountDownLatch readyLatch = new CountDownLatch(2);
+        CountDownLatch startLatch = new CountDownLatch(1);
+
+        Future<ReservationResponseDto> futureA = executor.submit(() -> {
+            readyLatch.countDown();
+            startLatch.await();
+            return reservationService.create(memberAId, requestA);
+        });
+
+        Future<ReservationResponseDto> futureB = executor.submit(() -> {
+            readyLatch.countDown();
+            startLatch.await();
+            return reservationService.create(memberAId, requestB);
+        });
+
+        // when
+        assertThat(readyLatch.await(5, TimeUnit.SECONDS)).isTrue();
+        startLatch.countDown();
+
+        ReservationResponseDto reservationA;
+        ReservationResponseDto reservationB;
+
+        try {
+            reservationA = futureA.get(10, TimeUnit.SECONDS);
+            reservationB = futureB.get(10, TimeUnit.SECONDS);
+        } finally {
+            executor.shutdownNow();
+        }
+
+        // then
+        assertThat(reservationA.getId()).isEqualTo(reservationB.getId());
+        assertThat(reservationRepository.count()).isEqualTo(1);
     }
 
     private ReservationCreateDto createRequest(Long eventSeatId, String idempotencyKey) {
