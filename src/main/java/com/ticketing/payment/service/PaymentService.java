@@ -40,7 +40,7 @@ public class PaymentService {
 
     @Transactional
     public PaymentResponseDto pay(Long memberId, PaymentCreateDto dto) {
-        Reservation reservation = reservationRepository.findById(dto.getReservationId())
+        Reservation reservation = reservationRepository.findByIdForUpdate(dto.getReservationId())
                 .orElseThrow(() -> new BaseException(RESERVATION_NOT_FOUND));
 
         if (!reservation.isOwnedBy(memberId)) {
