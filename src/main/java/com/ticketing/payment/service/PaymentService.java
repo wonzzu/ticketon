@@ -13,9 +13,12 @@ import com.ticketing.reservation.domain.Reservation;
 import com.ticketing.reservation.repository.ReservationRepository;
 import com.ticketing.reservation.service.ReservationConfirmService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 
@@ -23,6 +26,7 @@ import static com.ticketing.global.baseresponse.BaseResponseStatus.*;
 
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class PaymentService {
@@ -62,8 +66,8 @@ public class PaymentService {
         paymentHistoryRepository.save(PaymentHistory.of(payment, null));
 
         reservationConfirmService.confirm(reservation.getId());
-        
-        seatHoldService.releaseAll(scheduleId, seatIds,memberId);
+
+        registerSeatHoldRelease(scheduleId, seatIds, memberId);
 
         return PaymentResponseDto.from(payment);
     }
@@ -80,8 +84,22 @@ public class PaymentService {
                     payment.getCreatedAt().toLocalDate()));
 
         });
+    }
 
-
+    private void registerSeatHoldRelease(Long scheduleId, List<Long> seatIds, Long memberId) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    seatHoldService.releaseAll(scheduleId, seatIds, memberId);
+                    log.info("결제 커밋 후 좌석 선점 해제: scheduleId={}, memberId={}, seatIds={}",
+                            scheduleId, memberId, seatIds);
+                } catch (RuntimeException e) {
+                    log.error("결제 커밋 후 좌석 선점 해제 실패: scheduleId={}, memberId={}, seatIds={}",
+                            scheduleId, memberId, seatIds, e);
+                }
+            }
+        });
     }
 
 }

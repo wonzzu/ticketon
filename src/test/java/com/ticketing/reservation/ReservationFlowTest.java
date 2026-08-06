@@ -45,6 +45,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 /**
  * 기능 테스트 (안전망) — 예약·결제·취소 happy path.
@@ -192,5 +193,35 @@ class ReservationFlowTest {
                         "  기대값 : 예약 1건 / 실제값 : 예약 %d건%n" +
                         "==================================%n", count);
         assertThat(count).isEqualTo(1);   // 1건만 생성됨
+    }
+
+    @Test
+    @DisplayName("결제 트랜잭션이 롤백되면 좌석 선점을 유지한다")
+    void 결제_롤백_시_좌석_선점을_유지한다() {
+        ReservationCreateDto createDto = new ReservationCreateDto();
+        ReflectionTestUtils.setField(createDto, "scheduleId", scheduleId);
+        ReflectionTestUtils.setField(createDto, "eventSeatIds", List.of(eventSeatId));
+        ReflectionTestUtils.setField(createDto, "idempotencyKey", "idem-payment-rollback");
+
+        Long reservationId = reservationService.create(memberId, createDto).getId();
+
+        PaymentCreateDto payDto = new PaymentCreateDto();
+        ReflectionTestUtils.setField(payDto, "reservationId", reservationId);
+
+        assertThatThrownBy(() -> tx.executeWithoutResult(status -> {
+            paymentService.pay(memberId, payDto);
+            throw new RuntimeException("결제 트랜잭션 롤백 테스트");
+        })).isInstanceOf(RuntimeException.class);
+
+        Reservation reservation = reservationRepository.findById(reservationId).orElseThrow();
+        EventSeatStatus seatStatus = eventSeatRepository.findById(eventSeatId).orElseThrow().getStatus();
+        String holdOwner = redis.opsForValue().get(
+                "seat:hold:" + scheduleId + ":" + eventSeatId
+        );
+
+        assertThat(paymentRepository.existsByReservationId(reservationId)).isFalse();
+        assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.PENDING);
+        assertThat(seatStatus).isEqualTo(EventSeatStatus.AVAILABLE);
+        assertThat(holdOwner).isEqualTo(memberId.toString());
     }
 }
