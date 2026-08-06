@@ -102,10 +102,16 @@ public class QueueService {
 
             Long admittedCount = redisTemplate.execute(
                     queueAdmitScript,
-                    List.of(activeKey(scheduleId), waitKey(scheduleId)),
+                    List.of(
+                            activeKey(scheduleId),
+                            waitKey(scheduleId),
+                            seqKey(scheduleId),
+                            SCHEDULES_KEY
+                    ),
                     String.valueOf(now),
                     String.valueOf(expireAt),
-                    String.valueOf(CAPACITY)
+                    String.valueOf(CAPACITY),
+                    scheduleId.toString()
             );
 
             if (admittedCount != null && admittedCount > 0) {

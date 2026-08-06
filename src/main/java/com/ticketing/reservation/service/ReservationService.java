@@ -108,7 +108,7 @@ public class ReservationService {
             throw new BaseException(SEAT_NOT_AVAILABLE);
         }
 
-        registerSeatHoldRollbackCompensation(dto.getScheduleId(), seatIds, memberId);
+        registerTxCallbacks(dto.getScheduleId(), seatIds, memberId);
 
         int totalPrice = seats.stream().mapToInt(EventSeat::getPrice).sum();
 
@@ -173,8 +173,19 @@ public class ReservationService {
         log.info("예매 취소: reservationId={},memberId={},reason={}", reservationId, memberId, cancelReason);
     }
 
-    private void registerSeatHoldRollbackCompensation(Long scheduleId, List<Long> seatIds, Long memberId) {
+    private void registerTxCallbacks(Long scheduleId, List<Long> seatIds, Long memberId) {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    queueService.leave(scheduleId, memberId);
+                    log.info("예매 커밋 후 대기열 active 제거: scheduleId={}, memberId={}", scheduleId, memberId);
+                } catch (RuntimeException e) {
+                    log.error("예매 커밋 후 대기열 active 제거 실패: scheduleId={}, memberId={}",
+                            scheduleId, memberId, e);
+                }
+            }
+
             @Override
             public void afterCompletion(int status) {
                 if (status != TransactionSynchronization.STATUS_ROLLED_BACK) {
