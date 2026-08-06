@@ -129,6 +129,12 @@ class ReservationFlowTest {
 
         ReservationResponseDto created = reservationService.create(memberId, createDto);
         Long reservationId = created.getId();
+
+        Double activeScore = redis.opsForZSet()
+                .score("queue:active:" + scheduleId, memberId.toString());
+
+        assertThat(activeScore).isNull();
+
         System.out.printf("%n========== [예약·결제·취소 흐름] ==========%n" +
                         "  1) 예약생성 → 예약 %s (기대 PENDING) / 좌석 %d건 (기대 1)%n",
                 created.getStatus(), created.getSeats().size());

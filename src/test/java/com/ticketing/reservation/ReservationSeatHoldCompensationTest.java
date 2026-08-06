@@ -119,6 +119,11 @@ class ReservationSeatHoldCompensationTest {
         assertThatThrownBy(() -> reservationService.create(memberAId, request))
                 .isInstanceOf(DataIntegrityViolationException.class);
 
+        Double activeScore = redis.opsForZSet()
+                .score("queue:active:" + scheduleId, memberAId.toString());
+
+        assertThat(activeScore).isNotNull();
+
         // then: DB는 rollback되고 Redis 좌석 선점도 보상 해제돼야 한다.
         assertThat(reservationRepository.count()).isZero();
         assertThat(redis.hasKey("seat:hold:" + scheduleId + ":" + eventSeatId)).isFalse();
