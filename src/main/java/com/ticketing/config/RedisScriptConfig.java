@@ -48,4 +48,12 @@ public class RedisScriptConfig {
         script.setResultType(Long.class);
         return script;
     }
+
+    @Bean
+    public RedisScript<Long> couponRestoreScript() {
+        DefaultRedisScript<Long> script = new DefaultRedisScript<>();
+        script.setLocation(new ClassPathResource("scripts/coupon-restore.lua"));
+        script.setResultType(Long.class);
+        return script;
+    }
 }

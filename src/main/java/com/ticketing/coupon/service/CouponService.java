@@ -16,6 +16,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 
@@ -32,6 +34,7 @@ public class CouponService {
     private final CouponIssueRepository couponIssueRepository;
     private final MemberRepository memberRepository;
     private final RedisScript<Long> couponIssueScript;
+    private final RedisScript<Long> couponRestoreScript;
 
     @Transactional
     public Long createCoupon(CouponCreateDto dto) {
@@ -72,16 +75,12 @@ public class CouponService {
             throw new BaseException(COUPON_SOLD_OUT);
         }
 
-        try {
-            couponIssueRepository.save(CouponIssue.create(coupon, member));
-            log.info("쿠폰 발급 완료: couponId={}, memberId={}, 남은재고={}", couponId, memberId, result);
-        } catch (RuntimeException e) {
-            log.error("쿠폰 발급 DB 저장 실패 → Redis 재고·발급 롤백(보상): couponId={}, memberId={}", couponId, memberId, e);
-            redisTemplate.opsForValue().increment(stockKey);
-            redisTemplate.opsForSet().remove(issuedKey, me);
-            throw e;
-        }
+        registerRollbackCompensation(issuedKey, stockKey, me);
+
+        couponIssueRepository.save(CouponIssue.create(coupon, member));
+        log.info("쿠폰 발급 완료: couponId={}, memberId={}, 잔여재고={}", couponId, memberId, result);
     }
+
 
     public List<CouponResponseDto> findAll() {
         return couponRepository.findAll().stream()
@@ -93,6 +92,30 @@ public class CouponService {
         return couponIssueRepository.findByMemberId(memberId).stream()
                 .map(MyCouponResponseDto::from)
                 .toList();
+    }
+
+
+    private void registerRollbackCompensation(String issuedKey, String stockKey, String memberId) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(int status) {
+                if (status != TransactionSynchronization.STATUS_ROLLED_BACK) return;
+
+                try {
+                    Long restored = redisTemplate.execute(
+                            couponRestoreScript,
+                            List.of(issuedKey, stockKey),
+                            memberId
+                    );
+
+                    if (Long.valueOf(1L).equals(restored)) {
+                        log.warn("쿠폰 발급 롤백 보상 완료: issuedKey={}, memberId={}", issuedKey, memberId);
+                    }
+                } catch (RuntimeException e) {
+                    log.error("쿠폰 발급 롤백 보상 실패: issuedKey={}, memberId={}", issuedKey, memberId, e);
+                }
+            }
+        });
     }
 
 
