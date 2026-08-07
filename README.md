@@ -1,6 +1,49 @@
-# 🎫 Ticketon
+<h1 align="center">🎫 Ticketon</h1>
 
-> 티켓 오픈 순간의 트래픽 폭주를 견디는 콘서트 · 공연 예매 플랫폼
+<p align="center">
+  <img src="docs/ticketon-hero.png"
+       alt="TicketOn 대표 이미지"
+       width="100%" />
+</p>
+
+<p align="center">
+  <img src="docs/Ticketon erd.png"
+       alt="TicketOn 대표 이미지"
+       width="100%" />
+</p>
+
+
+# 🛠️ 기술 스택
+
+## Backend
+
+![Java](https://img.shields.io/badge/Java_21-007396?style=flat-square&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot_3.4-6DB33F?style=flat-square&logo=springboot&logoColor=white)
+![JPA · QueryDSL](https://img.shields.io/badge/JPA_·_QueryDSL-0769AD?style=flat-square&logo=hibernate&logoColor=white)
+![Spring Batch](https://img.shields.io/badge/Spring_Batch-6DB33F?style=flat-square&logo=spring&logoColor=white)
+
+## Frontend
+
+![Vue.js](https://img.shields.io/badge/Vue.js_3-4FC08D?style=flat-square&logo=vuedotjs&logoColor=white)
+![Bootstrap](https://img.shields.io/badge/Bootstrap_5.3-7952B3?style=flat-square&logo=bootstrap&logoColor=white)
+
+## Data
+
+![MySQL](https://img.shields.io/badge/MySQL_8-4479A1?style=flat-square&logo=mysql&logoColor=white)
+![Redis · Redisson](https://img.shields.io/badge/Redis_·_Redisson-DC382D?style=flat-square&logo=redis&logoColor=white)
+
+## Infrastructure
+
+![AWS](https://img.shields.io/badge/AWS_EC2_·_S3-FF9900?style=flat-square&logo=amazonwebservices&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker_Compose-2496ED?style=flat-square&logo=docker&logoColor=white)
+![Nginx](https://img.shields.io/badge/Nginx-009639?style=flat-square&logo=nginx&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white)
+
+## Monitoring & Load Test
+
+![Prometheus · Grafana](https://img.shields.io/badge/Prometheus_·_Grafana-F46800?style=flat-square&logo=grafana&logoColor=white)
+![k6](https://img.shields.io/badge/k6-7D64FF?style=flat-square&logo=k6&logoColor=white)
+
 
 ### 🔗 **[https://ticketon.kro.kr](https://ticketon.kro.kr)** — 배포 중 (AWS EC2)
 ### 📘 **[API 문서 (Swagger)](https://ticketon.kro.kr/swagger-ui)** — 로그인 후 우측 상단 `Authorize`에 accessToken을 넣으면 인증 API도 호출된다
