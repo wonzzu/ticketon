@@ -7,7 +7,13 @@
 </p>
 
 <p align="center">
-  <img src="docs/Ticketon erd.png"
+  <img src="docs/ticketon erd.png"
+       alt="TicketOn 대표 이미지"
+       width="100%" />
+</p
+
+  <p align="center">
+  <img src="docs/Ticketon 아키텍쳐.png"
        alt="TicketOn 대표 이미지"
        width="100%" />
 </p>
