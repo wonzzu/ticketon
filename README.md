@@ -1,3 +1,4 @@
+
 <h1 align="center">🎫 TicketOn</h1>
 
 <p align="center">
@@ -19,6 +20,7 @@
 </p>
 
 ---
+
 
 ## 📌 프로젝트 개요
 
