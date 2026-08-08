@@ -1,38 +1,133 @@
-# 🎫 Ticketon
+<h1 align="center">🎫 TicketOn</h1>
 
-> 티켓 오픈 순간의 트래픽 폭주를 견디는 콘서트 · 공연 예매 플랫폼
+<p align="center">
+  <img src="docs/ticketon-hero.png" alt="TicketOn 대표 이미지" width="100%" />
+</p>
 
-### 🔗 **[https://ticketon.kro.kr](https://ticketon.kro.kr)** — 배포 중 (AWS EC2)
-### 📘 **[API 문서 (Swagger)](https://ticketon.kro.kr/swagger-ui)** — 로그인 후 우측 상단 `Authorize`에 accessToken을 넣으면 인증 API도 호출된다
+<p align="center">
+  <b>티켓 오픈 순간의 트래픽 폭주를 제어하고 좌석 정합성을 보장하는 공연 예매 플랫폼</b>
+</p>
 
-**데모 계정** (비밀번호 공통 `test1234`)
-
-| 역할 | 계정 | 볼 수 있는 것 |
-|------|------|--------------|
-| 관리자 | `admin@test.com` | 공연 검수 · 회원 관리 · 매출 통계 · 정산 배치 실행 |
-| 판매자 | `seller1@test.com` | 공연 등록 · 정산 내역 (SILVER 8%) |
-| 판매자 | `seller2@test.com` | 정산 내역 (GOLD 5% — 등급별 수수료 차등 비교용) |
-| 일반 | `normal@test.com` | 예매 · 결제 · 후기 작성 |
-
-> 공연 제목과 카테고리는 [KOPIS 공연예술통합전산망](https://www.kopis.or.kr)에서 조회한 실제 공연 정보를 기반으로 구성했다 (비영리 학습 목적).
-> 회차 · 좌석 · 가격은 시드 생성값이다.
-
+<p align="center">
+  <a href="https://ticketon.kro.kr"><b>서비스 바로가기</b></a>
+  ·
+  <a href="https://ticketon.kro.kr/swagger-ui"><b>Swagger API</b></a>
+  ·
+  <a href="#-기능-시연"><b>기능 시연</b></a>
+  ·
+  <a href="#-시스템-아키텍처"><b>아키텍처</b></a>
+</p>
 
 ---
 
-## 🎯 이 프로젝트가 푸는 문제
+## 📌 프로젝트 개요
 
+TicketOn은 단순한 공연 CRUD보다 **대기열·좌석 선점·결제·배치에서 발생하는 동시성 및 정합성 문제를 직접 재현하고 해결하는 것**에 초점을 둔 프로젝트입니다.
 
-- **트래픽 폭주**: 티켓 오픈 순간 수많은 사용자가 동시 접속
-- **좌석 정합성**: 같은 좌석을 여러 명이 동시에 눌러도 단 한 명만 성공해야 함
-- **선착순 동시성**: 한정 수량 쿠폰을 초과 발급 없이 정확히 소진
-- **결제 안정성**: 중복 요청에도 결제는 한 번만 (멱등성)
+- 순간적으로 몰리는 사용자를 Redis 대기열로 순차 입장시킵니다.
+- 동일 좌석에 대한 동시 요청은 Redis 선점과 DB 낙관적 락으로 한 건만 성공시킵니다.
+- DB와 Redis가 함께 움직이지 못하는 구간은 트랜잭션 완료 콜백과 보상 처리로 정합성을 맞춥니다.
+- 다중 인스턴스의 배치 중복 실행은 Redisson 분산락으로 방지합니다.
+- 회원 30만 명, 예매·결제 각 300만 건 환경에서 k6와 Grafana로 병목을 측정했습니다.
+
+### 핵심 성과
+
+| 검증 대상 | 개선·검증 결과 |
+|---|---:|
+| 내 예매 목록 조회 | **62 queries → 5 queries** |
+| 공연 상세 조회 | **616 TPS → 1,660 TPS** |
+| 회원 검색 300 VU 실패율 | **71.2% → 0%** |
+| 회원 검색 `EXPLAIN ANALYZE` | **877ms → 33ms** |
+| 동일 좌석 동시 요청 | **100건 중 1건만 성공** |
+| 다중 인스턴스 배치 | **3회 실행 → 1회 실행** |
+
+---
+
+## 🛠️ 기술 스택
+
+### Backend
+
+![Java](https://img.shields.io/badge/Java_21-007396?style=flat-square&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot_3.4-6DB33F?style=flat-square&logo=springboot&logoColor=white)
+![Spring Security](https://img.shields.io/badge/Spring_Security-6DB33F?style=flat-square&logo=springsecurity&logoColor=white)
+![Spring Batch](https://img.shields.io/badge/Spring_Batch-6DB33F?style=flat-square&logo=spring&logoColor=white)
+
+### Frontend
+
+![Vue.js](https://img.shields.io/badge/Vue.js_3-4FC08D?style=flat-square&logo=vuedotjs&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)
+![Pinia](https://img.shields.io/badge/Pinia-FFD859?style=flat-square&logoColor=black)
+![Bootstrap](https://img.shields.io/badge/Bootstrap_5.3-7952B3?style=flat-square&logo=bootstrap&logoColor=white)
+![Axios](https://img.shields.io/badge/Axios-5A29E4?style=flat-square&logo=axios&logoColor=white)
+
+### Data & Persistence
+
+![MySQL](https://img.shields.io/badge/MySQL_8-4479A1?style=flat-square&logo=mysql&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis_7-DC382D?style=flat-square&logo=redis&logoColor=white)
+![Redisson](https://img.shields.io/badge/Redisson-DC382D?style=flat-square&logo=redis&logoColor=white)
+![JPA](https://img.shields.io/badge/Spring_Data_JPA-6DB33F?style=flat-square&logo=spring&logoColor=white)
+![QueryDSL](https://img.shields.io/badge/QueryDSL-0769AD?style=flat-square&logoColor=white)
+
+### Infrastructure & Observability
+
+![AWS](https://img.shields.io/badge/AWS_EC2_·_S3-FF9900?style=flat-square&logo=amazonwebservices&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker_Compose-2496ED?style=flat-square&logo=docker&logoColor=white)
+![Nginx](https://img.shields.io/badge/Nginx-009639?style=flat-square&logo=nginx&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white)
+![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=flat-square&logo=prometheus&logoColor=white)
+![Grafana](https://img.shields.io/badge/Grafana-F46800?style=flat-square&logo=grafana&logoColor=white)
+![k6](https://img.shields.io/badge/k6-7D64FF?style=flat-square&logo=k6&logoColor=white)
+
+---
+
+## 🏗️ 시스템 아키텍처
+
+<p align="center">
+  <img src="docs/Ticketon%20아키텍쳐.png" alt="TicketOn 시스템 아키텍처" width="90%" />
+</p>
+
+<details>
+<summary><b>ERD 보기</b></summary>
+
+<br>
+
+![TicketOn ERD](<docs/ticketon erd.png>)
+
+</details>
+
+---
+
+## 🔗 배포 및 데모 계정
+
+- **배포 주소**: [https://ticketon.kro.kr](https://ticketon.kro.kr)
+- **API 문서**: [https://ticketon.kro.kr/swagger-ui](https://ticketon.kro.kr/swagger-ui)
+- **공통 비밀번호**: `test1234`
+
+| 역할 | 계정 | 확인 가능한 기능 |
+|---|---|---|
+| 관리자 | `admin@test.com` | 공연 검수 · 회원 관리 · 매출 통계 · 정산 배치 |
+| 판매자 | `seller1@test.com` | 공연 등록 · 회차 관리 · 정산 내역 |
+| 판매자 | `seller2@test.com` | GOLD 등급 수수료 정산 비교 |
+| 일반 회원 | `normal@test.com` | 대기열 · 좌석 선택 · 예매 · 결제 · 리뷰 |
+
+> 공연 제목과 카테고리는 [KOPIS 공연예술통합전산망](https://www.kopis.or.kr)의 실제 공연 정보를 기반으로 구성했습니다. 회차·좌석·가격은 비영리 학습 목적의 시드 데이터입니다.
 
 ---
 
 ## 🚀 핵심 기술 도전
 
-> 각 항목은 **요약**만, 상세는 링크로. (백엔드 학습 목표: 대기열 · 선점 · 동시성 · 캐시 · 성능)
+| 문제 | 선택한 방법 | 검증 |
+|---|---|---|
+| 순간 트래픽 제어 | Redis ZSet 대기열 + Lua 원자화 | 중복 대기·정원 초과 동시성 테스트 |
+| 동일 좌석 경합 | Redis `SET NX` + DB 낙관적 락 | 100개 요청 중 1건 성공 |
+| 외부 저장소 정합성 | 트랜잭션 콜백 + 소유자 검증 보상 | 커밋·롤백 통합 테스트 |
+| 배치 중복 실행 | Redisson 분산락 | 앱 3대에서 3회 → 1회 |
+| Redis 장애 | Sentinel 3대 + Replica 2대 | 마스터 장애·복구 6회 실측 |
+
+<details>
+<summary><b>성능 개선·다중 인스턴스·Redis HA 상세 기록 펼치기</b></summary>
+
+<br>
 
 ### 🎟️ 대기열 (Queue)
 대량 동시 접속을 **Redis ZSet 기반 대기열**로 정원 제어 · 순번 관리
@@ -341,6 +436,8 @@ NPE를 400으로 바꾸면 서버 버그가 클라이언트 잘못으로 위장�
 - **`DataIntegrityViolationException`**을 409로 처리 — `existsBy` 사전 체크는 check-then-act라 동시 요청에서 뚫리므로, DB UNIQUE 제약이 최종 방어선
 - **업로드 한도**를 5MB로 맞춤 — Spring 기본 1MB라 서비스단 5MB 검증에 도달하지 못하던 문제
 
+</details>
+
 ### 🧭 검토했지만 적용하지 않은 개선
 
 **측정으로 병목이 재현되지 않으면 넣지 않는다**는 기준으로 판단했다.
@@ -373,17 +470,7 @@ NPE를 400으로 바꾸면 서버 버그가 클라이언트 잘못으로 위장�
 
 ---
 
-## 🛠️ 기술 스택
-
-- **Backend**: Spring Boot 3.4 · JPA · QueryDSL · **Spring Batch** · MySQL 8 · Redis 7 · JWT · Spring Security
-- **Frontend**: Vue 3 · Vite · Pinia · Vue Router · Axios · Bootstrap 5.3
-- **Infra**: AWS EC2 · Docker Compose · Nginx · S3 · Let's Encrypt
-- **CI/CD**: GitHub Actions · GHCR
-- **모니터링**: Spring Actuator · Prometheus · Grafana
-
----
-
-## 🏗️ 시스템 아키텍처
+## ⚙️ 인프라 구성 및 CI/CD
 
 ```
                      ┌──────────────────────────────────┐
@@ -440,6 +527,84 @@ feature 브랜치 ──PR──▶ dev ──PR──▶ main
 | 정산 | Spring Batch 건별 명세 → 집계 · 등급별 수수료 차등 · 취소 소급 재집계 |
 | 통계 | 일별 매출·주문 집계(배치) · 오늘분은 실시간 하이브리드 조회 |
 | 후기 | 예매 확정자만 작성 · 별점 · 실명 마스킹(서버 처리) |
+
+---
+
+## 🎬 기능 시연
+
+<details>
+<summary><b>일반 회원 — 공연 예매·결제·취소</b></summary>
+
+<br>
+
+<p align="center">
+  <img src="docs/시연영상.gif/홈화면%20예매.gif" alt="공연 예매" width="90%" />
+</p>
+
+<p align="center">
+  <img src="docs/시연영상.gif/마이페이지%20예매%20정보.gif" alt="예매 조회와 취소" width="90%" />
+</p>
+
+</details>
+
+<details>
+<summary><b>일반 회원 — 회원가입·로그인·리뷰</b></summary>
+
+<br>
+
+<p align="center">
+  <img src="docs/시연영상.gif/회원가입.gif" alt="회원가입" width="90%" />
+</p>
+
+<p align="center">
+  <img src="docs/시연영상.gif/로그인.gif" alt="로그인" width="90%" />
+</p>
+
+<p align="center">
+  <img src="docs/시연영상.gif/리뷰%20등록.gif" alt="리뷰 등록" width="90%" />
+</p>
+
+</details>
+
+<details>
+<summary><b>판매자 — 공연 회차 등록·정산 조회</b></summary>
+
+<br>
+
+<p align="center">
+  <img src="docs/시연영상.gif/판매자%20공연%20회차%20등록.gif" alt="공연 회차 등록" width="90%" />
+</p>
+
+<p align="center">
+  <img src="docs/시연영상.gif/판매자%20정산%20화면.gif" alt="판매자 정산 조회" width="90%" />
+</p>
+
+</details>
+
+<details>
+<summary><b>관리자 — 공연 검수·회원 관리·매출 통계</b></summary>
+
+<br>
+
+<p align="center">
+  <img src="docs/시연영상.gif/관리자%20공연%20승인.gif" alt="공연 승인" width="90%" />
+</p>
+
+<p align="center">
+  <img src="docs/시연영상.gif/관리자%20공연%20반려.gif" alt="공연 반려" width="90%" />
+</p>
+
+<p align="center">
+  <img src="docs/시연영상.gif/관리자%20회원%20관리.gif" alt="회원 관리" width="90%" />
+</p>
+
+<p align="center">
+  <img src="docs/시연영상.gif/관리자%20일별%20매출%20화면%20.gif" alt="일별 매출 통계" width="90%" />
+</p>
+
+</details>
+
+> 대기열 순차 입장과 두 사용자 간 좌석 선점 경합 시연은 추가할 예정입니다.
 
 ---
 
