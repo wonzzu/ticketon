@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { RouterLink, useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { CATEGORY, CATEGORY_LABEL, CATEGORY_ICON } from '@/utils/constants'
+import SupportChatWidget from '@/components/support/SupportChatWidget.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -129,6 +130,9 @@ async function onLogout() {
         <div class="small text-white-50 mt-2">© 2026 Ticketing. All rights reserved.</div>
       </div>
     </footer>
+
+    <!-- 일반 화면에서 유지되는 AI 고객지원. 로그인 화면(BlankLayout)에는 렌더링되지 않는다. -->
+    <SupportChatWidget />
   </div>
 </template>
 

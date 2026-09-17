@@ -19,6 +19,16 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    proxy: {
+      // AI Support는 별도 Spring Boot 서버(:8081)로 실행한다.
+      // Vue의 /ai/support/answers → AI 서버의 /api/support/answers
+      '/ai': {
+        target: 'http://localhost:8081',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/ai/, '/api'),
+      },
+    },
+    // TicketOn API는 현재 절대 URL(http://localhost:8080)을 사용하므로 아래 프록시는 비활성.
     // proxy: {
     //   '/api': {
     //     target: 'http://localhost:8080',
@@ -36,5 +46,8 @@ export default defineConfig({
         silenceDeprecations: ['import', 'color-functions', 'global-builtin'],
       },
     },
+  },
+  test: {
+    environment: 'jsdom',
   },
 })
