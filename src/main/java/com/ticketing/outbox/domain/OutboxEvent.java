@@ -17,6 +17,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.util.UUID;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -55,6 +56,11 @@ public class OutboxEvent extends BaseEntity {
     @Column(nullable = false, length = 20)
     private OutboxEventStatus status;
 
+    @Column(length = 100)
+    private String claimedBy;
+
+    private LocalDateTime claimedAt;
+
     public static OutboxEvent paymentCanceled(Long paymentId, String payload) {
         return OutboxEvent.builder()
                 .messageId(UUID.randomUUID().toString())
@@ -66,7 +72,4 @@ public class OutboxEvent extends BaseEntity {
                 .build();
     }
 
-    public void markPublished() {
-        this.status = OutboxEventStatus.PUBLISHED;
-    }
 }
