@@ -2,6 +2,7 @@ package com.ticketing.outbox.repository;
 
 import com.ticketing.outbox.domain.OutboxEvent;
 import com.ticketing.outbox.domain.OutboxEventStatus;
+import com.ticketing.outbox.domain.OutboxEventType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
@@ -20,6 +21,12 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
     long countByStatus(OutboxEventStatus status);
 
     List<OutboxEvent> findByStatusOrderByIdAsc(OutboxEventStatus status, Pageable pageable);
+
+    List<OutboxEvent> findByStatusAndEventTypeOrderByIdAsc(
+            OutboxEventStatus status,
+            OutboxEventType eventType,
+            Pageable pageable
+    );
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Transactional

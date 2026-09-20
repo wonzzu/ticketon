@@ -160,7 +160,7 @@ class PaymentCancellationOutboxTest {
 
         assertThatThrownBy(() -> reservationService.cancel(reservationId, memberId, CancelReason.CHANGE_OF_MIND, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage("결제 취소 Outbox payload 직렬화에 실패했습니다.");
+                .hasMessage("Payment Outbox payload 직렬화에 실패했습니다.");
 
         Payment payment = paymentRepository.findById(paymentId).orElseThrow();
         Reservation reservation = reservationRepository.findById(reservationId).orElseThrow();

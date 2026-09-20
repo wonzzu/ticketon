@@ -2,6 +2,7 @@ package com.ticketing.outbox.service;
 
 import com.ticketing.outbox.domain.OutboxEvent;
 import com.ticketing.outbox.domain.OutboxEventStatus;
+import com.ticketing.outbox.domain.OutboxEventType;
 import com.ticketing.outbox.messaging.OutboxMessagePublisher;
 import com.ticketing.outbox.repository.OutboxEventRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,7 +39,11 @@ public class OutboxRelayService {
         outboxEventRepository.releaseExpiredClaims(now.minus(leaseTimeout));
 
         List<OutboxEvent> pendingEvents = outboxEventRepository
-                .findByStatusOrderByIdAsc(OutboxEventStatus.PENDING, PageRequest.of(0, batchSize));
+                .findByStatusAndEventTypeOrderByIdAsc(
+                        OutboxEventStatus.PENDING,
+                        OutboxEventType.PAYMENT_CANCELED,
+                        PageRequest.of(0, batchSize)
+                );
 
         int publishedCount = 0;
         for (OutboxEvent pendingEvent : pendingEvents) {
