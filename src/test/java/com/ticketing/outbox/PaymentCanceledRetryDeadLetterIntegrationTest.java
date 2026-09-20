@@ -57,7 +57,7 @@ class PaymentCanceledRetryDeadLetterIntegrationTest {
         PaymentCanceledOutboxPayload payload = new PaymentCanceledOutboxPayload(
                 1L, 2L, LocalDate.of(2026, 8, 20), LocalDate.of(2026, 8, 19));
         OutboxEvent outboxEvent = OutboxEvent.paymentCanceled(
-                10L, objectMapper.writeValueAsString(payload));
+                10L, 1L, objectMapper.writeValueAsString(payload));
 
         messagePublisher.publish(outboxEvent);
 

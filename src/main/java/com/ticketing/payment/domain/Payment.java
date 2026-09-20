@@ -6,6 +6,7 @@ import com.ticketing.reservation.domain.Reservation;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -38,13 +39,23 @@ public class Payment extends BaseEntity {
     @Column(nullable = true, length = 30)
     private String method;
 
+    @Builder.Default
+    @Column(name = "event_sequence", nullable = false)
+    private Long eventSequence = 0L;
+
     public static Payment paid(Reservation reservation, int amount) {
         return Payment.builder()
                 .reservation(reservation)
                 .amount(amount)
                 .status(PaymentStatus.PAID)
                 .method("MOCK")
+                .eventSequence(0L)
                 .build();
+    }
+
+    public long nextEventSequence() {
+        this.eventSequence++;
+        return this.eventSequence;
     }
 
     public void cancel() {

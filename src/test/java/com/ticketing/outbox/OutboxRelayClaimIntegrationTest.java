@@ -33,7 +33,7 @@ class OutboxRelayClaimIntegrationTest {
     @DisplayName("세 Relay가 같은 PENDING 행을 선점해도 한 Relay만 성공한다")
     void onlyOneRelayClaimsPendingEvent() throws Exception {
         OutboxEvent event = outboxEventRepository.saveAndFlush(
-                OutboxEvent.paymentCanceled(1L, "{\"paymentId\":1}"));
+                OutboxEvent.paymentCanceled(1L, 1L, "{\"paymentId\":1}"));
         CountDownLatch ready = new CountDownLatch(3);
         CountDownLatch start = new CountDownLatch(1);
         ExecutorService executor = Executors.newFixedThreadPool(3);
@@ -70,7 +70,7 @@ class OutboxRelayClaimIntegrationTest {
     @DisplayName("Lease 시간이 지난 PROCESSING 행은 다시 PENDING으로 복구한다")
     void releaseExpiredClaim() {
         OutboxEvent event = outboxEventRepository.saveAndFlush(
-                OutboxEvent.paymentCanceled(2L, "{\"paymentId\":2}"));
+                OutboxEvent.paymentCanceled(2L, 1L, "{\"paymentId\":2}"));
         LocalDateTime claimedAt = LocalDateTime.now().minusMinutes(1);
         assertThat(outboxEventRepository.tryClaim(event.getId(), "stopped-spring", claimedAt))
                 .isEqualTo(1);

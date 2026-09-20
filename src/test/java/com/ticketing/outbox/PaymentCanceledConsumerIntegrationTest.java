@@ -66,7 +66,7 @@ class PaymentCanceledConsumerIntegrationTest {
 
         PaymentCanceledOutboxPayload payload = new PaymentCanceledOutboxPayload(
                 sellerId, performanceEventId, settlementDate, paidDate);
-        OutboxEvent outboxEvent = OutboxEvent.paymentCanceled(10L, objectMapper.writeValueAsString(payload));
+        OutboxEvent outboxEvent = OutboxEvent.paymentCanceled(10L, 1L, objectMapper.writeValueAsString(payload));
         messagePublisher.publish(outboxEvent);
 
         waitUntilDirtyCreated(sellerId, performanceEventId, settlementDate, paidDate);

@@ -66,7 +66,7 @@ class RabbitOutboxMessagePublisherIntegrationTest {
     @Test
     @DisplayName("발행한 결제 취소 메시지가 Queue에 보존된다")
     void publishToRealQueue() {
-        OutboxEvent outboxEvent = OutboxEvent.paymentCanceled(1L, "{\"paymentId\":1}");
+        OutboxEvent outboxEvent = OutboxEvent.paymentCanceled(1L, 1L, "{\"paymentId\":1}");
 
         messagePublisher.publish(outboxEvent);
 

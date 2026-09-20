@@ -86,7 +86,10 @@ public class PaymentService {
             var payload = new PaymentCanceledOutboxPayload(event.getSeller().getId(), event.getId(),
                     event.getEndDate(), payment.getCreatedAt().toLocalDate());
 
-            outboxEventRepository.save(OutboxEvent.paymentCanceled(payment.getId(), serialize(payload)));
+            long eventSequence = payment.nextEventSequence();
+
+            outboxEventRepository.save(OutboxEvent.paymentCanceled(
+                    payment.getId(), eventSequence, serialize(payload)));
         });
     }
 

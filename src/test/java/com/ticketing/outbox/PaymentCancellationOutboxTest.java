@@ -141,8 +141,10 @@ class PaymentCancellationOutboxTest {
         assertThat(outboxEventRepository.count()).isEqualTo(1);
         assertThat(outbox.getMessageId()).isNotBlank();
         assertThat(outbox.getEventType()).isEqualTo(OutboxEventType.PAYMENT_CANCELED);
+        assertThat(outbox.getEventVersion()).isEqualTo(1);
         assertThat(outbox.getAggregateType()).isEqualTo("PAYMENT");
         assertThat(outbox.getAggregateId()).isEqualTo(paymentId);
+        assertThat(outbox.getEventSequence()).isEqualTo(1L);
         assertThat(outbox.getStatus()).isEqualTo(OutboxEventStatus.PENDING);
         assertThat(payload.sellerId()).isEqualTo(sellerId);
         assertThat(payload.performanceEventId()).isEqualTo(performanceEventId);
@@ -164,6 +166,7 @@ class PaymentCancellationOutboxTest {
         Reservation reservation = reservationRepository.findById(reservationId).orElseThrow();
 
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PAID);
+        assertThat(payment.getEventSequence()).isZero();
         assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
         assertThat(outboxEventRepository.count()).isZero();
     }

@@ -27,7 +27,7 @@ class RabbitOutboxMessagePublisherTest {
     @Test
     @DisplayName("Payload와 메시지 식별자를 발행하고 브로커 ACK를 확인한다")
     void publishAfterBrokerAck() {
-        OutboxEvent outboxEvent = OutboxEvent.paymentCanceled(1L, "{\"paymentId\":1}");
+        OutboxEvent outboxEvent = OutboxEvent.paymentCanceled(1L, 1L, "{\"paymentId\":1}");
         doAnswer(invocation -> {
             Message message = invocation.getArgument(2);
             CorrelationData correlationData = invocation.getArgument(3);
@@ -50,7 +50,7 @@ class RabbitOutboxMessagePublisherTest {
     @Test
     @DisplayName("브로커가 NACK을 반환하면 발행 실패로 처리한다")
     void failWhenBrokerNack() {
-        OutboxEvent outboxEvent = OutboxEvent.paymentCanceled(1L, "{\"paymentId\":1}");
+        OutboxEvent outboxEvent = OutboxEvent.paymentCanceled(1L, 1L, "{\"paymentId\":1}");
         doAnswer(invocation -> {
             CorrelationData correlationData = invocation.getArgument(3);
             correlationData.getFuture().complete(new CorrelationData.Confirm(false, "exchange unavailable"));

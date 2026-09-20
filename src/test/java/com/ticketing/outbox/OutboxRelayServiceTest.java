@@ -35,7 +35,7 @@ class OutboxRelayServiceTest {
     @Test
     @DisplayName("RabbitMQ 발행에 성공한 메시지만 PUBLISHED로 변경한다")
     void markPublishedOnlyAfterPublishSuccess() {
-        OutboxEvent outboxEvent = OutboxEvent.paymentCanceled(1L, "{\"paymentId\":1}");
+        OutboxEvent outboxEvent = OutboxEvent.paymentCanceled(1L, 1L, "{\"paymentId\":1}");
         when(outboxEventRepository.findByStatusOrderByIdAsc(
                 OutboxEventStatus.PENDING, PageRequest.of(0, 20)))
                 .thenReturn(List.of(outboxEvent));
@@ -52,7 +52,7 @@ class OutboxRelayServiceTest {
     @Test
     @DisplayName("RabbitMQ 발행에 실패한 메시지는 PENDING으로 유지한다")
     void keepPendingWhenPublishFails() {
-        OutboxEvent outboxEvent = OutboxEvent.paymentCanceled(1L, "{\"paymentId\":1}");
+        OutboxEvent outboxEvent = OutboxEvent.paymentCanceled(1L, 1L, "{\"paymentId\":1}");
         when(outboxEventRepository.findByStatusOrderByIdAsc(
                 OutboxEventStatus.PENDING, PageRequest.of(0, 20)))
                 .thenReturn(List.of(outboxEvent));
@@ -68,7 +68,7 @@ class OutboxRelayServiceTest {
     @Test
     @DisplayName("다른 Relay가 먼저 선점한 메시지는 발행하지 않는다")
     void skipEventClaimedByAnotherRelay() {
-        OutboxEvent outboxEvent = OutboxEvent.paymentCanceled(1L, "{\"paymentId\":1}");
+        OutboxEvent outboxEvent = OutboxEvent.paymentCanceled(1L, 1L, "{\"paymentId\":1}");
         when(outboxEventRepository.findByStatusOrderByIdAsc(
                 OutboxEventStatus.PENDING, PageRequest.of(0, 20)))
                 .thenReturn(List.of(outboxEvent));
