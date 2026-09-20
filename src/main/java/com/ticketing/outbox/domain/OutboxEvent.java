@@ -25,12 +25,20 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_outbox_message_id",
-                columnNames = "message_id"
-        )
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_outbox_message_id",
+                        columnNames = "message_id"
+                ),
+                @UniqueConstraint(
+                        name = "uk_outbox_aggregate_sequence",
+                        columnNames = {"aggregate_type", "aggregate_id", "event_sequence"}
+                )
+        }
 )
 public class OutboxEvent extends BaseEntity {
+
+    private static final int INITIAL_EVENT_VERSION = 1;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,11 +51,17 @@ public class OutboxEvent extends BaseEntity {
     @Column(nullable = false, length = 50)
     private OutboxEventType eventType;
 
+    @Column(name = "event_version", nullable = false)
+    private Integer eventVersion;
+
     @Column(nullable = false, length = 50)
     private String aggregateType;
 
     @Column(nullable = false)
     private Long aggregateId;
+
+    @Column(name = "event_sequence", nullable = false)
+    private Long eventSequence;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String payload;
@@ -61,12 +75,14 @@ public class OutboxEvent extends BaseEntity {
 
     private LocalDateTime claimedAt;
 
-    public static OutboxEvent paymentCanceled(Long paymentId, String payload) {
+    public static OutboxEvent paymentCanceled(Long paymentId, long eventSequence, String payload) {
         return OutboxEvent.builder()
                 .messageId(UUID.randomUUID().toString())
                 .eventType(OutboxEventType.PAYMENT_CANCELED)
+                .eventVersion(INITIAL_EVENT_VERSION)
                 .aggregateType("PAYMENT")
                 .aggregateId(paymentId)
+                .eventSequence(eventSequence)
                 .payload(payload)
                 .status(OutboxEventStatus.PENDING)
                 .build();
