@@ -2,7 +2,6 @@ package com.ticketing.outbox;
 
 import com.ticketing.outbox.domain.OutboxEvent;
 import com.ticketing.outbox.domain.OutboxEventStatus;
-import com.ticketing.outbox.domain.OutboxEventType;
 import com.ticketing.outbox.messaging.OutboxMessagePublisher;
 import com.ticketing.outbox.repository.OutboxEventRepository;
 import com.ticketing.outbox.service.OutboxRelayService;
@@ -37,8 +36,8 @@ class OutboxRelayServiceTest {
     @DisplayName("RabbitMQ 발행에 성공한 메시지만 PUBLISHED로 변경한다")
     void markPublishedOnlyAfterPublishSuccess() {
         OutboxEvent outboxEvent = OutboxEvent.paymentCanceled(1L, 1L, "{\"paymentId\":1}");
-        when(outboxEventRepository.findByStatusAndEventTypeOrderByIdAsc(
-                OutboxEventStatus.PENDING, OutboxEventType.PAYMENT_CANCELED, PageRequest.of(0, 20)))
+        when(outboxEventRepository.findByStatusOrderByIdAsc(
+                OutboxEventStatus.PENDING, PageRequest.of(0, 20)))
                 .thenReturn(List.of(outboxEvent));
         when(outboxEventRepository.tryClaim(any(), anyString(), any())).thenReturn(1);
         when(outboxEventRepository.markPublished(any(), anyString())).thenReturn(1);
@@ -54,8 +53,8 @@ class OutboxRelayServiceTest {
     @DisplayName("RabbitMQ 발행에 실패한 메시지는 PENDING으로 유지한다")
     void keepPendingWhenPublishFails() {
         OutboxEvent outboxEvent = OutboxEvent.paymentCanceled(1L, 1L, "{\"paymentId\":1}");
-        when(outboxEventRepository.findByStatusAndEventTypeOrderByIdAsc(
-                OutboxEventStatus.PENDING, OutboxEventType.PAYMENT_CANCELED, PageRequest.of(0, 20)))
+        when(outboxEventRepository.findByStatusOrderByIdAsc(
+                OutboxEventStatus.PENDING, PageRequest.of(0, 20)))
                 .thenReturn(List.of(outboxEvent));
         when(outboxEventRepository.tryClaim(any(), anyString(), any())).thenReturn(1);
         doThrow(new IllegalStateException("RabbitMQ 연결 실패")).when(messagePublisher).publish(outboxEvent);
@@ -70,8 +69,8 @@ class OutboxRelayServiceTest {
     @DisplayName("다른 Relay가 먼저 선점한 메시지는 발행하지 않는다")
     void skipEventClaimedByAnotherRelay() {
         OutboxEvent outboxEvent = OutboxEvent.paymentCanceled(1L, 1L, "{\"paymentId\":1}");
-        when(outboxEventRepository.findByStatusAndEventTypeOrderByIdAsc(
-                OutboxEventStatus.PENDING, OutboxEventType.PAYMENT_CANCELED, PageRequest.of(0, 20)))
+        when(outboxEventRepository.findByStatusOrderByIdAsc(
+                OutboxEventStatus.PENDING, PageRequest.of(0, 20)))
                 .thenReturn(List.of(outboxEvent));
         when(outboxEventRepository.tryClaim(any(), anyString(), any())).thenReturn(0);
 
