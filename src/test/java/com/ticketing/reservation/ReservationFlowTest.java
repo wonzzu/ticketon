@@ -11,6 +11,8 @@ import com.ticketing.global.entity.Address;
 import com.ticketing.member.domain.Gender;
 import com.ticketing.member.domain.NormalMember;
 import com.ticketing.member.domain.Seller;
+import com.ticketing.outbox.domain.OutboxEventType;
+import com.ticketing.outbox.repository.OutboxEventRepository;
 import com.ticketing.payment.domain.PaymentStatus;
 import com.ticketing.payment.dto.request.PaymentCreateDto;
 import com.ticketing.payment.repository.PaymentRepository;
@@ -62,6 +64,7 @@ class ReservationFlowTest {
     @Autowired PaymentService paymentService;
     @Autowired ReservationRepository reservationRepository;
     @Autowired PaymentRepository paymentRepository;
+    @Autowired OutboxEventRepository outboxEventRepository;
     @Autowired EventSeatRepository eventSeatRepository;
     @Autowired StringRedisTemplate redis;
     @Autowired TransactionTemplate tx;
@@ -160,6 +163,9 @@ class ReservationFlowTest {
         assertThat(seatAfterPay).isEqualTo(EventSeatStatus.RESERVED);
         assertThat(holdReleased).isTrue();
         assertThat(paidAmount).isEqualTo(10000);
+        var completedEvent = outboxEventRepository.findAll().getFirst();
+        assertThat(completedEvent.getEventType()).isEqualTo(OutboxEventType.PAYMENT_COMPLETED);
+        assertThat(completedEvent.getEventSequence()).isEqualTo(1L);
 
 
         reservationService.cancel(reservationId, memberId, CancelReason.CHANGE_OF_MIND, null);
@@ -173,6 +179,13 @@ class ReservationFlowTest {
         assertThat(afterCancel.getStatus()).isEqualTo(ReservationStatus.CANCEL);
         assertThat(payStatusAfterCancel).isEqualTo(PaymentStatus.CANCELED);
         assertThat(seatAfterCancel).isEqualTo(EventSeatStatus.AVAILABLE);
+        var paymentEvents = outboxEventRepository.findAll().stream()
+                .sorted(java.util.Comparator.comparingLong(event -> event.getEventSequence()))
+                .toList();
+        assertThat(paymentEvents).extracting("eventType")
+                .containsExactly(OutboxEventType.PAYMENT_COMPLETED, OutboxEventType.PAYMENT_CANCELED);
+        assertThat(paymentEvents).extracting("eventSequence")
+                .containsExactly(1L, 2L);
     }
 
     @Test
@@ -227,6 +240,7 @@ class ReservationFlowTest {
                 paymentExists, reservation.getStatus(), seatStatus, holdMaintained);
 
         assertThat(paymentExists).isFalse();
+        assertThat(outboxEventRepository.count()).isZero();
         assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.PENDING);
         assertThat(seatStatus).isEqualTo(EventSeatStatus.AVAILABLE);
         assertThat(holdMaintained).isTrue();

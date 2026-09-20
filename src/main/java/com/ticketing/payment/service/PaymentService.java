@@ -6,6 +6,7 @@ import com.ticketing.event.service.SeatHoldService;
 import com.ticketing.global.exception.BaseException;
 import com.ticketing.outbox.domain.OutboxEvent;
 import com.ticketing.outbox.dto.PaymentCanceledOutboxPayload;
+import com.ticketing.outbox.dto.PaymentCompletedOutboxPayload;
 import com.ticketing.outbox.repository.OutboxEventRepository;
 import com.ticketing.payment.domain.Payment;
 import com.ticketing.payment.domain.PaymentHistory;
@@ -71,6 +72,24 @@ public class PaymentService {
 
         reservationConfirmService.confirm(reservation.getId());
 
+        var schedule = reservation.getEventSchedule();
+        var event = schedule.getEvent();
+        long eventSequence = payment.nextEventSequence();
+
+        var payload = new PaymentCompletedOutboxPayload(
+                payment.getId(),
+                reservation.getId(),
+                memberId,
+                event.getSeller().getId(),
+                event.getId(),
+                schedule.getId(),
+                payment.getAmount(),
+                payment.getCreatedAt()
+        );
+
+        outboxEventRepository.save(OutboxEvent.paymentCompleted(
+                payment.getId(), eventSequence, serialize(payload)));
+
         registerSeatHoldRelease(scheduleId, seatIds, memberId);
 
         return PaymentResponseDto.from(payment);
@@ -78,7 +97,7 @@ public class PaymentService {
 
     @Transactional
     public void cancelByReservation(Long reservationId, String reason) {
-        paymentRepository.findByReservationId(reservationId).ifPresent(payment -> {
+        paymentRepository.findByReservationIdForUpdate(reservationId).ifPresent(payment -> {
             payment.cancel();
             paymentHistoryRepository.save(PaymentHistory.of(payment, reason));
 
@@ -93,11 +112,11 @@ public class PaymentService {
         });
     }
 
-    private String serialize(PaymentCanceledOutboxPayload payload) {
+    private String serialize(Object payload) {
         try {
             return objectMapper.writeValueAsString(payload);
         } catch (JsonProcessingException e) {
-            throw new IllegalStateException("결제 취소 Outbox payload 직렬화에 실패했습니다.", e);
+            throw new IllegalStateException("Payment Outbox payload 직렬화에 실패했습니다.", e);
         }
     }
 
