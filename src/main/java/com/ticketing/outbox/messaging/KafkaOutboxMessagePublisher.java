@@ -1,5 +1,9 @@
 package com.ticketing.outbox.messaging;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ticketing.outbox.dto.EventEnvelope;
 import com.ticketing.outbox.domain.OutboxEvent;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,25 +23,30 @@ import java.util.concurrent.TimeoutException;
 public class KafkaOutboxMessagePublisher implements OutboxMessagePublisher {
 
     private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper objectMapper;
     private final String topic;
     private final long confirmTimeoutMs;
 
     public KafkaOutboxMessagePublisher(
             KafkaTemplate<String, String> kafkaTemplate,
+            ObjectMapper objectMapper,
             @Value("${app.kafka.topic.payment-events}") String topic,
             @Value("${outbox.relay.confirm-timeout-ms:5000}") long confirmTimeoutMs
     ) {
         this.kafkaTemplate = kafkaTemplate;
+        this.objectMapper = objectMapper;
         this.topic = topic;
         this.confirmTimeoutMs = confirmTimeoutMs;
     }
 
     @Override
     public void publish(OutboxEvent event) {
+        String partitionKey = event.getAggregateType() + ":" + event.getAggregateId();
+
         ProducerRecord<String, String> record = new ProducerRecord<>(
                 topic,
-                event.getMessageId(),
-                event.getPayload()
+                partitionKey,
+                serializeEnvelope(event)
         );
 
         addHeader(record, "messageId", event.getMessageId());
@@ -54,6 +63,15 @@ public class KafkaOutboxMessagePublisher implements OutboxMessagePublisher {
             throw new IllegalStateException("Kafka 발행 확인 대기 중 스레드가 중단됐습니다.", e);
         } catch (ExecutionException | TimeoutException e) {
             throw new IllegalStateException("Kafka 이벤트 발행에 실패했습니다.", e);
+        }
+    }
+
+    private String serializeEnvelope(OutboxEvent event) {
+        try {
+            JsonNode payload = objectMapper.readTree(event.getPayload());
+            return objectMapper.writeValueAsString(EventEnvelope.from(event, payload));
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Kafka 이벤트 Envelope 직렬화에 실패했습니다.", e);
         }
     }
 
