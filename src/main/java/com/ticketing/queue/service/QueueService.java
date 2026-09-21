@@ -1,6 +1,7 @@
 package com.ticketing.queue.service;
 
 import com.ticketing.queue.dto.response.QueueStatusResponse;
+import com.ticketing.queue.messaging.QueueEventPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
@@ -27,6 +28,12 @@ public class QueueService {
     private final RedissonClient redissonClient;
     private final RedisScript<Long> queueEnterScript;
     private final RedisScript<Long> queueAdmitScript;
+    private QueueEventPublisher queueEventPublisher;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setQueueEventPublisher(QueueEventPublisher queueEventPublisher) {
+        this.queueEventPublisher = queueEventPublisher;
+    }
 
 
     public QueueStatusResponse enter(Long scheduleId, Long memberId) {
@@ -39,7 +46,8 @@ public class QueueService {
                         activeKey(scheduleId),
                         waitKey(scheduleId),
                         seqKey(scheduleId),
-                        SCHEDULES_KEY
+                        SCHEDULES_KEY,
+                        enteredAtKey(scheduleId)
                 ),
                 member,
                 String.valueOf(now + ACTIVE_TTL_MS),
@@ -48,8 +56,12 @@ public class QueueService {
                 scheduleId.toString()
         );
 
-        if (Long.valueOf(1L).equals(result)) {
+        if (Long.valueOf(1L).equals(result) || Long.valueOf(3L).equals(result)) {
             return QueueStatusResponse.admitted();
+        }
+
+        if (Long.valueOf(4L).equals(result) && queueEventPublisher != null) {
+            queueEventPublisher.publishEntered(scheduleId, memberId, now);
         }
 
         return status(scheduleId, memberId);
@@ -144,6 +156,10 @@ public class QueueService {
 
     private String seqKey(Long s) {
         return "queue:seq:" + s;
+    }
+
+    private String enteredAtKey(Long s) {
+        return "queue:entered:" + s;
     }
 
 

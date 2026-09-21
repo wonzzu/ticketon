@@ -20,4 +20,16 @@ public class KafkaTopicConfig {
                 .replicas(replicationFactor)
                 .build();
     }
+
+    @Bean
+    public NewTopic queueEventsTopic(
+            @Value("${app.kafka.topic.queue-events}") String topicName,
+            @Value("${app.kafka.topic.payment-events-partitions}") int partitions,
+            @Value("${app.kafka.topic.replication-factor}") int replicationFactor
+    ) {
+        return TopicBuilder.name(topicName)
+                .partitions(partitions)
+                .replicas(replicationFactor)
+                .build();
+    }
 }

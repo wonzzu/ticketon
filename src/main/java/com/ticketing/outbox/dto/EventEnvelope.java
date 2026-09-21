@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.ticketing.outbox.domain.OutboxEvent;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record EventEnvelope(
         String eventId,
@@ -25,6 +26,23 @@ public record EventEnvelope(
                 outboxEvent.getAggregateId(),
                 outboxEvent.getEventSequence(),
                 outboxEvent.getCreatedAt(),
+                payload
+        );
+    }
+
+    public static EventEnvelope queueEntered(
+            Long scheduleId,
+            LocalDateTime occurredAt,
+            JsonNode payload
+    ) {
+        return new EventEnvelope(
+                UUID.randomUUID().toString(),
+                "QUEUE_ENTERED",
+                1,
+                "QUEUE",
+                scheduleId,
+                0,
+                occurredAt,
                 payload
         );
     }
