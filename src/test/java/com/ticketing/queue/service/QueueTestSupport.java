@@ -27,6 +27,7 @@ abstract class QueueTestSupport {
         redis.delete("queue:wait:" + scheduleId);
         redis.delete("queue:active:" + scheduleId);
         redis.delete("queue:seq:" + scheduleId);
+        redis.delete("queue:entered:" + scheduleId);
         redis.opsForSet().remove("queue:schedules", scheduleId.toString());
     }
 
