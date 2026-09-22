@@ -8,13 +8,13 @@
 -- ARGV[3] = capacity
 -- ARGV[4] = scheduleId
 --
--- return = 승급된 회원 수
+-- return = 승급된 회원 ID 목록(쉼표 구분)
 
 redis.call('ZREMRANGEBYSCORE', KEYS[1], 0, ARGV[1])
 
 local activeCount = redis.call('ZCARD', KEYS[1])
 local slots = tonumber(ARGV[3]) - activeCount
-local admittedCount = 0
+local admittedMembers = {}
 
 if slots > 0 then
     local members = redis.call('ZRANGE', KEYS[2], 0, slots - 1)
@@ -22,7 +22,7 @@ if slots > 0 then
     for _, member in ipairs(members) do
         redis.call('ZREM', KEYS[2], member)
         redis.call('ZADD', KEYS[1], ARGV[2], member)
-        admittedCount = admittedCount + 1
+        table.insert(admittedMembers, member)
     end
 end
 
@@ -34,4 +34,4 @@ if remainingActive == 0 and remainingWaiting == 0 then
     redis.call('SREM', KEYS[4], ARGV[4])
 end
 
-return admittedCount
+return table.concat(admittedMembers, ',')

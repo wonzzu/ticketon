@@ -5,6 +5,7 @@ import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
 
@@ -20,7 +21,13 @@ abstract class QueueTestSupport {
     protected RedisScript<Long> queueEnterScript;
 
     @Autowired
-    protected RedisScript<Long> queueAdmitScript;
+    protected RedisScript<String> queueAdmitScript;
+
+    @Value("${spring.data.redis.host}")
+    private String redisHost;
+
+    @Value("${spring.data.redis.port}")
+    private int redisPort;
 
     @AfterEach
     void cleanUp() {
@@ -33,7 +40,7 @@ abstract class QueueTestSupport {
 
     protected RedissonClient newClient() {
         Config config = new Config();
-        config.useSingleServer().setAddress("redis://localhost:6379");
+        config.useSingleServer().setAddress("redis://" + redisHost + ":" + redisPort);
         return Redisson.create(config);
     }
 }

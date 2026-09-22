@@ -42,10 +42,10 @@ public class RedisScriptConfig {
     }
 
     @Bean
-    public RedisScript<Long> queueAdmitScript() {
-        DefaultRedisScript<Long> script = new DefaultRedisScript<>();
+    public RedisScript<String> queueAdmitScript() {
+        DefaultRedisScript<String> script = new DefaultRedisScript<>();
         script.setLocation(new ClassPathResource("scripts/queue-admit.lua"));
-        script.setResultType(Long.class);
+        script.setResultType(String.class);
         return script;
     }
 
