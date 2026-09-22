@@ -46,4 +46,8 @@ public record EventEnvelope(
                 payload
         );
     }
+
+    public static EventEnvelope queueAdmitted(Long scheduleId, LocalDateTime occurredAt, JsonNode payload) {
+        return new EventEnvelope(UUID.randomUUID().toString(), "QUEUE_ADMITTED", 1, "QUEUE", scheduleId, 0, occurredAt, payload);
+    }
 }

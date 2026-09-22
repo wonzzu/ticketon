@@ -34,7 +34,7 @@ public class QueueEventPublisher {
         );
 
         ObjectNode payload = objectMapper.createObjectNode()
-                .put("queueToken", memberId.toString())
+                .put("memberId", memberId)
                 .put("scheduleId", scheduleId)
                 .put("enteredAt", enteredAt.toString());
 
@@ -60,5 +60,30 @@ public class QueueEventPublisher {
             log.warn("queue.entered 직렬화 실패: scheduleId={}, memberId={}",
                     scheduleId, memberId, e);
         }
+    }
+
+    public void publishAdmitted(Long scheduleId, Long memberId, Long enteredAtMillis, long admittedAtMillis) {
+        LocalDateTime enteredAt = toLocalDateTime(enteredAtMillis == null ? admittedAtMillis : enteredAtMillis);
+        LocalDateTime admittedAt = toLocalDateTime(admittedAtMillis);
+        ObjectNode payload = objectMapper.createObjectNode()
+                .put("memberId", memberId)
+                .put("scheduleId", scheduleId)
+                .put("enteredAt", enteredAt.toString())
+                .put("admittedAt", admittedAt.toString());
+        EventEnvelope envelope = EventEnvelope.queueAdmitted(scheduleId, admittedAt, payload);
+        try {
+            ProducerRecord<String, String> record = new ProducerRecord<>(topic, memberId.toString(), objectMapper.writeValueAsString(envelope));
+            record.headers().add("eventId", envelope.eventId().getBytes(StandardCharsets.UTF_8));
+            record.headers().add("eventType", envelope.eventType().getBytes(StandardCharsets.UTF_8));
+            kafkaTemplate.send(record).whenComplete((result, error) -> {
+                if (error != null) log.warn("queue.admitted 발행 실패: scheduleId={}, memberId={}", scheduleId, memberId, error);
+            });
+        } catch (JsonProcessingException e) {
+            log.warn("queue.admitted 직렬화 실패: scheduleId={}, memberId={}", scheduleId, memberId, e);
+        }
+    }
+
+    private LocalDateTime toLocalDateTime(Long epochMillis) {
+        return LocalDateTime.ofInstant(Instant.ofEpochMilli(epochMillis), ZoneId.of("Asia/Seoul"));
     }
 }

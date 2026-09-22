@@ -27,7 +27,7 @@ public class QueueService {
     private static final String ADMIT_LOCK = "queue:admit:lock";
     private final RedissonClient redissonClient;
     private final RedisScript<Long> queueEnterScript;
-    private final RedisScript<Long> queueAdmitScript;
+    private final RedisScript<String> queueAdmitScript;
     private QueueEventPublisher queueEventPublisher;
 
     @org.springframework.beans.factory.annotation.Autowired
@@ -112,7 +112,7 @@ public class QueueService {
         for (String sid : scheduleIds) {
             Long scheduleId = Long.valueOf(sid);
 
-            Long admittedCount = redisTemplate.execute(
+            String admittedMembers = redisTemplate.execute(
                     queueAdmitScript,
                     List.of(
                             activeKey(scheduleId),
@@ -126,8 +126,16 @@ public class QueueService {
                     scheduleId.toString()
             );
 
-            if (admittedCount != null && admittedCount > 0) {
-                log.info("대기열 승급: scheduleId={}, {}명 입장", scheduleId, admittedCount);
+            if (admittedMembers != null && !admittedMembers.isBlank()) {
+                String[] members = admittedMembers.split(",");
+                for (String member : members) {
+                    Long memberId = Long.valueOf(member);
+                    Object enteredAtValue = redisTemplate.opsForHash().get(enteredAtKey(scheduleId), member);
+                    Long enteredAt = enteredAtValue == null ? now : Long.valueOf(enteredAtValue.toString());
+                    if (queueEventPublisher != null) queueEventPublisher.publishAdmitted(scheduleId, memberId, enteredAt, now);
+                    redisTemplate.opsForHash().delete(enteredAtKey(scheduleId), member);
+                }
+                log.info("대기열 승급: scheduleId={}, {}명 입장", scheduleId, members.length);
             }
         }
     }
