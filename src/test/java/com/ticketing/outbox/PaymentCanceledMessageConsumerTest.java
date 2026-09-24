@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.doNothing;
@@ -25,6 +26,7 @@ class PaymentCanceledMessageConsumerTest {
     @DisplayName("자동 변환된 결제 취소 Payload를 Handler에 전달한다")
     void delegatePayloadToHandler() {
         PaymentCanceledOutboxPayload payload = new PaymentCanceledOutboxPayload(
+                10L, 20L, 30L, 100_000, LocalDateTime.of(2026, 8, 19, 12, 0),
                 1L, 2L, LocalDate.of(2026, 8, 20), LocalDate.of(2026, 8, 19));
 
         consumer.consume(payload, "message-1");
@@ -36,6 +38,7 @@ class PaymentCanceledMessageConsumerTest {
     @DisplayName("이미 처리한 메시지는 오류 없이 무시한다")
     void ignoreDuplicatedMessage() {
         PaymentCanceledOutboxPayload payload = new PaymentCanceledOutboxPayload(
+                10L, 20L, 30L, 100_000, LocalDateTime.of(2026, 8, 19, 12, 0),
                 1L, 2L, LocalDate.of(2026, 8, 20), LocalDate.of(2026, 8, 19));
         doNothing()
                 .doThrow(new DuplicateMessageException("REAGGREGATION", "message-1", null))

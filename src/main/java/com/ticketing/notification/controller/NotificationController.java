@@ -6,9 +6,11 @@ import com.ticketing.notification.dto.response.NotificationSliceResponseDto;
 import com.ticketing.notification.dto.response.ReadAllNotificationResponseDto;
 import com.ticketing.notification.dto.response.UnreadNotificationCountResponseDto;
 import com.ticketing.notification.service.NotificationService;
+import com.ticketing.notification.sse.NotificationSseEmitterRegistry;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Tag(name = "알림")
 @RestController
@@ -25,6 +28,18 @@ import org.springframework.web.bind.annotation.RestController;
 public class NotificationController {
 
     private final NotificationService notificationService;
+    private final NotificationSseEmitterRegistry emitterRegistry;
+
+    @Operation(summary = "실시간 알림 연결")
+    @GetMapping(
+            value = "/stream",
+            produces = MediaType.TEXT_EVENT_STREAM_VALUE
+    )
+    public SseEmitter connect(
+            @AuthenticationPrincipal CustomUserDetails user
+    ) {
+        return emitterRegistry.connect(user.getMemberId());
+    }
 
     @Operation(summary = "내 알림 목록 조회")
     @GetMapping

@@ -146,6 +146,11 @@ class PaymentCancellationOutboxTest {
         assertThat(outbox.getAggregateId()).isEqualTo(paymentId);
         assertThat(outbox.getEventSequence()).isEqualTo(1L);
         assertThat(outbox.getStatus()).isEqualTo(OutboxEventStatus.PENDING);
+        assertThat(payload.paymentId()).isEqualTo(paymentId);
+        assertThat(payload.reservationId()).isEqualTo(reservationId);
+        assertThat(payload.memberId()).isEqualTo(memberId);
+        assertThat(payload.canceledAmount()).isEqualTo(100_000);
+        assertThat(payload.canceledAt()).isNotNull();
         assertThat(payload.sellerId()).isEqualTo(sellerId);
         assertThat(payload.performanceEventId()).isEqualTo(performanceEventId);
         assertThat(payload.settlementDate()).isEqualTo(settlementDate);

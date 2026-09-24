@@ -25,6 +25,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -65,6 +66,7 @@ class PaymentCanceledConsumerIntegrationTest {
         });
 
         PaymentCanceledOutboxPayload payload = new PaymentCanceledOutboxPayload(
+                10L, 20L, 30L, 100_000, LocalDateTime.of(2026, 8, 19, 12, 0),
                 sellerId, performanceEventId, settlementDate, paidDate);
         OutboxEvent outboxEvent = OutboxEvent.paymentCanceled(10L, 1L, objectMapper.writeValueAsString(payload));
         messagePublisher.publish(outboxEvent);

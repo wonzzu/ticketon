@@ -21,6 +21,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -55,6 +56,7 @@ class PaymentCanceledRetryDeadLetterIntegrationTest {
         doThrow(new IllegalStateException("DB 일시 장애"))
                 .when(messageHandler).handle(anyString(), any(PaymentCanceledOutboxPayload.class));
         PaymentCanceledOutboxPayload payload = new PaymentCanceledOutboxPayload(
+                10L, 20L, 30L, 100_000, LocalDateTime.of(2026, 8, 19, 12, 0),
                 1L, 2L, LocalDate.of(2026, 8, 20), LocalDate.of(2026, 8, 19));
         OutboxEvent outboxEvent = OutboxEvent.paymentCanceled(
                 10L, 1L, objectMapper.writeValueAsString(payload));
