@@ -10,6 +10,7 @@
     "test:run": "vitest run"
   },
   "dependencies": {
+    "@microsoft/fetch-event-source": "^2.0.1",
     "axios": "^1.16.0",
     "bootstrap": "5.3",
     "bootstrap-icons": "^1.13.1",
