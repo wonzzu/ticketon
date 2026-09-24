@@ -1,13 +1,17 @@
 <script setup>
-import { ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { CATEGORY, CATEGORY_LABEL, CATEGORY_ICON } from '@/utils/constants'
 import SupportChatWidget from '@/components/support/SupportChatWidget.vue'
+import NotificationMenu from '@/components/notification/NotificationMenu.vue'
+import NotificationToast from '@/components/notification/NotificationToast.vue'
+import { useNotificationStore } from '@/stores/notification'
 
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
+const notification = useNotificationStore()
 const keyword = ref('')
 
 const categories = Object.values(CATEGORY)
@@ -24,9 +28,24 @@ function onSearch() {
 }
 
 async function onLogout() {
+  notification.reset()
   await auth.logout()
   router.push('/')
 }
+
+watch(
+  () => auth.isAuthenticated,
+  (authenticated) => {
+    if (authenticated) notification.initialize()
+    else notification.reset()
+  },
+)
+
+onMounted(() => {
+  if (auth.isAuthenticated) notification.initialize()
+})
+
+onBeforeUnmount(() => notification.reset())
 </script>
 
 <template>
@@ -54,6 +73,7 @@ async function onLogout() {
           <div class="ms-auto d-flex align-items-center gap-3 small">
             <!-- 로그인 상태 분기 -->
             <template v-if="auth.isAuthenticated">
+              <NotificationMenu />
               <RouterLink v-if="auth.isAdmin" to="/admin" class="auth-link">
                 <i class="bi bi-shield-lock me-1"></i>관리자센터
               </RouterLink>
@@ -132,6 +152,7 @@ async function onLogout() {
     </footer>
 
     <!-- 일반 화면에서 유지되는 AI 고객지원. 로그인 화면(BlankLayout)에는 렌더링되지 않는다. -->
+    <NotificationToast v-if="auth.isAuthenticated" />
     <SupportChatWidget />
   </div>
 </template>
