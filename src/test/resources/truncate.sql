@@ -3,6 +3,7 @@
 -- ※ 테이블명은 ddl-auto 기본 네이밍(snake_case) 기준 — 실제 스키마와 다르면 조정.
 SET FOREIGN_KEY_CHECKS = 0;
 
+TRUNCATE TABLE notification;
 TRUNCATE TABLE payment_history;
 TRUNCATE TABLE processed_message;
 TRUNCATE TABLE outbox_event;

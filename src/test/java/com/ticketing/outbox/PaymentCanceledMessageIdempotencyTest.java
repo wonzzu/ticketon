@@ -14,6 +14,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -33,6 +34,7 @@ class PaymentCanceledMessageIdempotencyTest {
     void ignoreDuplicatedMessage() {
         String messageId = "message-1";
         PaymentCanceledOutboxPayload payload = new PaymentCanceledOutboxPayload(
+                10L, 20L, 30L, 100_000, LocalDateTime.of(2026, 8, 19, 12, 0),
                 1L, 2L, LocalDate.of(2026, 8, 20), LocalDate.of(2026, 8, 19));
 
         messageHandler.handle(messageId, payload);

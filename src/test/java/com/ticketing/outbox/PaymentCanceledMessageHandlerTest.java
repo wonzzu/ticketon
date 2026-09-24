@@ -9,6 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -29,7 +30,9 @@ class PaymentCanceledMessageHandlerTest {
         LocalDate settlementDate = LocalDate.of(2026, 8, 20);
         LocalDate paidDate = LocalDate.of(2026, 8, 19);
         PaymentCanceledOutboxPayload payload =
-                new PaymentCanceledOutboxPayload(1L, 2L, settlementDate, paidDate);
+                new PaymentCanceledOutboxPayload(
+                        10L, 20L, 30L, 100_000, LocalDateTime.of(2026, 8, 19, 12, 0),
+                        1L, 2L, settlementDate, paidDate);
 
         messageHandler.handle("message-1", payload);
 

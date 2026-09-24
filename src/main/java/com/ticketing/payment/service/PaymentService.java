@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.ticketing.global.baseresponse.BaseResponseStatus.*;
@@ -101,9 +102,19 @@ public class PaymentService {
             payment.cancel();
             paymentHistoryRepository.save(PaymentHistory.of(payment, reason));
 
-            var event = payment.getReservation().getEventSchedule().getEvent();
-            var payload = new PaymentCanceledOutboxPayload(event.getSeller().getId(), event.getId(),
-                    event.getEndDate(), payment.getCreatedAt().toLocalDate());
+            var reservation = payment.getReservation();
+            var event = reservation.getEventSchedule().getEvent();
+            var payload = new PaymentCanceledOutboxPayload(
+                    payment.getId(),
+                    reservation.getId(),
+                    reservation.getMember().getId(),
+                    payment.getAmount(),
+                    LocalDateTime.now(),
+                    event.getSeller().getId(),
+                    event.getId(),
+                    event.getEndDate(),
+                    payment.getCreatedAt().toLocalDate()
+            );
 
             long eventSequence = payment.nextEventSequence();
 
