@@ -23,6 +23,10 @@ export const reservationApi = {
   findOne: (id) =>
     http.get(`/reservations/${id}`),
 
+  // GET /tickets/reservations/{id} — 내 예매의 전자 티켓 목록
+  findTickets: (id) =>
+    http.get(`/tickets/reservations/${id}`),
+
   // payload: { cancelReason, detail } — detail은 OTHER일 때만 필수
   cancel: (id, payload) =>
     http.post(`/reservations/${id}/cancel`, payload),

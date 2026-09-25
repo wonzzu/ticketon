@@ -15,6 +15,7 @@
  */
 import { ref, computed, onMounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import QrcodeVue from 'qrcode.vue'
 import { memberApi } from '@/api/member.api'
 import { reviewApi } from '@/api/review.api'
 import { reservationApi } from '@/api/reservation.api'
@@ -45,6 +46,8 @@ const reservationPage = ref({ number: 0, totalPages: 0, totalElements: 0 })
 const reservationFilter = ref({ period: '', status: '' })   // period: '' | '1' | '3' | '6' (개월)
 const reservationsLoaded = ref(false)
 const reservationsLoading = ref(false)
+const ticketLoadingId = ref(null)
+const ticketsByReservation = ref({})
 
 // 예매 취소 모달
 const cancelModalOpen = ref(false)
@@ -111,6 +114,23 @@ async function loadReservations(page = 0) {
     reservationPage.value = { number: 0, totalPages: 0, totalElements: 0 }
   } finally {
     reservationsLoading.value = false
+  }
+}
+
+async function loadTickets(reservationId) {
+  if (ticketsByReservation.value[reservationId]) {
+    delete ticketsByReservation.value[reservationId]
+    return
+  }
+
+  ticketLoadingId.value = reservationId
+  try {
+    ticketsByReservation.value[reservationId] =
+      await reservationApi.findTickets(reservationId)
+  } catch (e) {
+    ticketsByReservation.value[reservationId] = []
+  } finally {
+    ticketLoadingId.value = null
   }
 }
 
@@ -362,6 +382,35 @@ onMounted(() => {
                     예매 취소
                   </AppButton>
                 </div>
+                <div class="text-end mt-2">
+                  <AppButton variant="outline-primary" size="sm"
+                             :disabled="ticketLoadingId === r.id"
+                             @click="loadTickets(r.id)">
+                    <span v-if="ticketLoadingId === r.id" class="spinner-border spinner-border-sm me-1" />
+                    {{ ticketsByReservation[r.id] ? '티켓 닫기' : '전자 티켓 보기' }}
+                  </AppButton>
+                </div>
+                <div v-if="ticketsByReservation[r.id]" class="ticket-list mt-3 pt-3 border-top">
+                  <p v-if="ticketsByReservation[r.id].length === 0" class="small text-secondary mb-0">
+                    아직 발급된 전자 티켓이 없습니다.
+                  </p>
+                  <div v-for="ticket in ticketsByReservation[r.id]" :key="ticket.ticketId"
+                       class="ticket-card d-flex flex-wrap align-items-center gap-3 p-3 rounded">
+                    <QrcodeVue v-if="ticket.status === 'ISSUED'"
+                               :value="ticket.ticketToken"
+                               :size="150"
+                               level="H" />
+                    <div v-else class="ticket-canceled d-flex align-items-center justify-content-center">
+                      <span class="small text-danger fw-semibold">취소된 티켓</span>
+                    </div>
+                    <div class="small">
+                      <div class="fw-semibold mb-1">티켓 #{{ ticket.ticketId }}</div>
+                      <div class="text-secondary">
+                        {{ ticket.status === 'ISSUED' ? '입장 시 QR을 보여주세요.' : '사용할 수 없는 티켓입니다.' }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </li>
             </ul>
             <div v-if="reservationPage.totalPages > 1"
@@ -523,5 +572,15 @@ onMounted(() => {
     font-weight: 600;
   }
   dd { margin: 0; }
+}
+
+.ticket-card {
+  background: #f8fafc;
+}
+
+.ticket-canceled {
+  width: 150px;
+  height: 150px;
+  background: #fee2e2;
 }
 </style>
