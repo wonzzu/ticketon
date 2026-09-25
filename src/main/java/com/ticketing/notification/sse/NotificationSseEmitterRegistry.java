@@ -71,7 +71,7 @@ public class NotificationSseEmitterRegistry {
             );
         } catch (IOException | IllegalStateException e) {
             remove(memberId, emitter);
-            emitter.completeWithError(e);
+            completeWithErrorSafely(emitter, e);
         }
     }
 
@@ -89,7 +89,7 @@ public class NotificationSseEmitterRegistry {
             );
         } catch (IOException | IllegalStateException e) {
             remove(memberId, emitter);
-            emitter.completeWithError(e);
+            completeWithErrorSafely(emitter, e);
 
             log.debug(
                     "종료된 SSE 연결 제거: memberId={}, notificationId={}",
@@ -111,12 +111,23 @@ public class NotificationSseEmitterRegistry {
             );
         } catch (IOException | IllegalStateException e) {
             remove(memberId, emitter);
-            emitter.completeWithError(e);
+            completeWithErrorSafely(emitter, e);
 
             log.debug(
                     "Heartbeat 실패로 SSE 연결 제거: memberId={}",
                     memberId
             );
+        }
+    }
+
+    private void completeWithErrorSafely(
+            SseEmitter emitter,
+            Exception cause
+    ) {
+        try {
+            emitter.completeWithError(cause);
+        } catch (IllegalStateException ignored) {
+            log.debug("이미 종료된 SSE 연결의 완료 처리를 생략합니다.");
         }
     }
 
