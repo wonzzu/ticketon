@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class PaymentNotificationHandler {
+public class PaymentNotificationService {
 
     private final ProcessedMessageRepository processedMessageRepository;
     private final NotificationRepository notificationRepository;

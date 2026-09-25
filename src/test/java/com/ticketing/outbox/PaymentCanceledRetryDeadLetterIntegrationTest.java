@@ -6,7 +6,7 @@ import com.ticketing.config.RabbitMqConfig;
 import com.ticketing.outbox.domain.OutboxEvent;
 import com.ticketing.outbox.dto.PaymentCanceledOutboxPayload;
 import com.ticketing.outbox.messaging.RabbitOutboxMessagePublisher;
-import com.ticketing.outbox.service.PaymentCanceledMessageHandler;
+import com.ticketing.outbox.service.PaymentCanceledMessageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -42,7 +42,7 @@ class PaymentCanceledRetryDeadLetterIntegrationTest {
     @Autowired RabbitTemplate rabbitTemplate;
     @Autowired ObjectMapper objectMapper;
 
-    @MockitoBean PaymentCanceledMessageHandler messageHandler;
+    @MockitoBean PaymentCanceledMessageService messageService;
 
     @BeforeEach
     void purgeQueues() {
@@ -54,7 +54,7 @@ class PaymentCanceledRetryDeadLetterIntegrationTest {
     @DisplayName("처리가 계속 실패하면 세 번 시도한 뒤 메시지를 DLQ로 이동한다")
     void moveToDeadLetterQueueAfterRetries() throws JsonProcessingException {
         doThrow(new IllegalStateException("DB 일시 장애"))
-                .when(messageHandler).handle(anyString(), any(PaymentCanceledOutboxPayload.class));
+                .when(messageService).handle(anyString(), any(PaymentCanceledOutboxPayload.class));
         PaymentCanceledOutboxPayload payload = new PaymentCanceledOutboxPayload(
                 10L, 20L, 30L, 100_000, LocalDateTime.of(2026, 8, 19, 12, 0),
                 1L, 2L, LocalDate.of(2026, 8, 20), LocalDate.of(2026, 8, 19));
@@ -68,6 +68,6 @@ class PaymentCanceledRetryDeadLetterIntegrationTest {
         assertThat(deadLetter).isNotNull();
         assertThat((String) deadLetter.getMessageProperties().getHeader("messageId"))
                 .isEqualTo(outboxEvent.getMessageId());
-        verify(messageHandler, times(3)).handle(anyString(), any(PaymentCanceledOutboxPayload.class));
+        verify(messageService, times(3)).handle(anyString(), any(PaymentCanceledOutboxPayload.class));
     }
 }

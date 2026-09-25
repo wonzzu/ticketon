@@ -2,7 +2,7 @@ package com.ticketing.outbox;
 
 import com.ticketing.outbox.dto.PaymentCanceledOutboxPayload;
 import com.ticketing.outbox.repository.ProcessedMessageRepository;
-import com.ticketing.outbox.service.PaymentCanceledMessageHandler;
+import com.ticketing.outbox.service.PaymentCanceledMessageService;
 import com.ticketing.settlement.service.SettlementDirtyService;
 import com.ticketing.statistics.service.StatsDirtyService;
 import org.junit.jupiter.api.DisplayName;
@@ -14,14 +14,14 @@ import java.time.LocalDateTime;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-@DisplayName("결제 취소 메시지 Handler")
-class PaymentCanceledMessageHandlerTest {
+@DisplayName("결제 취소 메시지 Service")
+class PaymentCanceledMessageServiceTest {
 
     private final SettlementDirtyService settlementDirtyService = mock(SettlementDirtyService.class);
     private final StatsDirtyService statsDirtyService = mock(StatsDirtyService.class);
     private final ProcessedMessageRepository processedMessageRepository = mock(ProcessedMessageRepository.class);
-    private final PaymentCanceledMessageHandler messageHandler =
-            new PaymentCanceledMessageHandler(
+    private final PaymentCanceledMessageService messageService =
+            new PaymentCanceledMessageService(
                     processedMessageRepository, settlementDirtyService, statsDirtyService);
 
     @Test
@@ -34,7 +34,7 @@ class PaymentCanceledMessageHandlerTest {
                         10L, 20L, 30L, 100_000, LocalDateTime.of(2026, 8, 19, 12, 0),
                         1L, 2L, settlementDate, paidDate);
 
-        messageHandler.handle("message-1", payload);
+        messageService.handle("message-1", payload);
 
         verify(settlementDirtyService).markDirtyIfSettled(1L, 2L, settlementDate);
         verify(statsDirtyService).markDirtyIfAggregated(paidDate);

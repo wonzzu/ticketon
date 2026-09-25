@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ticketing.outbox.dto.EventEnvelope;
 import com.ticketing.outbox.dto.PaymentCanceledOutboxPayload;
 import com.ticketing.outbox.exception.DuplicateMessageException;
-import com.ticketing.outbox.service.PaymentCanceledMessageHandler;
+import com.ticketing.outbox.service.PaymentCanceledMessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 public class KafkaPaymentEventConsumer {
 
     private final ObjectMapper objectMapper;
-    private final PaymentCanceledMessageHandler messageHandler;
+    private final PaymentCanceledMessageService messageService;
 
     @KafkaListener(
             topics = "${app.kafka.topic.payment-events}",
@@ -47,7 +47,7 @@ public class KafkaPaymentEventConsumer {
                     PaymentCanceledOutboxPayload.class
             );
 
-            messageHandler.handle(envelope.eventId(), payload);
+            messageService.handle(envelope.eventId(), payload);
 
             log.info(
                     "Kafka 결제 취소 이벤트 처리 완료: eventId={}, partitionKey={}, eventSequence={}",

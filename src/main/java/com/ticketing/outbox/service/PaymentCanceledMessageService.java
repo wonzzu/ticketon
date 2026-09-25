@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class PaymentCanceledMessageHandler {
+public class PaymentCanceledMessageService {
 
     private final ProcessedMessageRepository processedMessageRepository;
     private final SettlementDirtyService settlementDirtyService;

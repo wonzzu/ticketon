@@ -2,7 +2,7 @@ package com.ticketing.outbox;
 
 import com.ticketing.outbox.dto.PaymentCanceledOutboxPayload;
 import com.ticketing.outbox.messaging.PaymentCanceledMessageConsumer;
-import com.ticketing.outbox.service.PaymentCanceledMessageHandler;
+import com.ticketing.outbox.service.PaymentCanceledMessageService;
 import com.ticketing.outbox.exception.DuplicateMessageException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,11 +19,11 @@ import static org.mockito.Mockito.verify;
 @DisplayName("결제 취소 메시지 Consumer")
 class PaymentCanceledMessageConsumerTest {
 
-    private final PaymentCanceledMessageHandler messageHandler = mock(PaymentCanceledMessageHandler.class);
-    private final PaymentCanceledMessageConsumer consumer = new PaymentCanceledMessageConsumer(messageHandler);
+    private final PaymentCanceledMessageService messageService = mock(PaymentCanceledMessageService.class);
+    private final PaymentCanceledMessageConsumer consumer = new PaymentCanceledMessageConsumer(messageService);
 
     @Test
-    @DisplayName("자동 변환된 결제 취소 Payload를 Handler에 전달한다")
+    @DisplayName("자동 변환된 결제 취소 Payload를 Service에 전달한다")
     void delegatePayloadToHandler() {
         PaymentCanceledOutboxPayload payload = new PaymentCanceledOutboxPayload(
                 10L, 20L, 30L, 100_000, LocalDateTime.of(2026, 8, 19, 12, 0),
@@ -31,7 +31,7 @@ class PaymentCanceledMessageConsumerTest {
 
         consumer.consume(payload, "message-1");
 
-        verify(messageHandler).handle("message-1", payload);
+        verify(messageService).handle("message-1", payload);
     }
 
     @Test
@@ -42,11 +42,11 @@ class PaymentCanceledMessageConsumerTest {
                 1L, 2L, LocalDate.of(2026, 8, 20), LocalDate.of(2026, 8, 19));
         doNothing()
                 .doThrow(new DuplicateMessageException("REAGGREGATION", "message-1", null))
-                .when(messageHandler).handle("message-1", payload);
+                .when(messageService).handle("message-1", payload);
 
         consumer.consume(payload, "message-1");
         consumer.consume(payload, "message-1");
 
-        verify(messageHandler, times(2)).handle("message-1", payload);
+        verify(messageService, times(2)).handle("message-1", payload);
     }
 }
