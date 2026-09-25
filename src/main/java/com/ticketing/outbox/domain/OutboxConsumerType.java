@@ -3,5 +3,6 @@ package com.ticketing.outbox.domain;
 public enum OutboxConsumerType {
     REAGGREGATION,
     NOTIFICATION,
-    QUEUE_ANALYTICS
+    QUEUE_ANALYTICS,
+    TICKET_ISSUANCE
 }

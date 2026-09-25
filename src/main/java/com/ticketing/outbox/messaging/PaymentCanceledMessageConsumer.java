@@ -3,7 +3,7 @@ package com.ticketing.outbox.messaging;
 import com.ticketing.config.RabbitMqConfig;
 import com.ticketing.outbox.dto.PaymentCanceledOutboxPayload;
 import com.ticketing.outbox.exception.DuplicateMessageException;
-import com.ticketing.outbox.service.PaymentCanceledMessageHandler;
+import com.ticketing.outbox.service.PaymentCanceledMessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -15,13 +15,13 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class PaymentCanceledMessageConsumer {
 
-    private final PaymentCanceledMessageHandler messageHandler;
+    private final PaymentCanceledMessageService messageService;
 
     @RabbitListener(queues = RabbitMqConfig.PAYMENT_CANCELED_QUEUE)
     public void consume(PaymentCanceledOutboxPayload payload,
                         @Header("messageId") String messageId) {
         try {
-            messageHandler.handle(messageId, payload);
+            messageService.handle(messageId, payload);
             log.info("결제 취소 메시지 처리 완료: messageId={}, eventId={}",
                     messageId, payload.performanceEventId());
         } catch (DuplicateMessageException e) {

@@ -3,7 +3,7 @@ package com.ticketing.outbox;
 import com.ticketing.outbox.domain.OutboxConsumerType;
 import com.ticketing.outbox.dto.PaymentCanceledOutboxPayload;
 import com.ticketing.outbox.repository.ProcessedMessageRepository;
-import com.ticketing.outbox.service.PaymentCanceledMessageHandler;
+import com.ticketing.outbox.service.PaymentCanceledMessageService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @DisplayName("결제 취소 메시지 멱등 처리")
 class PaymentCanceledMessageIdempotencyTest {
 
-    @Autowired PaymentCanceledMessageHandler messageHandler;
+    @Autowired PaymentCanceledMessageService messageService;
     @Autowired ProcessedMessageRepository processedMessageRepository;
 
     @Test
@@ -37,8 +37,8 @@ class PaymentCanceledMessageIdempotencyTest {
                 10L, 20L, 30L, 100_000, LocalDateTime.of(2026, 8, 19, 12, 0),
                 1L, 2L, LocalDate.of(2026, 8, 20), LocalDate.of(2026, 8, 19));
 
-        messageHandler.handle(messageId, payload);
-        assertThatThrownBy(() -> messageHandler.handle(messageId, payload))
+        messageService.handle(messageId, payload);
+        assertThatThrownBy(() -> messageService.handle(messageId, payload))
                 .isInstanceOf(DuplicateMessageException.class);
 
         assertThat(processedMessageRepository.countByConsumerTypeAndMessageId(

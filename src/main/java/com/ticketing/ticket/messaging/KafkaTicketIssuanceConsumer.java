@@ -1,4 +1,4 @@
-package com.ticketing.outbox.messaging;
+package com.ticketing.ticket.messaging;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -6,7 +6,7 @@ import com.ticketing.outbox.dto.EventEnvelope;
 import com.ticketing.outbox.dto.PaymentCanceledOutboxPayload;
 import com.ticketing.outbox.dto.PaymentCompletedOutboxPayload;
 import com.ticketing.outbox.exception.DuplicateMessageException;
-import com.ticketing.outbox.service.PaymentNotificationService;
+import com.ticketing.ticket.service.TicketIssuanceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -17,17 +17,17 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class KafkaPaymentNotificationConsumer {
+public class KafkaTicketIssuanceConsumer {
 
     private static final String PAYMENT_COMPLETED = "PAYMENT_COMPLETED";
     private static final String PAYMENT_CANCELED = "PAYMENT_CANCELED";
 
     private final ObjectMapper objectMapper;
-    private final PaymentNotificationService notificationService;
+    private final TicketIssuanceService ticketIssuanceService;
 
     @KafkaListener(
             topics = "${app.kafka.topic.payment-events}",
-            groupId = "ticketon-notification"
+            groupId = "ticketon-ticket-issuance"
     )
     public void consume(
             String message,
@@ -41,7 +41,7 @@ public class KafkaPaymentNotificationConsumer {
                 case PAYMENT_CANCELED -> handleCanceled(envelope);
                 default -> {
                     log.debug(
-                            "알림 Consumer 담당 이벤트가 아니므로 생략: eventType={}, eventId={}",
+                            "전자 티켓 Consumer 담당 이벤트가 아니므로 생략: eventType={}, eventId={}",
                             envelope.eventType(),
                             envelope.eventId()
                     );
@@ -50,19 +50,20 @@ public class KafkaPaymentNotificationConsumer {
             }
 
             log.info(
-                    "Kafka 결제 알림 이벤트 처리 완료: eventType={}, eventId={}, partitionKey={}",
+                    "전자 티켓 이벤트 처리 완료: eventType={}, eventId={}, partitionKey={}, eventSequence={}",
                     envelope.eventType(),
                     envelope.eventId(),
-                    partitionKey
+                    partitionKey,
+                    envelope.eventSequence()
             );
         } catch (DuplicateMessageException e) {
             log.info(
-                    "중복 Kafka 알림 메시지 처리 생략: eventId={}",
+                    "중복 전자 티켓 메시지 처리 생략: eventId={}",
                     envelope.eventId()
             );
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException(
-                    "Kafka 결제 알림 payload 역직렬화에 실패했습니다.",
+                    "전자 티켓 이벤트 payload 역직렬화에 실패했습니다.",
                     e
             );
         }
@@ -76,7 +77,7 @@ public class KafkaPaymentNotificationConsumer {
                 PaymentCompletedOutboxPayload.class
         );
 
-        notificationService.handleCompleted(
+        ticketIssuanceService.handleCompleted(
                 envelope.eventId(),
                 payload
         );
@@ -90,7 +91,7 @@ public class KafkaPaymentNotificationConsumer {
                 PaymentCanceledOutboxPayload.class
         );
 
-        notificationService.handleCanceled(
+        ticketIssuanceService.handleCanceled(
                 envelope.eventId(),
                 payload
         );
@@ -104,7 +105,7 @@ public class KafkaPaymentNotificationConsumer {
             );
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException(
-                    "Kafka 알림 이벤트 Envelope 역직렬화에 실패했습니다.",
+                    "전자 티켓 이벤트 Envelope 역직렬화에 실패했습니다.",
                     e
             );
         }
