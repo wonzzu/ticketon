@@ -61,3 +61,7 @@ spring-security-jwt-notes.md
 ### Claude Code ###
 .claude/
 
+### Codex temporary files ###
+.codex/
+.codex-tmp*
+
