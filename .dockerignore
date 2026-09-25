@@ -8,6 +8,8 @@ logs
 .idea
 .vscode
 .claude
+.codex
+.codex-tmp*
 *.log
 .env
 .env.*
