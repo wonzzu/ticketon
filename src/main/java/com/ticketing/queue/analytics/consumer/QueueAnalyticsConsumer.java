@@ -26,7 +26,8 @@ public class QueueAnalyticsConsumer {
 
     @KafkaListener(
             topics = "${app.kafka.topic.queue-events}",
-            groupId = "queue-analytics-group"
+            groupId = "queue-analytics-group",
+            containerFactory = "queueAnalyticsKafkaListenerContainerFactory"
     )
     public void consume(
             String message,
