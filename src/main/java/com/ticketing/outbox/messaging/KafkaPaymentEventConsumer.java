@@ -23,7 +23,8 @@ public class KafkaPaymentEventConsumer {
 
     @KafkaListener(
             topics = "${app.kafka.topic.payment-events}",
-            groupId = "ticketon-reaggregation"
+            groupId = "ticketon-reaggregation",
+            containerFactory = "reaggregationKafkaListenerContainerFactory"
     )
     public void consume(
             String message,

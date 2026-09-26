@@ -27,7 +27,8 @@ public class KafkaTicketIssuanceConsumer {
 
     @KafkaListener(
             topics = "${app.kafka.topic.payment-events}",
-            groupId = "ticketon-ticket-issuance"
+            groupId = "ticketon-ticket-issuance",
+            containerFactory = "ticketIssuanceKafkaListenerContainerFactory"
     )
     public void consume(
             String message,
