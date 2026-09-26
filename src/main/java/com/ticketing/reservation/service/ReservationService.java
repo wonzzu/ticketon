@@ -37,6 +37,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static com.ticketing.global.baseresponse.BaseResponseStatus.*;
 
@@ -77,6 +78,14 @@ public class ReservationService {
         if (!queueService.isAdmitted(dto.getScheduleId(), memberId)) {
             throw new BaseException(QUEUE_NOT_ADMITTED);
         }
+
+        String journeyId = queueService.findJourneyId(dto.getScheduleId(), memberId)
+                .orElseGet(() -> {
+                    String fallbackJourneyId = UUID.randomUUID().toString();
+                    log.warn("journeyId가 없어 대체 ID 발급: scheduleId={}, memberId={}, journeyId={}",
+                            dto.getScheduleId(), memberId, fallbackJourneyId);
+                    return fallbackJourneyId;
+                });
 
         List<Long> seatIds = dto.getEventSeatIds().stream().sorted().toList();
 
@@ -129,6 +138,7 @@ public class ReservationService {
         reservationHistoryRepository.save(ReservationHistory.of(reservation));
 
         ReservationCreatedOutboxPayload payload = new ReservationCreatedOutboxPayload(
+                journeyId,
                 reservation.getId(),
                 memberId,
                 schedule.getId(),
@@ -142,7 +152,8 @@ public class ReservationService {
                 serialize(payload)
         ));
 
-        log.info("예매 생성: memberId={},reservationId={},좌석 {}개,금액 ={}", memberId, reservation.getId(), seats.size(), totalPrice);
+        log.info("예매 생성: memberId={},reservationId={},journeyId={},좌석 {}개,금액 ={}",
+                memberId, reservation.getId(), journeyId, seats.size(), totalPrice);
 
         return ReservationResponseDto.from(reservation);
     }

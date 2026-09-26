@@ -27,13 +27,14 @@ public class QueueEventPublisher {
     @Value("${app.kafka.topic.queue-events}")
     private String topic;
 
-    public void publishEntered(Long scheduleId, Long memberId, long enteredAtMillis) {
+    public void publishEntered(Long scheduleId, Long memberId, String journeyId, long enteredAtMillis) {
         LocalDateTime enteredAt = LocalDateTime.ofInstant(
                 Instant.ofEpochMilli(enteredAtMillis),
                 ZoneId.of("Asia/Seoul")
         );
 
         ObjectNode payload = objectMapper.createObjectNode()
+                .put("journeyId", journeyId)
                 .put("memberId", memberId)
                 .put("scheduleId", scheduleId)
                 .put("enteredAt", enteredAt.toString());
@@ -41,46 +42,48 @@ public class QueueEventPublisher {
         EventEnvelope envelope = EventEnvelope.queueEntered(scheduleId, enteredAt, payload);
 
         try {
-            ProducerRecord<String, String> record = new ProducerRecord<>(
-                    topic,
-                    memberId.toString(),
-                    objectMapper.writeValueAsString(envelope)
-            );
-            record.headers().add("eventId", envelope.eventId().getBytes(StandardCharsets.UTF_8));
-            record.headers().add("eventType", envelope.eventType().getBytes(StandardCharsets.UTF_8));
-
-            // 분석 이벤트 발행 실패가 Redis 대기열 응답을 막지 않도록 비동기로 보낸다.
-            kafkaTemplate.send(record).whenComplete((result, error) -> {
-                if (error != null) {
-                    log.warn("queue.entered 발행 실패: scheduleId={}, memberId={}",
-                            scheduleId, memberId, error);
-                }
-            });
+            send(scheduleId, memberId, journeyId, envelope);
         } catch (JsonProcessingException e) {
-            log.warn("queue.entered 직렬화 실패: scheduleId={}, memberId={}",
-                    scheduleId, memberId, e);
+            log.warn("queue.entered 직렬화 실패: scheduleId={}, memberId={}, journeyId={}",
+                    scheduleId, memberId, journeyId, e);
         }
     }
 
-    public void publishAdmitted(Long scheduleId, Long memberId, Long enteredAtMillis, long admittedAtMillis) {
+    public void publishAdmitted(Long scheduleId, Long memberId, String journeyId, Long enteredAtMillis, long admittedAtMillis) {
         LocalDateTime enteredAt = toLocalDateTime(enteredAtMillis == null ? admittedAtMillis : enteredAtMillis);
         LocalDateTime admittedAt = toLocalDateTime(admittedAtMillis);
         ObjectNode payload = objectMapper.createObjectNode()
+                .put("journeyId", journeyId)
                 .put("memberId", memberId)
                 .put("scheduleId", scheduleId)
                 .put("enteredAt", enteredAt.toString())
                 .put("admittedAt", admittedAt.toString());
         EventEnvelope envelope = EventEnvelope.queueAdmitted(scheduleId, admittedAt, payload);
         try {
-            ProducerRecord<String, String> record = new ProducerRecord<>(topic, memberId.toString(), objectMapper.writeValueAsString(envelope));
-            record.headers().add("eventId", envelope.eventId().getBytes(StandardCharsets.UTF_8));
-            record.headers().add("eventType", envelope.eventType().getBytes(StandardCharsets.UTF_8));
-            kafkaTemplate.send(record).whenComplete((result, error) -> {
-                if (error != null) log.warn("queue.admitted 발행 실패: scheduleId={}, memberId={}", scheduleId, memberId, error);
-            });
+            send(scheduleId, memberId, journeyId, envelope);
         } catch (JsonProcessingException e) {
-            log.warn("queue.admitted 직렬화 실패: scheduleId={}, memberId={}", scheduleId, memberId, e);
+            log.warn("queue.admitted 직렬화 실패: scheduleId={}, memberId={}, journeyId={}",
+                    scheduleId, memberId, journeyId, e);
         }
+    }
+
+    private void send(Long scheduleId, Long memberId, String journeyId, EventEnvelope envelope)
+            throws JsonProcessingException {
+        ProducerRecord<String, String> record = new ProducerRecord<>(
+                topic,
+                journeyId,
+                objectMapper.writeValueAsString(envelope)
+        );
+        record.headers().add("eventId", envelope.eventId().getBytes(StandardCharsets.UTF_8));
+        record.headers().add("eventType", envelope.eventType().getBytes(StandardCharsets.UTF_8));
+        record.headers().add("journeyId", journeyId.getBytes(StandardCharsets.UTF_8));
+
+        kafkaTemplate.send(record).whenComplete((result, error) -> {
+            if (error != null) {
+                log.warn("대기열 분석 이벤트 발행 실패: eventType={}, scheduleId={}, memberId={}, journeyId={}",
+                        envelope.eventType(), scheduleId, memberId, journeyId, error);
+            }
+        });
     }
 
     private LocalDateTime toLocalDateTime(Long epochMillis) {

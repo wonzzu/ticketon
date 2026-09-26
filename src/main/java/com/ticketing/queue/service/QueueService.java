@@ -12,7 +12,10 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.time.Duration;
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -23,6 +26,7 @@ public class QueueService {
 
     private static final int CAPACITY = 100;
     private static final long ACTIVE_TTL_MS = 10 * 60 * 1000;
+    private static final long JOURNEY_TTL_MS = Duration.ofHours(24).toMillis();
     private static final String SCHEDULES_KEY = "queue:schedules";
     private static final String ADMIT_LOCK = "queue:admit:lock";
     private final RedissonClient redissonClient;
@@ -39,6 +43,7 @@ public class QueueService {
     public QueueStatusResponse enter(Long scheduleId, Long memberId) {
         String member = memberId.toString();
         long now = System.currentTimeMillis();
+        String journeyId = UUID.randomUUID().toString();
 
         Long result = redisTemplate.execute(
                 queueEnterScript,
@@ -47,13 +52,16 @@ public class QueueService {
                         waitKey(scheduleId),
                         seqKey(scheduleId),
                         SCHEDULES_KEY,
-                        enteredAtKey(scheduleId)
+                        enteredAtKey(scheduleId),
+                        journeyKey(scheduleId, memberId)
                 ),
                 member,
                 String.valueOf(now + ACTIVE_TTL_MS),
                 String.valueOf(CAPACITY),
                 String.valueOf(now),
-                scheduleId.toString()
+                scheduleId.toString(),
+                journeyId,
+                String.valueOf(JOURNEY_TTL_MS)
         );
 
         if (Long.valueOf(1L).equals(result)) {
@@ -62,13 +70,13 @@ public class QueueService {
 
         if (Long.valueOf(3L).equals(result)) {
             if (queueEventPublisher != null) {
-                queueEventPublisher.publishAdmitted(scheduleId, memberId, now, now);
+                queueEventPublisher.publishAdmitted(scheduleId, memberId, journeyId, now, now);
             }
             return QueueStatusResponse.admitted();
         }
 
         if (Long.valueOf(4L).equals(result) && queueEventPublisher != null) {
-            queueEventPublisher.publishEntered(scheduleId, memberId, now);
+            queueEventPublisher.publishEntered(scheduleId, memberId, journeyId, now);
         }
 
         return status(scheduleId, memberId);
@@ -89,8 +97,13 @@ public class QueueService {
         return isActive(scheduleId, memberId.toString());
     }
 
+    public Optional<String> findJourneyId(Long scheduleId, Long memberId) {
+        return Optional.ofNullable(redisTemplate.opsForValue().get(journeyKey(scheduleId, memberId)));
+    }
+
     public void leave(Long scheduleId, Long memberId) {
         redisTemplate.opsForZSet().remove(activeKey(scheduleId), memberId.toString());
+        redisTemplate.delete(journeyKey(scheduleId, memberId));
     }
 
     @Scheduled(fixedDelay = 3000)
@@ -139,7 +152,16 @@ public class QueueService {
                     Long memberId = Long.valueOf(member);
                     Object enteredAtValue = redisTemplate.opsForHash().get(enteredAtKey(scheduleId), member);
                     Long enteredAt = enteredAtValue == null ? now : Long.valueOf(enteredAtValue.toString());
-                    if (queueEventPublisher != null) queueEventPublisher.publishAdmitted(scheduleId, memberId, enteredAt, now);
+                    String journeyId = findJourneyId(scheduleId, memberId).orElse(null);
+                    if (journeyId == null) {
+                        log.warn("승급 사용자의 journeyId가 없어 분석 이벤트를 생략: scheduleId={}, memberId={}",
+                                scheduleId, memberId);
+                    } else {
+                        redisTemplate.expire(journeyKey(scheduleId, memberId), Duration.ofMillis(ACTIVE_TTL_MS));
+                        if (queueEventPublisher != null) {
+                            queueEventPublisher.publishAdmitted(scheduleId, memberId, journeyId, enteredAt, now);
+                        }
+                    }
                     redisTemplate.opsForHash().delete(enteredAtKey(scheduleId), member);
                 }
                 log.info("대기열 승급: scheduleId={}, {}명 입장", scheduleId, members.length);
@@ -155,6 +177,7 @@ public class QueueService {
 
         if (expireAt < System.currentTimeMillis()) {
             redisTemplate.opsForZSet().remove(activeKey(scheduleId), member);
+            redisTemplate.delete(journeyKey(scheduleId, Long.valueOf(member)));
             return false;
         }
         return true;
@@ -175,6 +198,10 @@ public class QueueService {
 
     private String enteredAtKey(Long s) {
         return "queue:entered:" + s;
+    }
+
+    private String journeyKey(Long scheduleId, Long memberId) {
+        return "queue:journey:" + scheduleId + ":" + memberId;
     }
 
 
