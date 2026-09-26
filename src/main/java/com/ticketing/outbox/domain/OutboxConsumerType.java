@@ -4,5 +4,6 @@ public enum OutboxConsumerType {
     REAGGREGATION,
     NOTIFICATION,
     QUEUE_ANALYTICS,
-    TICKET_ISSUANCE
+    TICKET_ISSUANCE,
+    FUNNEL_ANALYTICS
 }
