@@ -1,5 +1,7 @@
 package com.ticketing.reservation.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ticketing.event.domain.EventSchedule;
 import com.ticketing.event.domain.EventSeat;
 import com.ticketing.event.domain.EventSeatStatus;
@@ -9,6 +11,9 @@ import com.ticketing.event.service.SeatHoldService;
 import com.ticketing.global.exception.BaseException;
 import com.ticketing.member.domain.Member;
 import com.ticketing.member.repository.MemberRepository;
+import com.ticketing.outbox.domain.OutboxEvent;
+import com.ticketing.outbox.dto.ReservationCreatedOutboxPayload;
+import com.ticketing.outbox.repository.OutboxEventRepository;
 import com.ticketing.payment.service.PaymentService;
 import com.ticketing.queue.service.QueueService;
 import com.ticketing.reservation.domain.CancelReason;
@@ -51,6 +56,8 @@ public class ReservationService {
     private final QueueService queueService;
     private final ReservationHistoryRepository reservationHistoryRepository;
     private final PaymentService paymentService;
+    private final OutboxEventRepository outboxEventRepository;
+    private final ObjectMapper objectMapper;
 
 
     @Transactional
@@ -121,6 +128,20 @@ public class ReservationService {
 
         reservationHistoryRepository.save(ReservationHistory.of(reservation));
 
+        ReservationCreatedOutboxPayload payload = new ReservationCreatedOutboxPayload(
+                reservation.getId(),
+                memberId,
+                schedule.getId(),
+                seats.size(),
+                totalPrice,
+                reservation.getCreatedAt()
+        );
+
+        outboxEventRepository.save(OutboxEvent.reservationCreated(
+                reservation.getId(),
+                serialize(payload)
+        ));
+
         log.info("예매 생성: memberId={},reservationId={},좌석 {}개,금액 ={}", memberId, reservation.getId(), seats.size(), totalPrice);
 
         return ReservationResponseDto.from(reservation);
@@ -171,6 +192,14 @@ public class ReservationService {
         reservationHistoryRepository.save(ReservationHistory.ofCancel(reservation, cancelReason, detail));
 
         log.info("예매 취소: reservationId={},memberId={},reason={}", reservationId, memberId, cancelReason);
+    }
+
+    private String serialize(Object payload) {
+        try {
+            return objectMapper.writeValueAsString(payload);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Reservation Outbox payload 직렬화에 실패했습니다.", e);
+        }
     }
 
     private void registerTxCallbacks(Long scheduleId, List<Long> seatIds, Long memberId) {

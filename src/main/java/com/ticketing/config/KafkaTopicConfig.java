@@ -31,6 +31,15 @@ public class KafkaTopicConfig {
     }
 
     @Bean
+    public NewTopic reservationEventsTopic(
+            @Value("${app.kafka.topic.reservation-events}") String topicName,
+            @Value("${app.kafka.topic.reservation-events-partitions}") int partitions,
+            @Value("${app.kafka.topic.replication-factor}") int replicationFactor
+    ) {
+        return createTopic(topicName, partitions, replicationFactor);
+    }
+
+    @Bean
     public NewTopic paymentReaggregationDltTopic(
             @Value("${app.kafka.topic.payment-events}") String topicName,
             @Value("${app.kafka.topic.payment-events-partitions}") int partitions,
