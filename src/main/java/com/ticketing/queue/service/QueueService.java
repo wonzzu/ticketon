@@ -56,7 +56,14 @@ public class QueueService {
                 scheduleId.toString()
         );
 
-        if (Long.valueOf(1L).equals(result) || Long.valueOf(3L).equals(result)) {
+        if (Long.valueOf(1L).equals(result)) {
+            return QueueStatusResponse.admitted();
+        }
+
+        if (Long.valueOf(3L).equals(result)) {
+            if (queueEventPublisher != null) {
+                queueEventPublisher.publishAdmitted(scheduleId, memberId, now, now);
+            }
             return QueueStatusResponse.admitted();
         }
 

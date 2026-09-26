@@ -75,8 +75,19 @@ public class OutboxEvent extends BaseEntity {
 
     private LocalDateTime claimedAt;
 
+    public static OutboxEvent reservationCreated(Long reservationId, String payload) {
+        return create(
+                "RESERVATION",
+                reservationId,
+                1L,
+                OutboxEventType.RESERVATION_CREATED,
+                payload
+        );
+    }
+
     public static OutboxEvent paymentCompleted(Long paymentId, long eventSequence, String payload) {
-        return createPaymentEvent(
+        return create(
+                "PAYMENT",
                 paymentId,
                 eventSequence,
                 OutboxEventType.PAYMENT_COMPLETED,
@@ -85,7 +96,8 @@ public class OutboxEvent extends BaseEntity {
     }
 
     public static OutboxEvent paymentCanceled(Long paymentId, long eventSequence, String payload) {
-        return createPaymentEvent(
+        return create(
+                "PAYMENT",
                 paymentId,
                 eventSequence,
                 OutboxEventType.PAYMENT_CANCELED,
@@ -93,8 +105,9 @@ public class OutboxEvent extends BaseEntity {
         );
     }
 
-    private static OutboxEvent createPaymentEvent(
-            Long paymentId,
+    private static OutboxEvent create(
+            String aggregateType,
+            Long aggregateId,
             long eventSequence,
             OutboxEventType eventType,
             String payload
@@ -103,8 +116,8 @@ public class OutboxEvent extends BaseEntity {
                 .messageId(UUID.randomUUID().toString())
                 .eventType(eventType)
                 .eventVersion(INITIAL_EVENT_VERSION)
-                .aggregateType("PAYMENT")
-                .aggregateId(paymentId)
+                .aggregateType(aggregateType)
+                .aggregateId(aggregateId)
                 .eventSequence(eventSequence)
                 .payload(payload)
                 .status(OutboxEventStatus.PENDING)

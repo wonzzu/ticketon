@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ticketing.outbox.dto.EventEnvelope;
 import com.ticketing.outbox.domain.OutboxEvent;
+import com.ticketing.outbox.domain.OutboxEventType;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -24,23 +25,27 @@ public class KafkaOutboxMessagePublisher implements OutboxMessagePublisher {
 
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
-    private final String topic;
+    private final String paymentEventsTopic;
+    private final String reservationEventsTopic;
     private final long confirmTimeoutMs;
 
     public KafkaOutboxMessagePublisher(
             KafkaTemplate<String, String> kafkaTemplate,
             ObjectMapper objectMapper,
-            @Value("${app.kafka.topic.payment-events}") String topic,
+            @Value("${app.kafka.topic.payment-events}") String paymentEventsTopic,
+            @Value("${app.kafka.topic.reservation-events}") String reservationEventsTopic,
             @Value("${outbox.relay.confirm-timeout-ms:5000}") long confirmTimeoutMs
     ) {
         this.kafkaTemplate = kafkaTemplate;
         this.objectMapper = objectMapper;
-        this.topic = topic;
+        this.paymentEventsTopic = paymentEventsTopic;
+        this.reservationEventsTopic = reservationEventsTopic;
         this.confirmTimeoutMs = confirmTimeoutMs;
     }
 
     @Override
     public void publish(OutboxEvent event) {
+        String topic = resolveTopic(event.getEventType());
         String partitionKey = event.getAggregateType() + ":" + event.getAggregateId();
 
         ProducerRecord<String, String> record = new ProducerRecord<>(
@@ -64,6 +69,13 @@ public class KafkaOutboxMessagePublisher implements OutboxMessagePublisher {
         } catch (ExecutionException | TimeoutException e) {
             throw new IllegalStateException("Kafka 이벤트 발행에 실패했습니다.", e);
         }
+    }
+
+    private String resolveTopic(OutboxEventType eventType) {
+        return switch (eventType) {
+            case RESERVATION_CREATED -> reservationEventsTopic;
+            case PAYMENT_COMPLETED, PAYMENT_CANCELED -> paymentEventsTopic;
+        };
     }
 
     private String serializeEnvelope(OutboxEvent event) {
