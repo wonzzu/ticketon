@@ -75,6 +75,33 @@ public class KafkaTopicConfig {
         return createTopic(topicName + ".analytics.DLT", partitions, replicationFactor);
     }
 
+    @Bean
+    public NewTopic queueFunnelDltTopic(
+            @Value("${app.kafka.topic.queue-events}") String topicName,
+            @Value("${app.kafka.topic.queue-events-partitions}") int partitions,
+            @Value("${app.kafka.topic.replication-factor}") int replicationFactor
+    ) {
+        return createTopic(topicName + ".funnel.DLT", partitions, replicationFactor);
+    }
+
+    @Bean
+    public NewTopic reservationFunnelDltTopic(
+            @Value("${app.kafka.topic.reservation-events}") String topicName,
+            @Value("${app.kafka.topic.reservation-events-partitions}") int partitions,
+            @Value("${app.kafka.topic.replication-factor}") int replicationFactor
+    ) {
+        return createTopic(topicName + ".funnel.DLT", partitions, replicationFactor);
+    }
+
+    @Bean
+    public NewTopic paymentFunnelDltTopic(
+            @Value("${app.kafka.topic.payment-events}") String topicName,
+            @Value("${app.kafka.topic.payment-events-partitions}") int partitions,
+            @Value("${app.kafka.topic.replication-factor}") int replicationFactor
+    ) {
+        return createTopic(topicName + ".funnel.DLT", partitions, replicationFactor);
+    }
+
     private NewTopic createTopic(String topicName, int partitions, int replicationFactor) {
         return TopicBuilder.name(topicName)
                 .partitions(partitions)

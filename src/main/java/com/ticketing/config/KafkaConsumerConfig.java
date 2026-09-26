@@ -91,6 +91,25 @@ public class KafkaConsumerConfig {
         );
     }
 
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<Object, Object>
+    funnelKafkaListenerContainerFactory(
+            ConcurrentKafkaListenerContainerFactoryConfigurer configurer,
+            ConsumerFactory<Object, Object> consumerFactory,
+            KafkaTemplate<String, String> kafkaTemplate,
+            @Value("${app.kafka.retry.interval-ms}") long retryIntervalMs,
+            @Value("${app.kafka.retry.max-retries}") long maxRetries
+    ) {
+        return createFactory(
+                configurer,
+                consumerFactory,
+                kafkaTemplate,
+                ".funnel.DLT",
+                retryIntervalMs,
+                maxRetries
+        );
+    }
+
     private ConcurrentKafkaListenerContainerFactory<Object, Object> createFactory(
             ConcurrentKafkaListenerContainerFactoryConfigurer configurer,
             ConsumerFactory<Object, Object> consumerFactory,
