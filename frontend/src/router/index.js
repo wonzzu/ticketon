@@ -87,6 +87,12 @@ const routes = [
     meta: { requiresAuth: true, requiresRole: 'ADMIN' },
   },
   {
+    path: '/admin/funnels',
+    name: 'admin-funnels',
+    component: () => import('@/views/admin/AdminFunnelView.vue'),
+    meta: { requiresAuth: true, requiresRole: 'ADMIN' },   // 공연 회차별 예매 전환 분석
+  },
+  {
     path: '/admin/members',
     name: 'admin-members',
     component: () => import('@/views/admin/AdminMemberView.vue'),
