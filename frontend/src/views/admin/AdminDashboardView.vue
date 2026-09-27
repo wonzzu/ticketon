@@ -95,6 +95,20 @@ onMounted(load)
           </div>
         </RouterLink>
       </div>
+
+      <!-- 예매 전환 분석 -->
+      <div class="col-md-6 col-lg-4">
+        <RouterLink to="/admin/funnels"
+                    class="d-flex align-items-center gap-3 p-3 bg-white border rounded text-reset hover-lift">
+          <div class="admin-icon bg-danger-subtle text-danger-emphasis d-flex align-items-center justify-content-center rounded fs-4 flex-shrink-0">
+            <i class="bi bi-funnel"></i>
+          </div>
+          <div>
+            <h3 class="h6 fw-bold mb-1">예매 전환 분석</h3>
+            <p class="text-secondary small mb-0">대기열 · 예매 · 결제 전환율</p>
+          </div>
+        </RouterLink>
+      </div>
     </div>
   </div>
 </template>

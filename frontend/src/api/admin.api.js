@@ -11,6 +11,7 @@
  * - GET  /admin/members/{id}         — 회원 상세 + 상태 변경 이력
  * - POST /admin/members/{id}/suspend — 정지 (사유 필요)
  * - POST /admin/members/{id}/release — 정지 해제
+ * - GET  /admin/funnels/schedules/{scheduleId} — 회차별 예매 전환 퍼널
  *
  * 인증 + ADMIN 권한 필요.
  */
@@ -40,4 +41,8 @@ export const adminApi = {
 
   releaseMember: (id) =>
     http.post(`/admin/members/${id}/release`),
+
+  // ── 예매 전환 분석 ──
+  findFunnelBySchedule: (scheduleId) =>
+    http.get(`/admin/funnels/schedules/${scheduleId}`),
 }
