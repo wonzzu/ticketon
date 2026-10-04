@@ -66,7 +66,7 @@ public class FailedKafkaEvent extends BaseEntity {
     private String messageKey;
 
     @Lob
-    @Column(name = "payload", nullable = false)
+    @Column(name = "payload", nullable = false, columnDefinition = "LONGTEXT")
     private String payload;
 
     @Column(name = "exception_class", length = 500)
