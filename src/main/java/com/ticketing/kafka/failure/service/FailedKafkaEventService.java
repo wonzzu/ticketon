@@ -64,8 +64,8 @@ public class FailedKafkaEventService {
 
         failedEventReprocessor.reprocess(failedEvent);
 
-        if (failedKafkaEventRepository.markResolved(failedEventId) != 1) {
-            throw new IllegalStateException("Kafka 실패 이벤트 재처리 완료 상태를 저장하지 못했습니다.");
+        if (failedKafkaEventRepository.markRepublished(failedEventId) != 1) {
+            throw new IllegalStateException("Kafka 실패 이벤트 재발행 완료 상태를 저장하지 못했습니다.");
         }
     }
 }
