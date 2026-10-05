@@ -37,9 +37,9 @@ public interface FailedKafkaEventRepository
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
             update FailedKafkaEvent event
-               set event.status = com.ticketing.kafka.failure.domain.FailedKafkaEventStatus.RESOLVED
+               set event.status = com.ticketing.kafka.failure.domain.FailedKafkaEventStatus.REPUBLISHED
              where event.id = :id
                and event.status = com.ticketing.kafka.failure.domain.FailedKafkaEventStatus.REPROCESSING
             """)
-    int markResolved(@Param("id") Long id);
+    int markRepublished(@Param("id") Long id);
 }

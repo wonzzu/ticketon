@@ -57,12 +57,12 @@ class FailedKafkaEventServiceTest {
                 any()
         )).thenReturn(1);
         when(failedKafkaEventRepository.findById(1L)).thenReturn(Optional.of(failedEvent));
-        when(failedKafkaEventRepository.markResolved(1L)).thenReturn(1);
+        when(failedKafkaEventRepository.markRepublished(1L)).thenReturn(1);
 
         failedKafkaEventService.reprocess(1L);
 
         verify(failedEventReprocessor).reprocess(failedEvent);
-        verify(failedKafkaEventRepository).markResolved(1L);
+        verify(failedKafkaEventRepository).markRepublished(1L);
     }
 
     @Test
